@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "PLAN E",
+    "slug": "plan-e",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#18372D"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.plane.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#18372D"
+      },
+      "package": "com.plane.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "scheme": "plane"
+  }
+}
