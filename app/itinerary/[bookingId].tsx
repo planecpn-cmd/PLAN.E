@@ -1,51 +1,84 @@
 // RM-10 Interactive Itinerary
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
+import { Screen } from '@/components/Screen';
+import { Card } from '@/components/Card';
+import { useExperience } from '@/hooks/useExperience';
+import { Skeleton } from '@/components/Skeleton';
+import { ErrorState } from '@/components/ErrorState';
+import { EmptyState } from '@/components/EmptyState';
+import { colors, spacing } from '@/theme/tokens';
+import { typography } from '@/theme/typography';
 
 export default function ItineraryScreen() {
   const { bookingId } = useLocalSearchParams<{ bookingId: string }>();
-  const router = useRouter();
+  const { data: experience, isLoading, error, refetch } = useExperience(bookingId || '');
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>RM-10 Interactive Itinerary</Text>
-      <Text style={styles.subtitle}>Booking ID: {bookingId}</Text>
-      
-      <TouchableOpacity style={styles.button} onPress={() => router.back()}>
-        <Text style={styles.buttonText}>Go Back</Text>
-      </TouchableOpacity>
-    </View>
+    <Screen scrollable style={styles.container}>
+      <Text style={[typography.styles.headingLarge, styles.title]}>RM-10 Interactive Itinerary</Text>
+      <Text style={[typography.styles.bodyMedium, styles.subtitle]}>
+        Day-by-day trail guide for Booking: {bookingId}
+      </Text>
+
+      {isLoading ? (
+        <View style={styles.list}>
+          <Skeleton width="100%" height={100} style={{ marginBottom: spacing.md }} />
+          <Skeleton width="100%" height={100} />
+        </View>
+      ) : error ? (
+        <ErrorState message="Could not load itinerary details." onRetry={refetch} />
+      ) : !experience?.itinerary_items?.length ? (
+        <Card style={styles.card}>
+          <EmptyState
+            title="Itinerary Details"
+            description="Detailed day-by-day itinerary breakdown is prepared by the host upon booking confirmation."
+          />
+        </Card>
+      ) : (
+        <View style={styles.list}>
+          {experience.itinerary_items.map((item: any) => (
+            <Card key={item.id} style={styles.card}>
+              <Text style={styles.dayBadge}>Day {item.day_number}</Text>
+              <Text style={typography.styles.headingMedium}>{item.title}</Text>
+              <Text style={[typography.styles.bodyMedium, styles.itemBody]}>
+                {item.description}
+              </Text>
+            </Card>
+          ))}
+        </View>
+      )}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#F6F2E9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
+    padding: spacing.lg,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#18372D',
-    marginBottom: 8,
+    marginBottom: 2,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#24312D',
-    marginBottom: 32,
+    color: colors.ink,
+    opacity: 0.7,
+    marginBottom: spacing.lg,
   },
-  button: {
-    backgroundColor: '#18372D',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 24,
+  list: {
+    paddingBottom: spacing.xxl,
   },
-  buttonText: {
-    color: '#FFFFFF',
+  card: {
+    marginBottom: spacing.md,
+  },
+  dayBadge: {
+    color: colors.gold,
     fontWeight: 'bold',
+    fontSize: 12,
+    marginBottom: spacing.xs,
+  },
+  itemBody: {
+    color: colors.ink,
+    marginTop: spacing.xs,
   },
 });

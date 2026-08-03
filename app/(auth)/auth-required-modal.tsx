@@ -1,37 +1,44 @@
-// PL-20 Application Submitted
+// RM-05 Authentication Required Modal
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen } from '@/components/Screen';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
+import { useDeferredActionStore } from '@/stores/deferredActionStore';
 import { colors, spacing } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
-import { t } from '@/i18n';
 
-export default function HostSubmittedScreen() {
+export default function AuthRequiredModalScreen() {
   const router = useRouter();
+  const pendingAction = useDeferredActionStore((state) => state.pendingAction);
 
   return (
     <Screen style={styles.container}>
       <Card style={styles.card}>
-        <Text style={styles.icon}>📋</Text>
+        <Text style={styles.icon}>🔐</Text>
         <Text style={[typography.styles.headingLarge, styles.title]}>
-          {t('host.submittedTitle')}
+          RM-05 Authentication Required
         </Text>
         <Text style={[typography.styles.bodyMedium, styles.body]}>
-          {t('host.submittedSubtitle')}
+          Please log in or sign up to complete your action ({pendingAction?.action || 'save'}).
         </Text>
 
-        <View style={styles.statusBox}>
-          <Text style={styles.statusLabel}>Current Status:</Text>
-          <Text style={styles.statusValue}>Under Review 🟡</Text>
-        </View>
-
         <Button
-          title="Back to Profile"
-          onPress={() => router.replace('/(tabs)/profile')}
+          title="Sign Up New Account"
+          onPress={() => router.push('/(auth)/sign-up')}
           style={styles.button}
+        />
+        <Button
+          title="Log In Existing Account"
+          onPress={() => router.push('/(auth)/login')}
+          variant="secondary"
+          style={styles.button}
+        />
+        <Button
+          title="Cancel"
+          onPress={() => router.back()}
+          variant="text"
         />
       </Card>
     </Screen>
@@ -59,28 +66,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: colors.ink,
     opacity: 0.7,
-    marginBottom: spacing.lg,
-  },
-  statusBox: {
-    backgroundColor: colors.sage,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderRadius: 8,
-    alignItems: 'center',
     marginBottom: spacing.xl,
-    width: '100%',
-  },
-  statusLabel: {
-    fontSize: 12,
-    color: colors.ink,
-  },
-  statusValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.forest,
-    marginTop: 2,
   },
   button: {
     width: '100%',
+    marginBottom: spacing.sm,
   },
 });

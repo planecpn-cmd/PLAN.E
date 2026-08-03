@@ -1,51 +1,69 @@
 // RM-11 Trip Chat
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { View, Text, StyleSheet } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
+import { Screen } from '@/components/Screen';
+import { Card } from '@/components/Card';
+import { Toast } from '@/components/Toast';
+import { colors, spacing } from '@/theme/tokens';
+import { typography } from '@/theme/typography';
+import { t } from '@/i18n';
 
 export default function ChatScreen() {
   const { bookingId } = useLocalSearchParams<{ bookingId: string }>();
-  const router = useRouter();
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>RM-11 Trip Chat</Text>
-      <Text style={styles.subtitle}>Group Chat for Booking ID: {bookingId}</Text>
-      
-      <TouchableOpacity style={styles.button} onPress={() => router.back()}>
-        <Text style={styles.buttonText}>Go Back</Text>
-      </TouchableOpacity>
-    </View>
+    <Screen style={styles.container}>
+      <Text style={[typography.styles.headingLarge, styles.title]}>RM-11 Trip Chat</Text>
+      <Text style={[typography.styles.bodyMedium, styles.subtitle]}>
+        Group Chat for Booking ID: {bookingId}
+      </Text>
+
+      <Toast
+        message="Realtime Chat lands in Stage B (Phase 8)"
+        type="info"
+        style={{ marginBottom: spacing.lg }}
+      />
+
+      <Card style={styles.card}>
+        <Text style={styles.icon}>💬</Text>
+        <Text style={[typography.styles.headingMedium, styles.cardTitle]}>
+          {t('common.comingSoonTitle')}
+        </Text>
+        <Text style={[typography.styles.bodyMedium, styles.body]}>
+          Realtime group chat between trip participants and your Sherpa host will be enabled upon booking confirmation in Stage B.
+        </Text>
+      </Card>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#F6F2E9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
+    padding: spacing.lg,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#18372D',
-    marginBottom: 8,
+    marginBottom: 2,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#24312D',
-    marginBottom: 32,
+    color: colors.ink,
+    opacity: 0.7,
+    marginBottom: spacing.lg,
   },
-  button: {
-    backgroundColor: '#18372D',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 24,
+  card: {
+    alignItems: 'center',
+    padding: spacing.xl,
   },
-  buttonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+  icon: {
+    fontSize: 44,
+    marginBottom: spacing.sm,
+  },
+  cardTitle: {
+    marginBottom: spacing.xs,
+  },
+  body: {
+    textAlign: 'center',
+    color: colors.ink,
+    opacity: 0.7,
   },
 });

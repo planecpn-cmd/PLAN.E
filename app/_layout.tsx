@@ -10,6 +10,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="(onboarding)" />
         <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(auth)/auth-required-modal" options={{ presentation: 'modal' }} />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="search" />
         <Stack.Screen name="collection/[slug]" />

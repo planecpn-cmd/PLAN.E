@@ -1,54 +1,79 @@
 // PL-19 Host Application Step 2
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Screen } from '@/components/Screen';
+import { Button } from '@/components/Button';
+import { Card } from '@/components/Card';
+import { ProgressSteps } from '@/components/ProgressSteps';
+import { spacing } from '@/theme/tokens';
+import { typography } from '@/theme/typography';
+import { t } from '@/i18n';
 
 export default function HostStep2Screen() {
   const router = useRouter();
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>PL-19 Host Application Step 2</Text>
-      <Text style={styles.subtitle}>Identity Verification & Documents</Text>
-      
-      <TouchableOpacity 
-        style={styles.button}
-        onPress={() => router.push('/host/step-3')}
-      >
-        <Text style={styles.buttonText}>Next Step</Text>
-      </TouchableOpacity>
-    </View>
+    <Screen style={styles.container}>
+      <ProgressSteps
+        currentStep={2}
+        totalSteps={4}
+        stepLabels={['Contact Info', 'Documents', 'Pricing', 'Review']}
+      />
+
+      <Text style={[typography.styles.headingLarge, styles.title]}>{t('host.step2Title')}</Text>
+
+      <Card style={styles.card}>
+        <Text style={styles.docIcon}>📄</Text>
+        <Text style={typography.styles.headingMedium}>Upload Government ID / License</Text>
+        <Text style={[typography.styles.bodyMedium, styles.docBody]}>
+          Upload Citizenship card, Passport, or Trekking Guide License scan.
+        </Text>
+        <Button
+          title="Select Document File"
+          onPress={() => {}}
+          variant="secondary"
+        />
+      </Card>
+
+      <View style={styles.footer}>
+        <Button
+          title="Back"
+          onPress={() => router.back()}
+          variant="text"
+          style={{ marginBottom: spacing.xs }}
+        />
+        <Button
+          title={t('common.next')}
+          onPress={() => router.push('/host/step-3')}
+        />
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#F6F2E9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
+    padding: spacing.lg,
+    justifyContent: 'space-between',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#18372D',
-    marginBottom: 8,
+    marginVertical: spacing.md,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#24312D',
-    marginBottom: 32,
+  card: {
+    alignItems: 'center',
+    padding: spacing.xl,
   },
-  button: {
-    backgroundColor: '#18372D',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 24,
+  docIcon: {
+    fontSize: 44,
+    marginBottom: spacing.sm,
   },
-  buttonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 15,
+  docBody: {
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+    opacity: 0.7,
+  },
+  footer: {
+    marginTop: spacing.xl,
   },
 });

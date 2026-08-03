@@ -1,71 +1,79 @@
-// PL-01 Splash
+// PL-01 Splash Screen
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Screen } from '@/components/Screen';
+import { Button } from '@/components/Button';
+import { colors, spacing } from '@/theme/tokens';
+import { typography } from '@/theme/typography';
+import { t } from '@/i18n';
 
 export default function SplashScreen() {
   const router = useRouter();
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>PL-01 Splash</Text>
-      <Text style={styles.subtitle}>PLAN E — Nepal Travel App</Text>
-      
-      <TouchableOpacity 
-        style={styles.button}
-        onPress={() => router.push('/(onboarding)/slide-1')}
-      >
-        <Text style={styles.buttonText}>Get Started</Text>
-      </TouchableOpacity>
+    <Screen backgroundColor={colors.forest} style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.nepalText}>NEPAL →</Text>
+        <Text style={[typography.styles.displayLarge, styles.title]}>{t('common.appName')}</Text>
+        <Text style={[typography.styles.bodyLarge, styles.tagline]}>{t('common.tagline')}</Text>
+      </View>
 
-      <TouchableOpacity 
-        style={styles.devButton}
-        onPress={() => router.push('/dev/routes')}
-      >
-        <Text style={styles.devButtonText}>Open Route Index (/dev/routes)</Text>
-      </TouchableOpacity>
-    </View>
+      <View style={styles.footer}>
+        <Button
+          title={t('common.continue')}
+          onPress={() => router.push('/(onboarding)/slide-1')}
+          variant="secondary"
+          style={styles.button}
+        />
+        <TouchableOpacity style={styles.devLink} onPress={() => router.push('/dev/routes')}>
+          <Text style={styles.devText}>Open Route Index (/dev/routes)</Text>
+        </TouchableOpacity>
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    padding: spacing.xxl,
+    justifyContent: 'space-between',
+  },
+  content: {
     flex: 1,
-    backgroundColor: '#18372D',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+  },
+  nepalText: {
+    color: colors.gold,
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+    marginBottom: spacing.xs,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#F6F2E9',
-    marginBottom: 8,
+    color: colors.ivory,
+    fontSize: 40,
+    lineHeight: 48,
+    marginBottom: spacing.md,
   },
-  subtitle: {
-    fontSize: 18,
-    color: '#E7ECE7',
-    marginBottom: 40,
+  tagline: {
+    color: colors.sage,
+    textAlign: 'center',
+  },
+  footer: {
+    marginBottom: spacing.lg,
   },
   button: {
-    backgroundColor: '#B7802B',
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 24,
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
-  buttonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 16,
+  devLink: {
+    alignItems: 'center',
+    padding: spacing.xs,
   },
-  devButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-  },
-  devButtonText: {
-    color: '#F6F2E9',
-    fontSize: 14,
+  devText: {
+    color: colors.ivory,
+    fontSize: 13,
     textDecorationLine: 'underline',
   },
 });

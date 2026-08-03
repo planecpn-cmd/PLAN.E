@@ -1,54 +1,64 @@
 // RM-22 Host Application Step 1
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+// ASSUMPTION: Step 1 collects personal & contact info
+import React, { useState } from 'react';
+import { View, StyleSheet, Text } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Screen } from '@/components/Screen';
+import { Button } from '@/components/Button';
+import { Input } from '@/components/Input';
+import { ProgressSteps } from '@/components/ProgressSteps';
+import { spacing } from '@/theme/tokens';
+import { typography } from '@/theme/typography';
+import { t } from '@/i18n';
 
 export default function HostStep1Screen() {
   const router = useRouter();
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>RM-22 Host Application Step 1</Text>
-      <Text style={styles.subtitle}>Personal Details & Contact Info</Text>
-      
-      <TouchableOpacity 
-        style={styles.button}
-        onPress={() => router.push('/host/step-2')}
-      >
-        <Text style={styles.buttonText}>Next Step</Text>
-      </TouchableOpacity>
-    </View>
+    <Screen style={styles.container}>
+      <ProgressSteps
+        currentStep={1}
+        totalSteps={4}
+        stepLabels={['Contact Info', 'Documents', 'Pricing', 'Review']}
+      />
+
+      <Text style={[typography.styles.headingLarge, styles.title]}>{t('host.step1Title')}</Text>
+
+      <Input
+        label="Full Name / Agency Name"
+        placeholder="e.g. Pemba Sherpa / Himalayan Treks"
+        value={fullName}
+        onChangeText={setFullName}
+      />
+      <Input
+        label="Contact Phone (+977)"
+        placeholder="+97798XXXXXXXX"
+        value={phone}
+        onChangeText={setPhone}
+        keyboardType="phone-pad"
+      />
+
+      <View style={styles.footer}>
+        <Button
+          title={t('common.next')}
+          onPress={() => router.push('/host/step-2')}
+        />
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#F6F2E9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
+    padding: spacing.lg,
+    justifyContent: 'space-between',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#18372D',
-    marginBottom: 8,
+    marginVertical: spacing.md,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#24312D',
-    marginBottom: 32,
-  },
-  button: {
-    backgroundColor: '#18372D',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 24,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 15,
+  footer: {
+    marginTop: spacing.xl,
   },
 });
