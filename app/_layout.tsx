@@ -38,6 +38,7 @@ export default function RootLayout() {
         <Stack.Screen name="host/step-4" />
         <Stack.Screen name="host/submitted" />
         <Stack.Screen name="dev/routes" />
+        <Stack.Screen name="dev/components" />
       </Stack>
     </>
   );
