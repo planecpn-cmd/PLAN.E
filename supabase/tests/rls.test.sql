@@ -9,12 +9,19 @@ declare
   v_user_a uuid := 'a0000000-0000-0000-0000-000000000001';
   v_user_b uuid := 'b0000000-0000-0000-0000-000000000002';
   v_cat_id uuid := 'c0000000-0000-0000-0000-000000000001';
-  v_reg_id uuid := 'r0000000-0000-0000-0000-000000000001';
+  v_reg_id uuid := '70000000-0000-0000-0000-000000000001';
   v_exp_id uuid := 'e0000000-0000-0000-0000-000000000001';
   v_dep_id uuid := 'd0000000-0000-0000-0000-000000000001';
   v_book_b1 uuid := '11111111-0000-0000-0000-000000000001';
   v_book_b2 uuid := '22222222-0000-0000-0000-000000000002';
 begin
+  -- Setup auth users
+  insert into auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role, aud)
+  values 
+    (v_user_a, '00000000-0000-0000-0000-000000000000', 'usera@example.com', 'encrypted', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), 'authenticated', 'authenticated'),
+    (v_user_b, '00000000-0000-0000-0000-000000000000', 'userb@example.com', 'encrypted', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), 'authenticated', 'authenticated')
+  on conflict (id) do nothing;
+
   -- Setup test profiles
   insert into public.profiles (id, full_name, role)
   values 
@@ -31,9 +38,9 @@ begin
   values (v_reg_id, 'test-reg', 'Test Region', 'क्षेत्र')
   on conflict (id) do nothing;
 
-  -- Setup published experience
+  -- Setup published experience (hosted by User B)
   insert into public.experiences (id, host_id, category_id, region_id, title, slug, cover_image_url, price_paisa, status)
-  values (v_exp_id, v_user_a, v_cat_id, v_reg_id, 'Test Experience', 'test-experience', 'http://example.com/img.jpg', 500000, 'published')
+  values (v_exp_id, v_user_b, v_cat_id, v_reg_id, 'Test Experience', 'test-experience', 'http://example.com/img.jpg', 500000, 'published')
   on conflict (id) do nothing;
 
   -- Setup departure
@@ -50,7 +57,7 @@ begin
 
   -- Setup host application for User A
   insert into public.host_applications (id, user_id, status, title)
-  values ('h0000000-0000-0000-0000-000000000001', v_user_a, 'draft', 'Host App A')
+  values ('80000000-0000-0000-0000-000000000001', v_user_a, 'draft', 'Host App A')
   on conflict (id) do nothing;
 end $$;
 
@@ -120,6 +127,7 @@ end $$;
 -- Assertion 5: authenticated role cannot update bookings.status
 do $$
 declare
+  v_updated int := 0;
   v_failed boolean := false;
 begin
   set local role authenticated;
@@ -127,7 +135,10 @@ begin
 
   begin
     update public.bookings set status = 'confirmed' where id = '11111111-0000-0000-0000-000000000001';
-    v_failed := true;
+    get diagnostics v_updated = row_count;
+    if v_updated > 0 then
+      v_failed := true;
+    end if;
   exception when others then
     v_failed := false;
   end;
@@ -196,14 +207,18 @@ end $$;
 -- Assertion 8: authenticated role cannot update host_applications.status
 do $$
 declare
+  v_updated int := 0;
   v_failed boolean := false;
 begin
   set local role authenticated;
   perform set_config('request.jwt.claims', json_build_object('sub', 'a0000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
 
   begin
-    update public.host_applications set status = 'approved' where id = 'h0000000-0000-0000-0000-000000000001';
-    v_failed := true;
+    update public.host_applications set status = 'approved' where id = '80000000-0000-0000-0000-000000000001';
+    get diagnostics v_updated = row_count;
+    if v_updated > 0 then
+      v_failed := true;
+    end if;
   exception when others then
     v_failed := false;
   end;
@@ -243,6 +258,7 @@ declare
   v_failed boolean := false;
 begin
   set local role postgres;
+  perform set_config('request.jwt.claims', json_build_object('role', 'service_role')::text, true);
   insert into public.payments (booking_id, provider, idempotency_key, amount_paisa)
   values ('11111111-0000-0000-0000-000000000001', 'khalti', 'dup_key_test_123', 500000);
 

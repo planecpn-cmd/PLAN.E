@@ -11,32 +11,41 @@ class AppSupabaseClient {
     String url = const String.fromEnvironment('SUPABASE_URL');
     String anonKey = const String.fromEnvironment('SUPABASE_ANON_KEY');
 
-    // Fallback to local config file if not set via --dart-define
+    // Load from env/local.json if not passed via --dart-define
     if (url.isEmpty || anonKey.isEmpty) {
       try {
         final String jsonStr = await rootBundle.loadString('env/local.json');
         final Map<String, dynamic> config = jsonDecode(jsonStr) as Map<String, dynamic>;
         url = config['SUPABASE_URL'] as String? ?? '';
         anonKey = config['SUPABASE_ANON_KEY'] as String? ?? '';
-      } catch (_) {
-        // Default local Supabase values if env/local.json is missing
-        url = 'http://127.0.0.1:54321';
-        anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDU1NTUyMDAsImV4cCI6MTk2MTEzMTIwMH0.demo-anon-key';
+      } catch (e) {
+        throw StateError(
+          'Failed to load Supabase configuration from env/local.json or --dart-define: $e',
+        );
       }
     }
 
-    if (url.isNotEmpty && anonKey.isNotEmpty) {
-      await Supabase.initialize(
-        url: url,
-        // ignore: deprecated_member_use
-        anonKey: anonKey,
-        authOptions: const FlutterAuthClientOptions(
-          authFlowType: AuthFlowType.pkce,
-        ),
+    if (url.isEmpty || anonKey.isEmpty) {
+      throw StateError(
+        'SUPABASE_URL or SUPABASE_ANON_KEY is empty. Provide real keys in env/local.json or --dart-define.',
       );
-      _initialized = true;
     }
+
+    await Supabase.initialize(
+      url: url,
+      // ignore: deprecated_member_use
+      anonKey: anonKey,
+      authOptions: const FlutterAuthClientOptions(
+        authFlowType: AuthFlowType.pkce,
+      ),
+    );
+    _initialized = true;
   }
 
-  static SupabaseClient get client => Supabase.instance.client;
+  static SupabaseClient get client {
+    if (!_initialized) {
+      throw StateError('AppSupabaseClient has not been initialized. Call initialize() first.');
+    }
+    return Supabase.instance.client;
+  }
 }
