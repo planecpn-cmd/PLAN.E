@@ -120,8 +120,9 @@ Written down so nobody re-proposes them.
 | Multi-currency | NPR only; foreign cards settle through the wallet's own conversion |
 | Stripe / PayPal | cannot settle NPR domestically |
 | Firebase instead of Supabase | no relational integrity for bookings and participants; RLS is the security model |
-| Redux | TanStack Query + Zustand covers it with a fraction of the code |
-| Custom Node backend | doubles the surface area for an MVP where RLS covers most rules |
+| BLoC | Riverpod covers it with far less ceremony at this size |
+| Custom Dart backend | doubles the surface area for an MVP where RLS covers most rules |
+| React Native / Expo | evaluated and built as a throwaway skeleton, then rejected: the maintainer debugs in Dart and Khalti/eSewa ship official Flutter SDKs. Do not reintroduce |
 | In-app wallet / stored balance | financial licensing burden in Nepal, no product need |
 | Social feed | not the product; PLAN E is discovery and planning |
 
@@ -140,4 +141,4 @@ Nothing ships publicly until all of these are true:
 - [ ] WCAG AA contrast verified, 44 pt targets, dynamic type without clipping
 - [ ] Privacy policy published, PII deletion path exists
 - [ ] Crash-free sessions above 99% in internal testing
-- [ ] Maestro E2E green: onboarding, book, chat, review, host apply
+- [ ] `integration_test` E2E green: onboarding, book, chat, review, host apply

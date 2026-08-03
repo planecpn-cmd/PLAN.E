@@ -211,7 +211,7 @@ user; only admin/Edge Function moves the status forward. `verification_doc_path`
 RLS: own rows, update limited to `is_read`.
 
 ### 3.18 device_tokens
-`id, user_id FK, expo_push_token text unique, platform text, last_seen_at`. Own rows only.
+`id, user_id FK, fcm_token text unique, platform text, last_seen_at`. Own rows only.
 
 ---
 
