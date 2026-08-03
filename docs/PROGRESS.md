@@ -55,8 +55,18 @@
 
 ---
 
-## STAGE B — TRANSACTIONAL (PAUSED)
-- [ ] **Phase 5** — Search hardening
+## STAGE B — TRANSACTIONAL
+
+- [x] **Phase 5** — Search hardening
+  - Created `search-experiences` Edge Function (`supabase/functions/search-experiences/index.ts`) for ranked full-text search, filtering, and sorting
+  - Created `RecentSearchesRepository` with `SharedPreferences` persistence
+  - Enhanced `ExperienceRepository` with Edge Function invocation, sorting, price range, and PostgREST fallback
+  - Updated `FilterSheet` (RM-07) with sorting options (relevance, rating, popular, price, newest)
+  - Updated `SearchResultsScreen` (PL-08) with recent search chips, `PageStorageKey` scroll restoration, and reset recovery
+  - Added unit test suite in `test/search_test.dart` (5 tests)
+  - `dart analyze --fatal-infos`: 0 issues; `flutter test`: 16/16 passing clean
+  - *Status:* **DONE** (Committed: `feat(phase-5): search hardening with Edge Function and recent searches`)
+
 - [ ] **Phase 6** — Map
 - [ ] **Phase 7** — Booking and payment (RM-09 Payment Gateway lives here)
 - [ ] **Phase 8** — Trip tools

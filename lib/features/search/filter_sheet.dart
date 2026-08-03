@@ -12,12 +12,14 @@ class FilterSheet extends ConsumerStatefulWidget {
   final String? initialDifficulty;
   final String? initialCategoryId;
   final String? initialRegionId;
+  final String? initialSortBy;
 
   const FilterSheet({
     super.key,
     this.initialDifficulty,
     this.initialCategoryId,
     this.initialRegionId,
+    this.initialSortBy,
   });
 
   @override
@@ -28,6 +30,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
   String? _selectedDifficulty;
   String? _selectedCategoryId;
   String? _selectedRegionId;
+  String? _selectedSortBy;
 
   @override
   void initState() {
@@ -35,6 +38,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     _selectedDifficulty = widget.initialDifficulty;
     _selectedCategoryId = widget.initialCategoryId;
     _selectedRegionId = widget.initialRegionId;
+    _selectedSortBy = widget.initialSortBy ?? 'relevance';
   }
 
   void _resetAll() {
@@ -42,6 +46,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
       _selectedDifficulty = null;
       _selectedCategoryId = null;
       _selectedRegionId = null;
+      _selectedSortBy = 'relevance';
     });
   }
 
@@ -50,6 +55,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
       'difficulty': _selectedDifficulty,
       'category_id': _selectedCategoryId,
       'region_id': _selectedRegionId,
+      'sort_by': _selectedSortBy,
     });
   }
 
@@ -115,7 +121,28 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
               const Divider(color: AppColors.borderSubtle),
               const SizedBox(height: AppSpacing.md12),
 
-              // 1. Difficulty Level
+              // 1. Sort By Options
+              Text(
+                'Sort By',
+                style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
+              ),
+              const SizedBox(height: AppSpacing.sm8),
+              Wrap(
+                spacing: AppSpacing.sm8,
+                runSpacing: AppSpacing.sm8,
+                children: [
+                  _buildSortChip('relevance', 'Relevance'),
+                  _buildSortChip('rating', 'Highest Rated'),
+                  _buildSortChip('popular', 'Most Popular'),
+                  _buildSortChip('price_asc', 'Price: Low to High'),
+                  _buildSortChip('price_desc', 'Price: High to Low'),
+                  _buildSortChip('newest', 'Newest'),
+                ],
+              ),
+
+              const SizedBox(height: AppSpacing.xxl24),
+
+              // 2. Difficulty Level
               Text(
                 'Difficulty Level',
                 style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
@@ -134,7 +161,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
 
               const SizedBox(height: AppSpacing.xxl24),
 
-              // 2. Categories Section
+              // 3. Categories Section
               Text(
                 'Category',
                 style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
@@ -171,7 +198,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
 
               const SizedBox(height: AppSpacing.xxl24),
 
-              // 3. Regions Section
+              // 4. Regions Section
               Text(
                 'Region',
                 style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
@@ -222,6 +249,19 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     );
   }
 
+  Widget _buildSortChip(String value, String label) {
+    final isSelected = _selectedSortBy == value;
+    return FilterChipPill(
+      label: label,
+      isSelected: isSelected,
+      onSelected: (selected) {
+        setState(() {
+          _selectedSortBy = selected ? value : 'relevance';
+        });
+      },
+    );
+  }
+
   Widget _buildDifficultyChip(String value, String label) {
     final isSelected = _selectedDifficulty == value;
     return FilterChipPill(
@@ -235,5 +275,3 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     );
   }
 }
-
-

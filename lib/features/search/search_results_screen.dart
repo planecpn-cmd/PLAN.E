@@ -33,7 +33,9 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
   String? _selectedDifficulty;
   String? _categoryId;
   String? _regionId;
+  String? _sortBy = 'relevance';
   String _searchQuery = '';
+  bool _showRecentSearches = false;
 
   @override
   void initState() {
@@ -58,7 +60,19 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
         'difficulty': _selectedDifficulty,
       if (_categoryId != null && _categoryId!.isNotEmpty) 'category_id': _categoryId,
       if (_regionId != null && _regionId!.isNotEmpty) 'region_id': _regionId,
+      if (_sortBy != null && _sortBy!.isNotEmpty) 'sort_by': _sortBy,
     };
+  }
+
+  void _submitSearch(String query) {
+    setState(() {
+      _searchQuery = query;
+      _showRecentSearches = false;
+    });
+    if (query.trim().isNotEmpty) {
+      ref.read(recentSearchesRepositoryProvider).addSearchQuery(query);
+      ref.invalidate(recentSearchesProvider);
+    }
   }
 
   void _openFilterSheet() async {
@@ -70,6 +84,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
         initialDifficulty: _selectedDifficulty,
         initialCategoryId: _categoryId,
         initialRegionId: _regionId,
+        initialSortBy: _sortBy,
       ),
     );
 
@@ -78,6 +93,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
         _selectedDifficulty = result['difficulty'];
         _categoryId = result['category_id'];
         _regionId = result['region_id'];
+        _sortBy = result['sort_by'] ?? 'relevance';
       });
     }
   }
@@ -85,6 +101,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
   @override
   Widget build(BuildContext context) {
     final experiencesAsync = ref.watch(experiencesProvider(_filterMap));
+    final recentSearchesAsync = ref.watch(recentSearchesProvider);
 
     return Scaffold(
       backgroundColor: AppColors.ivory,
@@ -139,6 +156,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                             _searchController.clear();
                             setState(() {
                               _searchQuery = '';
+                              _showRecentSearches = true;
                             });
                           },
                         )
@@ -162,11 +180,12 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                     borderSide: BorderSide(color: AppColors.forest, width: 2),
                   ),
                 ),
-                onSubmitted: (value) {
+                onTap: () {
                   setState(() {
-                    _searchQuery = value;
+                    _showRecentSearches = true;
                   });
                 },
+                onSubmitted: _submitSearch,
                 onChanged: (value) {
                   setState(() {
                     _searchQuery = value;
@@ -174,6 +193,78 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                 },
               ),
             ),
+
+            // Recent Searches Overlay / Chips if active
+            if (_showRecentSearches)
+              AsyncValueView<List<String>>(
+                value: recentSearchesAsync,
+                onRetry: () => ref.refresh(recentSearchesProvider),
+                isEmpty: (list) => list.isEmpty,
+                emptyView: const SizedBox.shrink(),
+                data: (recentList) {
+                  if (recentList.isEmpty) return const SizedBox.shrink();
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg16,
+                      vertical: AppSpacing.sm8,
+                    ),
+                    color: AppColors.sage.withValues(alpha: 0.3),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Recent Searches',
+                              style: AppTypography.caption.copyWith(
+                                color: AppColors.forest,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () async {
+                                await ref
+                                    .read(recentSearchesRepositoryProvider)
+                                    .clearRecentSearches();
+                                ref.invalidate(recentSearchesProvider);
+                              },
+                              child: Text(
+                                'Clear',
+                                style: AppTypography.caption.copyWith(
+                                  color: AppColors.disabledText,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.xs4),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: recentList.map((term) {
+                              return Padding(
+                                padding: const EdgeInsets.only(right: AppSpacing.sm8),
+                                child: ActionChip(
+                                  label: Text(term, style: AppTypography.caption),
+                                  backgroundColor: AppColors.white,
+                                  shape: const RoundedRectangleBorder(
+                                    borderRadius: AppRadii.borderPill,
+                                  ),
+                                  onPressed: () {
+                                    _searchController.text = term;
+                                    _submitSearch(term);
+                                  },
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
 
             // Difficulty Chips Bar
             SingleChildScrollView(
@@ -209,19 +300,24 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                     'Search Results',
                     style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
                   ),
-                  if (_categoryId != null || _regionId != null || _selectedDifficulty != null)
+                  if (_categoryId != null ||
+                      _regionId != null ||
+                      _selectedDifficulty != null ||
+                      _searchQuery.isNotEmpty)
                     GestureDetector(
                       onTap: () {
                         setState(() {
                           _selectedDifficulty = null;
                           _categoryId = null;
                           _regionId = null;
+                          _sortBy = 'relevance';
                           _searchQuery = '';
                           _searchController.clear();
+                          _showRecentSearches = false;
                         });
                       },
                       child: Text(
-                        'Clear Filters',
+                        'Clear All Filters',
                         style: AppTypography.caption.copyWith(
                           color: AppColors.error,
                           fontWeight: FontWeight.bold,
@@ -234,16 +330,17 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
 
             const SizedBox(height: AppSpacing.md12),
 
-            // Async Results View
+            // Async Results View (with PageStorageKey to preserve scroll position on back navigation)
             Expanded(
               child: AsyncValueView<List<Experience>>(
                 value: experiencesAsync,
                 onRetry: () => ref.refresh(experiencesProvider(_filterMap)),
                 isEmpty: (list) => list.isEmpty,
                 emptyView: EmptyStateView(
+                  icon: Icons.search_off,
                   title: 'No Experiences Found',
                   description: _searchQuery.isNotEmpty
-                      ? 'No results for "$_searchQuery". Try broadening your search or resetting filters.'
+                      ? 'No results for "$_searchQuery". Try searching for "Everest", "Annapurna", or "Pokhara".'
                       : 'No experiences match the selected criteria.',
                   actionLabel: 'Reset Search',
                   onActionPressed: () {
@@ -251,13 +348,16 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                       _selectedDifficulty = null;
                       _categoryId = null;
                       _regionId = null;
+                      _sortBy = 'relevance';
                       _searchQuery = '';
                       _searchController.clear();
+                      _showRecentSearches = false;
                     });
                   },
                 ),
                 data: (experiences) {
                   return ListView.separated(
+                    key: const PageStorageKey<String>('search_results_list'),
                     padding: AppSpacing.screenPadding,
                     itemCount: experiences.length,
                     separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.lg16),
@@ -300,5 +400,3 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
     );
   }
 }
-
-

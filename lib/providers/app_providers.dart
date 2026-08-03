@@ -10,6 +10,7 @@ import '../models/region.dart';
 import '../repositories/booking_repository.dart';
 import '../repositories/experience_repository.dart';
 import '../repositories/profile_repository.dart';
+import '../repositories/recent_searches_repository.dart';
 import '../repositories/saved_repository.dart';
 import '../repositories/taxonomy_repository.dart';
 
@@ -37,14 +38,35 @@ final taxonomyRepositoryProvider = Provider<TaxonomyRepository>((ref) {
   return TaxonomyRepository(ref.watch(supabaseClientProvider));
 });
 
+final recentSearchesRepositoryProvider = Provider<RecentSearchesRepository>((ref) {
+  return RecentSearchesRepository();
+});
+
+final recentSearchesProvider = FutureProvider<List<String>>((ref) async {
+  final repo = ref.watch(recentSearchesRepositoryProvider);
+  return repo.getRecentSearches();
+});
+
 // Async Providers
 final experiencesProvider = FutureProvider.family<List<Experience>, Map<String, String?>>((ref, filters) async {
   final repo = ref.watch(experienceRepositoryProvider);
+  int? minPricePaisa;
+  int? maxPricePaisa;
+  if (filters['min_price'] != null) {
+    minPricePaisa = int.tryParse(filters['min_price']!);
+  }
+  if (filters['max_price'] != null) {
+    maxPricePaisa = int.tryParse(filters['max_price']!);
+  }
+
   return repo.getExperiences(
     categoryId: filters['category_id'],
     regionId: filters['region_id'],
     difficulty: filters['difficulty'],
     searchQuery: filters['search_query'],
+    minPricePaisa: minPricePaisa,
+    maxPricePaisa: maxPricePaisa,
+    sortBy: filters['sort_by'],
   );
 });
 
