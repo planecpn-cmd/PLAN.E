@@ -4,7 +4,7 @@
 - [x] **Phase S0** — Repo, tooling, skeleton navigation (DONE)
 - [x] **Phase S1** — Design system (DONE - Gold token adjusted to #8F5E1B for WCAG AA 5.07:1 contrast on ivory)
 - [x] **Phase S2** — Database (DONE - 15 migrations, 30 real Nepal experiences seeded, RLS policies & rls.test.sql)
-- [ ] **Phase S3** — Data layer (TODO)
+- [x] **Phase S3** — Data layer (DONE - Supabase client, TanStack Query hooks, Zustand stores, Zod schemas, formatters & unit tests)
 - [ ] **Phase S4** — Skeleton screens with real data (TODO)
 
 ## STAGE B — TRANSACTIONAL
