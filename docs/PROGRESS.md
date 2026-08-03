@@ -1,7 +1,7 @@
 # PLAN E — Progress Tracker
 
 ## STAGE A — SKELETON
-- [ ] **Phase S0** — Repo, tooling, skeleton navigation (TODO)
+- [x] **Phase S0** — Repo, tooling, skeleton navigation (DONE)
 - [ ] **Phase S1** — Design system (TODO)
 - [ ] **Phase S2** — Database (TODO)
 - [ ] **Phase S3** — Data layer (TODO)
