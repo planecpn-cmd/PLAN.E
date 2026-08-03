@@ -9,6 +9,7 @@ void main() {
         child: PlanEApp(),
       ),
     );
-    expect(find.text('PL-01 Splash Screen'), findsOneWidget);
+    // The splash screen renders the 'NEPAL' brand text on launch.
+    expect(find.text('NEPAL'), findsOneWidget);
   });
 }
