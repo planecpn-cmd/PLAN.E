@@ -31,17 +31,22 @@ agent believes looking at MeroBites would help, that is the moment to stop and a
 
 ## 2. Git isolation
 
-PLAN E has **no remote yet**. That is the safe state. When git gets one:
+The live remote repository for PLAN E is:
+
+```bash
+https://github.com/planecpn-cmd/PLAN.E.git
+```
+
+This is the **ONLY** remote this repository may ever have.
 
 ```bash
 cd "C:/Users/rauna/OneDrive/Desktop/PLAN E"
-git remote add origin <the NEW plan-e repo url>
-git remote -v          # must show ONLY plan-e, never merobites/restro
+git remote -v          # must show ONLY https://github.com/planecpn-cmd/PLAN.E.git
 ```
 
 Rules:
-- A brand-new, empty GitHub repository named `plan-e`. Never an existing repo.
-- `git remote -v` checked before the first push; exactly one remote.
+- A brand-new GitHub repository named `PLAN.E` (`planecpn-cmd`). Never an existing repo.
+- `git remote -v` checked before any push; exactly one remote.
 - Never `git remote add` a second remote. Never `git -C`. Never force-push.
 - Push only to `main` or `phase/*` in the plan-e repo.
 

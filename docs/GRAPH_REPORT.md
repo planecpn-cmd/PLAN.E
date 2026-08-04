@@ -231,7 +231,7 @@ erDiagram
 | E.9 | Reviews unique on booking_id | ✅ YES | `supabase/tests/rls.test.sql` Assertion 9 |
 | E.10 | Payments unique idempotency_key | ✅ YES | `supabase/tests/rls.test.sql` Assertion 10 |
 | E.11 | Every list/detail has loading+empty+error | ✅ YES | 17 data screens use `AsyncValueView<T>` |
-| E.12 | No raw Color outside theme AND no literals outside ARB | ✅ YES | 0 raw Color in features; `grep -rn "Text('" lib/features | grep -v "/dev/" | wc -l` = **0** |
+| E.12 | No raw Color outside theme AND no literals outside ARB | ❌ NO (PARTIAL) | 0 raw Color in features; 238 ARB keys added (labels & buttons done), but 274 lines remain matching hardcoded literal pattern (hints, placeholders, validation & error messages outstanding) |
 | E.13 | Tap targets ≥48 dp | ✅ YES | `AppTouchTarget.minSize` = 48.0 |
 | E.14 | rls.test.sql exists, CAN fail, passing live | ✅ YES | 10 assertions pass; intentional failure output verified |
 | E.15 | No secret in history | ✅ YES | `git log -p` verified clean of production keys |
@@ -242,8 +242,8 @@ erDiagram
 
 ## F. ISOLATION AUDIT
 
-- `git remote -v`: **Empty (No remotes)**
-- `git rev-parse --show-toplevel`: **Ends in "PLAN E"**
+- `git remote -v`: **`https://github.com/planecpn-cmd/PLAN.E.git` (Single remote)**
+- `git rev-parse --show-tooplevel`: **Ends in "PLAN E"**
 - `grep -rni "merobites|restro"`: **0 occurrences**
 - `pubspec.yaml` path dependencies: **0 outside repo**
 - `applicationId`: **`com.plane.plan_e`**

@@ -71,7 +71,19 @@
 
 ---
 
+## REMOTE REPOSITORY STATUS
+
+- **Live Remote:** `https://github.com/planecpn-cmd/PLAN.E.git`
+- **GitHub Username:** `planecpn-cmd`
+- **User Email:** `planecpn@gmail.com`
+- **Date Added & Initial Push:** 2026-08-04 (Commit: `ffa043e`)
+- **Push Method:** Manual push performed by user via Git Credential Manager.
+- **Rule:** This is the ONLY remote this repository may ever have.
+
+---
+
 ## STAGE C — PRODUCTION
 - [ ] **Phase 10** — Host application, live
 - [ ] **Phase 11** — Localization, accessibility, resilience
+  - *Current Status:* **PARTIAL** (labels and primary button texts localized across 238 ARB keys; hints, placeholders, field validation messages, dynamic error messages, and fallback strings outstanding with 274 remaining lines matched by lint rules).
 - [ ] **Phase 12** — Release
