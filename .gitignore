@@ -43,3 +43,6 @@ env/*.json
 
 # Antigravity artifacts & tasks
 .gemini/
+
+# Incoming raw external extracts
+_incoming/

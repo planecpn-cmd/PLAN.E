@@ -8,11 +8,7 @@ import '../../l10n/app_localizations.dart';
 import '../../models/booking.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
-import '../../widgets/app_button.dart';
-import '../../widgets/app_card.dart';
-import '../../widgets/app_tabs.dart';
-import '../../widgets/async_value_view.dart';
-import '../../widgets/empty_state_view.dart';
+import '../../widgets/widgets.dart';
 
 class TripsScreen extends ConsumerStatefulWidget {
   const TripsScreen({super.key});
@@ -32,67 +28,75 @@ class _TripsScreenState extends ConsumerState<TripsScreen> {
     final bookingsAsync = ref.watch(bookingsProvider(statusQuery));
 
     return Scaffold(
-      backgroundColor: AppColors.ivory,
-      appBar: AppBar(
-        title: Text(
-          l10n.myTrips,
-          style: AppTypography.headingLarge.copyWith(color: AppColors.ink),
-        ),
-        backgroundColor: AppColors.ivory,
-        elevation: 0,
-        centerTitle: false,
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: AppSpacing.screenPadding,
-              child: AppTabs(
-                tabs: tabs,
-                selectedIndex: _selectedTabIndex,
-                onTabSelected: (index) {
-                  setState(() {
-                    _selectedTabIndex = index;
-                  });
-                },
-              ),
-            ),
-            Expanded(
-              child: RefreshIndicator(
-                color: AppColors.forest,
-                onRefresh: () async {
-                  ref.invalidate(bookingsProvider(statusQuery));
-                },
-                child: AsyncValueView<List<Booking>>(
-                  value: bookingsAsync,
-                  isEmpty: (data) => data.isEmpty,
-                  emptyView: EmptyStateView(
-                    title: _selectedTabIndex == 0 ? 'No Completed Trips' : 'No Cancelled Trips',
-                    description: _selectedTabIndex == 0
-                        ? 'Trips you complete will be listed here with memories & review options.'
-                        : 'Any cancelled trip reservations will be shown here.',
-                    actionLabel: l10n.exploreExperiences,
-                    onActionPressed: () => context.go('/explore'),
+      body: PlanEBackground(
+        safeArea: false,
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                child: Text(
+                  l10n.myTrips,
+                  style: const TextStyle(
+                    fontFamily: 'serif',
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.forest,
                   ),
-                  onRetry: () => ref.invalidate(bookingsProvider(statusQuery)),
-                  data: (bookings) {
-                    return ListView.separated(
-                      padding: AppSpacing.screenPadding,
-                      itemCount: bookings.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: AppSpacing.md12),
-                      itemBuilder: (context, index) {
-                        final booking = bookings[index];
-                        return _selectedTabIndex == 0
-                            ? _buildCompletedCard(context, booking, l10n)
-                            : _buildCancelledCard(context, booking, l10n);
-                      },
-                    );
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: AppTabs(
+                  tabs: tabs,
+                  selectedIndex: _selectedTabIndex,
+                  onTabSelected: (index) {
+                    setState(() {
+                      _selectedTabIndex = index;
+                    });
                   },
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Expanded(
+                child: RefreshIndicator(
+                  color: AppColors.forest,
+                  onRefresh: () async {
+                    ref.invalidate(bookingsProvider(statusQuery));
+                  },
+                  child: AsyncValueView<List<Booking>>(
+                    value: bookingsAsync,
+                    isEmpty: (data) => data.isEmpty,
+                    emptyView: EmptyStateView(
+                      title: _selectedTabIndex == 0 ? 'No Completed Trips' : 'No Cancelled Trips',
+                      description: _selectedTabIndex == 0
+                          ? 'Trips you complete will be listed here with memories & review options.'
+                          : 'Any cancelled trip reservations will be shown here.',
+                      actionLabel: l10n.exploreExperiences,
+                      onActionPressed: () => context.go('/explore'),
+                    ),
+                    onRetry: () => ref.invalidate(bookingsProvider(statusQuery)),
+                    data: (bookings) {
+                      return ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        itemCount: bookings.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 14),
+                        itemBuilder: (context, index) {
+                          final booking = bookings[index];
+                          return _selectedTabIndex == 0
+                              ? _buildCompletedCard(context, booking, l10n)
+                              : _buildCancelledCard(context, booking, l10n);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -104,7 +108,7 @@ class _TripsScreenState extends ConsumerState<TripsScreen> {
     );
     final String formattedPrice = AppFormatters.formatNpr(booking.totalPaisa);
 
-    return AppCard(
+    return PlanECard(
       onTap: () => context.push('/itinerary/${booking.id}'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,67 +117,72 @@ class _TripsScreenState extends ConsumerState<TripsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm8,
-                  vertical: AppSpacing.xs4,
-                ),
-                decoration: const BoxDecoration(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
                   color: AppColors.successContainer,
-                  borderRadius: AppRadii.borderSm8,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
+                child: const Text(
                   'COMPLETED',
-                  style: AppTypography.caption.copyWith(
+                  style: TextStyle(
                     color: AppColors.success,
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
               Text(
                 'Ref: ${booking.bookingRef}',
-                style: AppTypography.caption.copyWith(color: AppColors.disabledText),
+                style: const TextStyle(fontSize: 12, color: AppColors.disabledText),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm8),
+          const SizedBox(height: 8),
           Text(
             'Completed Trip #${booking.bookingRef}',
-            style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
-          ),
-          const SizedBox(height: AppSpacing.xs4),
-          Row(
-            children: [
-              const Icon(Icons.check_circle_outline, size: 14, color: AppColors.success),
-              const SizedBox(width: AppSpacing.xs4),
-              Text(
-                'Completed on $formattedDate',
-                style: AppTypography.caption.copyWith(color: AppColors.ink),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm8),
-          Text(
-            'Paid: $formattedPrice',
-            style: AppTypography.bodyMedium.copyWith(
+            style: const TextStyle(
+              fontFamily: 'serif',
+              fontSize: 20,
               fontWeight: FontWeight.bold,
               color: AppColors.forest,
             ),
           ),
-          const SizedBox(height: AppSpacing.md12),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const Icon(Icons.check_circle_outline, size: 14, color: AppColors.success),
+              const SizedBox(width: 4),
+              Text(
+                'Completed on $formattedDate',
+                style: const TextStyle(fontSize: 13, color: AppColors.ink),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Paid: $formattedPrice',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.forest,
+            ),
+          ),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
                 child: AppButton(
                   label: 'View Guide',
                   variant: AppButtonVariant.secondary,
+                  minHeight: 40,
                   onPressed: () => context.push('/itinerary/${booking.id}'),
                 ),
               ),
-              const SizedBox(width: AppSpacing.md12),
+              const SizedBox(width: 12),
               Expanded(
                 child: AppButton(
                   label: l10n.leaveReview,
-                  variant: AppButtonVariant.primary,
+                  minHeight: 40,
                   onPressed: () => context.push('/review/${booking.id}'),
                 ),
               ),
@@ -190,7 +199,7 @@ class _TripsScreenState extends ConsumerState<TripsScreen> {
     );
     final String formattedPrice = AppFormatters.formatNpr(booking.totalPaisa);
 
-    return AppCard(
+    return PlanECard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -198,59 +207,56 @@ class _TripsScreenState extends ConsumerState<TripsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm8,
-                  vertical: AppSpacing.xs4,
-                ),
-                decoration: const BoxDecoration(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
                   color: AppColors.errorContainer,
-                  borderRadius: AppRadii.borderSm8,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
+                child: const Text(
                   'CANCELLED',
-                  style: AppTypography.caption.copyWith(
+                  style: TextStyle(
                     color: AppColors.error,
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
               Text(
                 'Ref: ${booking.bookingRef}',
-                style: AppTypography.caption.copyWith(color: AppColors.disabledText),
+                style: const TextStyle(fontSize: 12, color: AppColors.disabledText),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm8),
+          const SizedBox(height: 8),
           Text(
             'Trip #${booking.bookingRef}',
-            style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
+            style: const TextStyle(
+              fontFamily: 'serif',
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.forest,
+            ),
           ),
-          const SizedBox(height: AppSpacing.xs4),
+          const SizedBox(height: 4),
           Text(
             'Cancelled on $formattedDate',
-            style: AppTypography.caption.copyWith(color: AppColors.disabledText),
+            style: const TextStyle(fontSize: 12, color: AppColors.disabledText),
           ),
-          const SizedBox(height: AppSpacing.xs4),
+          const SizedBox(height: 4),
           Text(
             'Amount: $formattedPrice',
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.ink,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.ink),
           ),
-          const SizedBox(height: AppSpacing.md12),
-          SizedBox(
-            width: double.infinity,
-            child: AppButton(
-              label: l10n.bookAgain,
-              variant: AppButtonVariant.secondary,
-              onPressed: () => context.push('/booking/${booking.experienceId}'),
-            ),
+          const SizedBox(height: 12),
+          AppButton(
+            label: l10n.bookAgain,
+            variant: AppButtonVariant.secondary,
+            isFullWidth: true,
+            minHeight: 40,
+            onPressed: () => context.push('/booking/${booking.experienceId}'),
           ),
         ],
       ),
     );
   }
 }
-
-

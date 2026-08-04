@@ -60,3 +60,6 @@ class AppCard extends StatelessWidget {
     return cardContent;
   }
 }
+
+typedef PlanECard = AppCard;
+

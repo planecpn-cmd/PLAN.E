@@ -5,9 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
 import '../../theme/theme.dart';
-import '../../widgets/app_button.dart';
-import '../../widgets/app_card.dart';
-import '../../widgets/progress_steps.dart';
+import '../../widgets/widgets.dart';
 import 'host_provider.dart';
 
 class ApplicationSubmittedScreen extends ConsumerWidget {
@@ -18,171 +16,158 @@ class ApplicationSubmittedScreen extends ConsumerWidget {
     final hostData = ref.watch(hostApplicationProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.ivory,
-      appBar: AppBar(
-        title: Text(
-          'Application Status',
-          style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
-        ),
-        backgroundColor: AppColors.ivory,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.ink),
-          constraints: AppTouchTarget.minConstraints,
-          onPressed: () => context.go('/profile'),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.lg16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header Hero Banner
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppSpacing.xl20),
-              decoration: const BoxDecoration(
-                color: AppColors.forest,
-                borderRadius: AppRadii.borderMd16,
+      body: PlanEBackground(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              Container(
+                width: 76,
+                height: 76,
+                decoration: BoxDecoration(
+                  color: AppColors.forest,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.border, width: 5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.forest.withValues(alpha: .18),
+                      blurRadius: 20,
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.check, color: AppColors.white, size: 40),
               ),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(AppSpacing.md12),
-                    decoration: const BoxDecoration(
-                      color: AppColors.gold,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.mark_email_read_outlined,
-                      color: AppColors.white,
-                      size: 32,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md12),
-                  Text(
-                    'Application Under Review',
-                    style: AppTypography.headingMedium.copyWith(
-                      color: AppColors.ivory,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xs4),
-                  Text(
-                    'Reference ID: PL-HOST-${DateTime.now().year}-9841',
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.sage,
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 18),
+              const Text(
+                'Application Submitted!',
+                style: TextStyle(
+                  fontFamily: 'serif',
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.forest,
+                ),
+                textAlign: TextAlign.center,
               ),
-            ),
-            const SizedBox(height: AppSpacing.xxl24),
+              const SizedBox(height: 10),
+              const Text(
+                'We’ve received your host application.\nOur team in Nepal will review your details and documents.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13.5, color: AppColors.disabledText, height: 1.45),
+              ),
+              const SizedBox(height: 20),
 
-            // Status Progress Tracker
-            Text(
-              'Application Tracker',
-              style: AppTypography.headingMedium.copyWith(fontSize: 18),
-            ),
-            const SizedBox(height: AppSpacing.sm8),
-            const ProgressSteps(
-              steps: ['Submitted', 'Under Review', 'ID Verified', 'Approved'],
-              currentStep: 1,
-            ),
-            const SizedBox(height: AppSpacing.xxl24),
-
-            // Summary Card of Application
-            AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.check_circle, color: AppColors.success, size: 20),
-                      const SizedBox(width: AppSpacing.xs4),
-                      Text(
-                        'Submitted Details',
-                        style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+              // Status Timeline Card
+              PlanECard(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Application Status',
+                      style: TextStyle(
+                        fontFamily: 'serif',
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.forest,
                       ),
-                    ],
-                  ),
-                  const Divider(height: 24, color: AppColors.borderSubtle),
-
-                  _DetailRow(
-                    label: 'Host Name',
-                    value: hostData.fullName.isNotEmpty ? hostData.fullName : 'Siddharth Gurung',
-                  ),
-                  _DetailRow(
-                    label: 'District',
-                    value: hostData.district,
-                  ),
-                  _DetailRow(
-                    label: 'Listing Title',
-                    value: hostData.experienceTitle.isNotEmpty
-                        ? hostData.experienceTitle
-                        : 'Kathmandu Valley Heritage Village Walk',
-                  ),
-                  _DetailRow(
-                    label: 'Listing Price',
-                    value: AppFormatters.formatNpr(hostData.pricePaisa),
-                  ),
-                  _DetailRow(
-                    label: 'ID Verification',
-                    value: '${hostData.idType} (${hostData.idNumber})',
-                  ),
-                  _DetailRow(
-                    label: 'Payout Account',
-                    value: '${hostData.bankName} (${hostData.accountNumber})',
-                  ),
-                ],
+                    ),
+                    const SizedBox(height: 16),
+                    const _StatusTimeline(),
+                    const Divider(height: 24),
+                    _DetailRow(
+                      label: 'Host Name',
+                      value: hostData.fullName.isNotEmpty ? hostData.fullName : 'Siddharth Gurung',
+                    ),
+                    _DetailRow(
+                      label: 'District',
+                      value: hostData.district,
+                    ),
+                    _DetailRow(
+                      label: 'Listing Title',
+                      value: hostData.experienceTitle.isNotEmpty
+                          ? hostData.experienceTitle
+                          : 'Kathmandu Valley Heritage Village Walk',
+                    ),
+                    _DetailRow(
+                      label: 'Price',
+                      value: AppFormatters.formatNpr(hostData.pricePaisa),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.xl20),
+              const SizedBox(height: 20),
 
-            // Notice Box
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md12),
-              decoration: const BoxDecoration(
-                color: AppColors.cardBackgroundAlt,
-                borderRadius: AppRadii.borderMd16,
-                border: Border.fromBorderSide(BorderSide(color: AppColors.borderSubtle)),
-              ),
-              child: Row(
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.info_outline, color: AppColors.forest, size: 22),
-                  const SizedBox(width: AppSpacing.md12),
-                  Expanded(
+                  Icon(Icons.eco_outlined, size: 36, color: AppColors.forest),
+                  SizedBox(width: 12),
+                  Flexible(
                     child: Text(
-                      'Applications are reviewed within 24-48 hours. Our verification team in Kathmandu may reach out to verify details.',
-                      style: AppTypography.caption.copyWith(color: AppColors.ink, height: 1.3),
+                      'Most applications are reviewed within 3–5 business days. We’ll notify you when status updates.',
+                      style: TextStyle(fontSize: 12.5, height: 1.4, color: AppColors.disabledText),
                     ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: AppSpacing.xxl24),
+              const SizedBox(height: 20),
 
-            // Action Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: AppButton.secondary(
-                    label: 'View Profile',
-                    onPressed: () => context.go('/profile'),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md12),
-                Expanded(
-                  child: AppButton(
-                    label: 'Return Home',
-                    onPressed: () => context.go('/home'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.lg16),
-          ],
+              AppButton(
+                label: 'BACK TO PROFILE',
+                isFullWidth: true,
+                onPressed: () => context.go('/profile'),
+              ),
+              const SizedBox(height: 10),
+              AppButton(
+                label: 'BACK TO HOME',
+                variant: AppButtonVariant.secondary,
+                isFullWidth: true,
+                onPressed: () => context.go('/home'),
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _StatusTimeline extends StatelessWidget {
+  const _StatusTimeline();
+
+  @override
+  Widget build(BuildContext context) {
+    const labels = ['Submitted', 'Under review', 'Verification', 'Approved'];
+    return Column(
+      children: List.generate(labels.length, (index) {
+        final active = index == 0;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: active ? AppColors.forest : AppColors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: active ? AppColors.forest : AppColors.border, width: 2),
+                ),
+                child: active ? const Icon(Icons.check, color: AppColors.white, size: 14) : null,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                labels[index],
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: active ? FontWeight.bold : FontWeight.normal,
+                  color: active ? AppColors.forest : AppColors.disabledText,
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
     );
   }
 }
@@ -199,27 +184,21 @@ class _DetailRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs4 + 2),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 110,
+            width: 100,
             child: Text(
               label,
-              style: AppTypography.caption.copyWith(
-                color: AppColors.disabledText,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 12, color: AppColors.disabledText),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: AppTypography.bodyMedium.copyWith(
-                fontWeight: FontWeight.w600,
-                color: AppColors.ink,
-              ),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.ink),
             ),
           ),
         ],

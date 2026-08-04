@@ -7,9 +7,7 @@ import '../../l10n/app_localizations.dart';
 import '../../models/profile.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
-import '../../widgets/app_button.dart';
-import '../../widgets/app_card.dart';
-import '../../widgets/async_value_view.dart';
+import '../../widgets/widgets.dart';
 import 'logout_dialog.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -23,443 +21,334 @@ class ProfileScreen extends ConsumerWidget {
     final bookingsAsync = ref.watch(bookingsProvider('all'));
 
     return Scaffold(
-      backgroundColor: AppColors.ivory,
-      appBar: AppBar(
-        title: Text(
-          l10n.profile,
-          style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
-        ),
-        backgroundColor: AppColors.ivory,
-        elevation: 0,
-        centerTitle: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined, color: AppColors.ink),
-            tooltip: 'Settings',
-            constraints: AppTouchTarget.minConstraints,
-            onPressed: () => context.push('/profile/settings'),
-          ),
-        ],
-      ),
-      body: AsyncValueView<Profile?>(
-        value: profileAsync,
-        onRetry: () => ref.refresh(profileProvider),
-        data: (profile) {
-          final String name = profile?.fullName ?? 'Traveler';
-          final String phone = profile?.phone ?? '+977 9800000000';
-          final String location = profile?.location ?? 'Kathmandu, Nepal';
-          final String initial = name.isNotEmpty ? name[0].toUpperCase() : 'T';
-          final int points = profile?.points ?? 350;
-          final int savedCount = savedAsync.asData?.value.length ?? 4;
-          final int tripsCount = bookingsAsync.asData?.value.length ?? 2;
-          final UserRole role = profile?.role ?? UserRole.traveler;
+      body: PlanEBackground(
+        safeArea: false,
+        child: SafeArea(
+          bottom: false,
+          child: AsyncValueView<Profile?>(
+            value: profileAsync,
+            onRetry: () => ref.refresh(profileProvider),
+            data: (profile) {
+              final String name = profile?.fullName ?? 'Traveler';
+              final String location = profile?.location ?? 'Kathmandu, Nepal';
+              final String initial = name.isNotEmpty ? name[0].toUpperCase() : 'T';
+              final int savedCount = savedAsync.asData?.value.length ?? 0;
+              final int tripsCount = bookingsAsync.asData?.value.length ?? 0;
+              final UserRole role = profile?.role ?? UserRole.traveler;
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg16,
-              vertical: AppSpacing.md12,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // User Header Card
-                AppCard(
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 36,
-                        backgroundColor: AppColors.forest,
-                        backgroundImage: profile?.avatarUrl != null
-                            ? NetworkImage(profile!.avatarUrl!)
-                            : null,
-                        child: profile?.avatarUrl == null
-                            ? Text(
-                                initial,
-                                style: AppTypography.displayMedium.copyWith(
-                                  color: AppColors.ivory,
-                                ),
-                              )
-                            : null,
+              return SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 26),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.profile,
+                      style: const TextStyle(
+                        fontFamily: 'serif',
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.forest,
                       ),
-                      const SizedBox(width: AppSpacing.lg16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    name,
-                                    style: AppTypography.headingMedium,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (role == UserRole.host)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: AppSpacing.sm8,
-                                      vertical: AppSpacing.xs4,
-                                    ),
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.forest,
-                                      borderRadius: AppRadii.borderPill,
-                                    ),
-                                    child: Text(
-                                      'HOST',
-                                      style: AppTypography.caption.copyWith(
-                                        color: AppColors.ivory,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                              ],
+                    ),
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.border, width: 2),
                             ),
-                            const SizedBox(height: AppSpacing.xs4),
-                            Text(
-                              phone,
-                              style: AppTypography.caption.copyWith(
-                                color: AppColors.disabledText,
+                            child: CircleAvatar(
+                              radius: 54,
+                              backgroundColor: AppColors.forest,
+                              backgroundImage: profile?.avatarUrl != null
+                                  ? NetworkImage(profile!.avatarUrl!)
+                                  : null,
+                              child: profile?.avatarUrl == null
+                                  ? Text(
+                                      initial,
+                                      style: const TextStyle(
+                                        fontSize: 40,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.ivory,
+                                      ),
+                                    )
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            name,
+                            style: const TextStyle(
+                              fontFamily: 'serif',
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.forest,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.location_on_outlined, size: 16, color: AppColors.disabledText),
+                              const SizedBox(width: 4),
+                              Text(
+                                location,
+                                style: const TextStyle(color: AppColors.disabledText, fontSize: 13),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          GestureDetector(
+                            onTap: () => context.push('/profile/edit'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: AppColors.forest),
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.edit_outlined, size: 16, color: AppColors.forest),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    l10n.editProfile.toUpperCase(),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.forest,
+                                      letterSpacing: .5,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: AppSpacing.xs4),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.location_on_outlined,
-                                  size: 14,
-                                  color: AppColors.gold,
-                                ),
-                                const SizedBox(width: AppSpacing.xs4),
-                                Text(
-                                  location,
-                                  style: AppTypography.caption.copyWith(
-                                    color: AppColors.ink,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Stats Card
+                    PlanECard(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => context.go('/trips'),
+                              child: _StatTile(number: '$tripsCount', label: 'Trips'),
                             ),
-                          ],
+                          ),
+                          const SizedBox(height: 40, child: VerticalDivider()),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => context.push('/saved'),
+                              child: _StatTile(number: '$savedCount', label: 'Saved'),
+                            ),
+                          ),
+                          const SizedBox(height: 40, child: VerticalDivider()),
+                          Expanded(
+                            child: _StatTile(number: '${profile?.points ?? 350}', label: 'Points'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Settings List Card
+                    PlanECard(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: Column(
+                        children: [
+                          _ProfileRow(
+                            icon: Icons.work_outline,
+                            label: l10n.myTrips,
+                            onTap: () => context.go('/trips'),
+                          ),
+                          const Divider(height: 1),
+                          _ProfileRow(
+                            icon: Icons.credit_card,
+                            label: l10n.paymentMethods,
+                            onTap: () => context.push('/profile/payment-methods'),
+                          ),
+                          const Divider(height: 1),
+                          _ProfileRow(
+                            icon: Icons.notifications_none,
+                            label: l10n.notifications,
+                            onTap: () => context.push('/profile/notifications'),
+                          ),
+                          const Divider(height: 1),
+                          _ProfileRow(
+                            icon: Icons.language,
+                            label: l10n.languageAndRegion,
+                            onTap: () => context.push('/profile/language'),
+                          ),
+                          const Divider(height: 1),
+                          _ProfileRow(
+                            icon: Icons.help_outline,
+                            label: l10n.helpAndSupport,
+                            onTap: () => context.push('/profile/help'),
+                          ),
+                          const Divider(height: 1),
+                          _ProfileRow(
+                            icon: Icons.settings_outlined,
+                            label: l10n.settings,
+                            onTap: () => context.push('/profile/settings'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Host Action
+                    _buildHostButton(context, role, l10n),
+                    const SizedBox(height: 16),
+
+                    // Logout Button
+                    Center(
+                      child: GestureDetector(
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => const LogoutDialog(),
+                          );
+                        },
+                        child: Text(
+                          l10n.logout.toUpperCase(),
+                          style: const TextStyle(
+                            color: AppColors.error,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                          ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.lg16),
-
-                // DB Counters Row (Saved, Trips, Points)
-                Row(
-                  children: [
-                    Expanded(
-                      child: _CounterTile(
-                        label: l10n.savedExperiences,
-                        value: '$savedCount',
-                        icon: Icons.bookmark_outline,
-                        onTap: () => context.push('/saved'),
-                      ),
                     ),
-                    const SizedBox(width: AppSpacing.md12),
-                    Expanded(
-                      child: _CounterTile(
-                        label: l10n.trips,
-                        value: '$tripsCount',
-                        icon: Icons.card_travel_outlined,
-                        onTap: () => context.go('/trips'),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.md12),
-                    Expanded(
-                      child: _CounterTile(
-                        label: l10n.overview,
-                        value: '$points',
-                        icon: Icons.stars_outlined,
-                        onTap: () {},
-                      ),
-                    ),
+                    const SizedBox(height: 20),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.xl20),
-
-                // Become a Host CTA Card
-                _BecomeHostCtaCard(role: role),
-                const SizedBox(height: AppSpacing.xl20),
-
-                // Settings & Links Section
-                Text(
-                  l10n.accountSettings,
-                  style: AppTypography.headingMedium.copyWith(fontSize: 18.0),
-                ),
-                const SizedBox(height: AppSpacing.md12),
-                AppCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    children: [
-                      _SettingsTile(
-                        icon: Icons.person_outline,
-                        title: l10n.editProfile,
-                        subtitle: l10n.subEditProfile,
-                        onTap: () => context.push('/profile/edit'),
-                      ),
-                      const Divider(height: 1, color: AppColors.borderSubtle),
-                      _SettingsTile(
-                        icon: Icons.account_balance_wallet_outlined,
-                        title: l10n.paymentMethods,
-                        subtitle: l10n.subPaymentMethods,
-                        onTap: () => context.push('/profile/payment-methods'),
-                      ),
-                      const Divider(height: 1, color: AppColors.borderSubtle),
-                      _SettingsTile(
-                        icon: Icons.notifications_none_outlined,
-                        title: l10n.notifications,
-                        subtitle: l10n.subNotifications,
-                        onTap: () => context.push('/profile/notifications'),
-                      ),
-                      const Divider(height: 1, color: AppColors.borderSubtle),
-                      _SettingsTile(
-                        icon: Icons.language_outlined,
-                        title: l10n.languageAndRegion,
-                        subtitle: l10n.subLanguageRegion,
-                        onTap: () => context.push('/profile/language'),
-                      ),
-                      const Divider(height: 1, color: AppColors.borderSubtle),
-                      _SettingsTile(
-                        icon: Icons.rate_review_outlined,
-                        title: l10n.myReviews,
-                        subtitle: l10n.subMyReviews,
-                        onTap: () => context.push('/profile/my-reviews'),
-                      ),
-                      const Divider(height: 1, color: AppColors.borderSubtle),
-                      _SettingsTile(
-                        icon: Icons.help_outline,
-                        title: l10n.helpAndSupport,
-                        subtitle: l10n.subHelpSupport,
-                        onTap: () => context.push('/profile/help'),
-                      ),
-                      const Divider(height: 1, color: AppColors.borderSubtle),
-                      _SettingsTile(
-                        icon: Icons.tune_outlined,
-                        title: l10n.settings,
-                        subtitle: l10n.subSettings,
-                        onTap: () => context.push('/profile/settings'),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xl20),
-
-                // Logout Action Button
-                AppButton.secondary(
-                  label: l10n.logout,
-                  icon: Icons.logout,
-                  isFullWidth: true,
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => const LogoutDialog(),
-                    );
-                  },
-                ),
-                const SizedBox(height: AppSpacing.xxl24),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _CounterTile extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _CounterTile({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: AppRadii.borderMd16,
-      child: AppCard(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md12,
-          vertical: AppSpacing.lg16,
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: AppColors.forest, size: 22),
-            const SizedBox(height: AppSpacing.xs4),
-            Text(
-              value,
-              style: AppTypography.headingMedium.copyWith(
-                color: AppColors.forest,
-              ),
-            ),
-            Text(
-              label,
-              style: AppTypography.caption.copyWith(
-                color: AppColors.disabledText,
-              ),
-            ),
-          ],
+              );
+            },
+          ),
         ),
       ),
     );
   }
-}
 
-class _BecomeHostCtaCard extends StatelessWidget {
-  final UserRole role;
-
-  const _BecomeHostCtaCard({required this.role});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+  Widget _buildHostButton(BuildContext context, UserRole role, AppLocalizations l10n) {
     if (role == UserRole.hostApplicant) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(AppSpacing.lg16),
-        decoration: const BoxDecoration(
-          color: AppColors.warningContainer,
-          borderRadius: AppRadii.borderMd16,
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.hourglass_top, color: AppColors.warning, size: 32),
-            const SizedBox(width: AppSpacing.md12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.hostUnderReviewTitle,
-                    style: AppTypography.bodyLarge.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.warning,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xs4),
-                  Text(
-                    'Check your status or update application details.',
-                    style: AppTypography.caption.copyWith(color: AppColors.ink),
-                  ),
-                ],
+      return GestureDetector(
+        onTap: () => context.push('/host/submitted'),
+        child: Container(
+          height: 52,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppColors.warningContainer,
+            borderRadius: BorderRadius.circular(25),
+            border: Border.all(color: AppColors.warning),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.hourglass_top, color: AppColors.warning),
+              const SizedBox(width: 10),
+              Text(
+                l10n.hostUnderReviewTitle.toUpperCase(),
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.warning),
               ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.warning),
-              constraints: AppTouchTarget.minConstraints,
-              onPressed: () => context.push('/host/submitted'),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
 
     if (role == UserRole.host) {
       return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(AppSpacing.lg16),
-        decoration: const BoxDecoration(
+        height: 52,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
           color: AppColors.successContainer,
-          borderRadius: AppRadii.borderMd16,
+          borderRadius: BorderRadius.circular(25),
+          border: Border.all(color: AppColors.success),
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.verified, color: AppColors.success, size: 32),
-            const SizedBox(width: AppSpacing.md12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.hostVerifiedTitle,
-                    style: AppTypography.bodyLarge.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.success,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xs4),
-                  Text(
-                    'Manage your local homestays & experience listings.',
-                    style: AppTypography.caption.copyWith(color: AppColors.ink),
-                  ),
-                ],
-              ),
+            const Icon(Icons.verified, color: AppColors.success),
+            const SizedBox(width: 10),
+            Text(
+              l10n.hostVerifiedTitle.toUpperCase(),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.success),
             ),
           ],
         ),
       );
     }
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.lg16),
-      decoration: BoxDecoration(
-        color: AppColors.forest,
-        borderRadius: AppRadii.borderMd16,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.cabin, color: AppColors.gold, size: 28),
-              const SizedBox(width: AppSpacing.sm8),
-              Text(
-                l10n.becomeLocalHostTitle,
-                style: AppTypography.headingMedium.copyWith(
-                  color: AppColors.ivory,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm8),
-          Text(
-            l10n.becomeLocalHostSub,
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.sage,
+    return GestureDetector(
+      onTap: () => context.push('/host'),
+      child: Container(
+        height: 52,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: AppColors.sage.withValues(alpha: .7),
+          borderRadius: BorderRadius.circular(25),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.group_outlined, color: AppColors.forest),
+            const SizedBox(width: 10),
+            Text(
+              l10n.becomeLocalHostTitle.toUpperCase(),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.forest),
             ),
-          ),
-          const SizedBox(height: AppSpacing.md12),
-          AppButton(
-            label: l10n.startHostAppBtn,
-            icon: Icons.arrow_forward,
-            onPressed: () => context.push('/host'),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _SettingsTile extends StatelessWidget {
+class _StatTile extends StatelessWidget {
+  final String number;
+  final String label;
+
+  const _StatTile({required this.number, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          number,
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: AppColors.forest,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(color: AppColors.disabledText, fontSize: 12),
+        ),
+      ],
+    );
+  }
+}
+
+class _ProfileRow extends StatelessWidget {
   final IconData icon;
-  final String title;
-  final String subtitle;
+  final String label;
   final VoidCallback onTap;
 
-  const _SettingsTile({
+  const _ProfileRow({
     required this.icon,
-    required this.title,
-    required this.subtitle,
+    required this.label,
     required this.onTap,
   });
 
@@ -468,39 +357,18 @@ class _SettingsTile extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg16,
-          vertical: AppSpacing.md12,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
           children: [
-            Container(
-              width: AppTouchTarget.minSize,
-              height: AppTouchTarget.minSize,
-              alignment: Alignment.center,
-              child: Icon(icon, color: AppColors.forest, size: 22),
-            ),
-            const SizedBox(width: AppSpacing.sm8),
+            Icon(icon, size: 20, color: AppColors.forest),
+            const SizedBox(width: 14),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: AppTypography.bodyLarge.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.disabledText,
-                    ),
-                  ),
-                ],
+              child: Text(
+                label,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
             ),
-            const Icon(Icons.chevron_right, color: AppColors.disabledText),
+            const Icon(Icons.chevron_right, size: 20, color: AppColors.disabledText),
           ],
         ),
       ),

@@ -17,240 +17,213 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final homeRailsAsync = ref.watch(homeRailsProvider);
+    final profileAsync = ref.watch(profileProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.ivory,
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: AppColors.forest,
-          onRefresh: () async {
-            ref.invalidate(homeRailsProvider);
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top Header / Search Bar Bar
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.lg16,
-                    AppSpacing.md12,
-                    AppSpacing.lg16,
-                    AppSpacing.sm8,
-                  ),
-                  child: Row(
+      body: PlanEBackground(
+        safeArea: false,
+        child: SafeArea(
+          bottom: false,
+          child: RefreshIndicator(
+            color: AppColors.forest,
+            onRefresh: () async {
+              ref.invalidate(homeRailsProvider);
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header Row with Logo, Location & Points
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
+                      const Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'PLAN E',
-                              style: AppTypography.bodyLarge.copyWith(
-                                color: AppColors.forest,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.2,
-                              ),
+                            PlanELogo(fontSize: 26, centered: false),
+                            SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(Icons.location_on, size: 16, color: AppColors.forest),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Kathmandu, Nepal',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.ink,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.forest,
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                        child: Row(
+                          children: [
+                            const CircleAvatar(
+                              radius: 12,
+                              backgroundColor: AppColors.white,
+                              child: Icon(Icons.local_activity, size: 14, color: AppColors.gold),
+                            ),
+                            const SizedBox(width: 8),
                             Text(
-                              'Explore Authentic Nepal',
-                              style: AppTypography.caption.copyWith(
-                                color: AppColors.disabledText,
+                              '${profileAsync.value?.points ?? 450} pts',
+                              style: const TextStyle(
+                                color: AppColors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.bookmark_outline, color: AppColors.ink),
-                        onPressed: () => context.push('/saved'),
-                        constraints: AppTouchTarget.minConstraints,
-                        tooltip: 'Saved Experiences',
-                      ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 16),
 
-                // Hero Banner
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg16, vertical: AppSpacing.sm8),
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.deep, AppColors.forest],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                  // Hero Featured Banner Card
+                  SizedBox(
+                    height: 240,
+                    child: PlanEPhoto(
+                      imageUrl: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80',
+                      radius: 36,
+                      overlay: Container(
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: [
+                              AppColors.black.withValues(alpha: .68),
+                              AppColors.transparent,
+                            ],
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.gold,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Text(
+                                'FEATURED',
+                                style: TextStyle(
+                                  color: AppColors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Discover\nNepal Himalayas',
+                              style: TextStyle(
+                                fontFamily: 'serif',
+                                color: AppColors.white,
+                                fontSize: 30,
+                                height: 1.05,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Spacer(),
+                            SizedBox(
+                              width: 140,
+                              child: AppButton(
+                                label: 'Search Treks',
+                                onPressed: () => context.push('/search'),
+                                minHeight: 40,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      borderRadius: AppRadii.borderLg24,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.deep.withValues(alpha: 0.15),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    padding: AppSpacing.paddingXxl24,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.md12,
-                            vertical: AppSpacing.xs4,
-                          ),
-                          decoration: const BoxDecoration(
-                            color: AppColors.gold,
-                            borderRadius: AppRadii.borderPill,
-                          ),
-                          child: Text(
-                            'NEPAL EXPEDITIONS',
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.ivory,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.0,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.md12),
-                        Text(
-                          'Unforgettable Adventures & Local Stays',
-                          style: AppTypography.headingLarge.copyWith(
-                            color: AppColors.ivory,
-                            height: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.sm8),
-                        Text(
-                          'Connect with verified local guides and authentic village homestays across Nepal.',
-                          style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.sage,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.xl20),
-
-                        // Search Trigger Input Box
-                        Material(
-                          color: AppColors.white,
-                          borderRadius: AppRadii.borderMd16,
-                          child: InkWell(
-                            onTap: () => context.push('/search'),
-                            borderRadius: AppRadii.borderMd16,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.lg16,
-                                vertical: AppSpacing.md12,
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.search, color: AppColors.forest),
-                                  const SizedBox(width: AppSpacing.md12),
-                                  Expanded(
-                                    child: Text(
-                                      l10n.searchHint,
-                                      style: AppTypography.bodyMedium.copyWith(
-                                        color: AppColors.disabledText,
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: AppSpacing.paddingSm8,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.sage,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(Icons.tune, size: 18, color: AppColors.forest),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
                   ),
-                ),
+                  const SizedBox(height: 24),
 
-                const SizedBox(height: AppSpacing.xl20),
-
-                // Content Rails wrapped in AsyncValueView
-                AsyncValueView<Map<String, List<Experience>>>(
-                  value: homeRailsAsync,
-                  onRetry: () => ref.refresh(homeRailsProvider),
-                  isEmpty: (data) => data.values.every((list) => list.isEmpty),
-                  emptyView: const Padding(
-                    padding: AppSpacing.paddingXxl24,
-                    child: EmptyStateView(
-                      title: 'No Experiences Available',
-                      description: 'Check back soon for new curated Nepal adventures.',
+                  // Content Rails wrapped in AsyncValueView
+                  AsyncValueView<Map<String, List<Experience>>>(
+                    value: homeRailsAsync,
+                    onRetry: () => ref.refresh(homeRailsProvider),
+                    isEmpty: (data) => data.values.every((list) => list.isEmpty),
+                    emptyView: const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: EmptyStateView(
+                        title: 'No Experiences Available',
+                        description: 'Check back soon for new curated Nepal adventures.',
+                      ),
                     ),
+                    data: (railsMap) {
+                      return Column(
+                        children: [
+                          if (railsMap['recommended']?.isNotEmpty ?? false) ...[
+                            ContentRail(
+                              title: l10n.recommendedForYou,
+                              subtitle: 'Handpicked experiences based on popular journeys',
+                              actionLabel: l10n.seeAll,
+                              onActionTap: () => context.push('/collection/recommended'),
+                              items: railsMap['recommended']!
+                                  .map((exp) => _buildExperienceCard(context, exp))
+                                  .toList(),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+                          if (railsMap['trending']?.isNotEmpty ?? false) ...[
+                            ContentRail(
+                              title: l10n.trendingNow,
+                              subtitle: 'Most booked trips this season in Nepal',
+                              actionLabel: l10n.seeAll,
+                              onActionTap: () => context.push('/collection/trending'),
+                              items: railsMap['trending']!
+                                  .map((exp) => _buildExperienceCard(context, exp))
+                                  .toList(),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+                          if (railsMap['homestays']?.isNotEmpty ?? false) ...[
+                            ContentRail(
+                              title: l10n.authenticHomestays,
+                              subtitle: 'Immerse in local village hospitality',
+                              actionLabel: l10n.seeAll,
+                              onActionTap: () => context.push('/collection/homestays'),
+                              items: railsMap['homestays']!
+                                  .map((exp) => _buildExperienceCard(context, exp))
+                                  .toList(),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+                          if (railsMap['community']?.isNotEmpty ?? false) ...[
+                            ContentRail(
+                              title: l10n.communityLedTours,
+                              subtitle: 'Direct impact travel supporting local communities',
+                              actionLabel: l10n.seeAll,
+                              onActionTap: () => context.push('/collection/community'),
+                              items: railsMap['community']!
+                                  .map((exp) => _buildExperienceCard(context, exp))
+                                  .toList(),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+                        ],
+                      );
+                    },
                   ),
-                  data: (railsMap) {
-                    return Column(
-                      children: [
-                        // Rail 1: Recommended
-                        if (railsMap['recommended']?.isNotEmpty ?? false) ...[
-                          ContentRail(
-                            title: l10n.recommendedForYou,
-                            subtitle: 'Handpicked experiences based on popular journeys',
-                            actionLabel: l10n.seeAll,
-                            onActionTap: () => context.push('/collection/recommended'),
-                            items: railsMap['recommended']!
-                                .map((exp) => _buildExperienceCard(context, exp))
-                                .toList(),
-                          ),
-                          const SizedBox(height: AppSpacing.xxl24),
-                        ],
-
-                        // Rail 2: Trending
-                        if (railsMap['trending']?.isNotEmpty ?? false) ...[
-                          ContentRail(
-                            title: l10n.trendingNow,
-                            subtitle: 'Most booked trips this season in Nepal',
-                            actionLabel: l10n.seeAll,
-                            onActionTap: () => context.push('/collection/trending'),
-                            items: railsMap['trending']!
-                                .map((exp) => _buildExperienceCard(context, exp))
-                                .toList(),
-                          ),
-                          const SizedBox(height: AppSpacing.xxl24),
-                        ],
-
-                        // Rail 3: Homestays
-                        if (railsMap['homestays']?.isNotEmpty ?? false) ...[
-                          ContentRail(
-                            title: l10n.authenticHomestays,
-                            subtitle: 'Immerse in local village hospitality',
-                            actionLabel: l10n.seeAll,
-                            onActionTap: () => context.push('/collection/homestays'),
-                            items: railsMap['homestays']!
-                                .map((exp) => _buildExperienceCard(context, exp))
-                                .toList(),
-                          ),
-                          const SizedBox(height: AppSpacing.xxl24),
-                        ],
-
-                        // Rail 4: Community
-                        if (railsMap['community']?.isNotEmpty ?? false) ...[
-                          ContentRail(
-                            title: l10n.communityLedTours,
-                            subtitle: 'Direct impact travel supporting local communities',
-                            actionLabel: l10n.seeAll,
-                            onActionTap: () => context.push('/collection/community'),
-                            items: railsMap['community']!
-                                .map((exp) => _buildExperienceCard(context, exp))
-                                .toList(),
-                          ),
-                          const SizedBox(height: AppSpacing.xxl24),
-                        ],
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: AppSpacing.xxxl32),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -271,4 +244,3 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 }
-

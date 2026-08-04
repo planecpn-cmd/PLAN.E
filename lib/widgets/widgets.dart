@@ -16,3 +16,8 @@ export 'app_toast.dart';
 export 'price_bottom_bar.dart';
 export 'progress_steps.dart';
 export 'async_value_view.dart';
+export 'contour_background.dart';
+export 'app_photo.dart';
+export 'plan_e_logo.dart';
+
+

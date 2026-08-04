@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../theme/theme.dart';
-import '../../widgets/app_button.dart';
+import '../../widgets/widgets.dart';
 
 class OnboardingSlideData {
   final String screenId;
@@ -115,31 +115,27 @@ class _OnboardingSlideScreenState extends State<OnboardingSlideScreen> {
     final isLastStep = currentIndex == _slides.length - 1;
 
     return Scaffold(
-      backgroundColor: AppColors.ivory,
-      appBar: AppBar(
-        backgroundColor: AppColors.ivory,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        actions: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: AppTouchTarget.minSize, minHeight: AppTouchTarget.minSize),
-            child: TextButton(
-              onPressed: _onSkipPressed,
-              child: Text(
-                _skipText,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.gold,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm8),
-        ],
-      ),
-      body: SafeArea(
+      body: PlanEBackground(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
         child: Column(
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const SizedBox(width: 48), // Spacer to balance Skip button
+                const PlanELogo(fontSize: 28),
+                TextButton(
+                  onPressed: _onSkipPressed,
+                  child: Text(
+                    _skipText,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.gold,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
@@ -148,29 +144,28 @@ class _OnboardingSlideScreenState extends State<OnboardingSlideScreen> {
                 itemBuilder: (context, index) {
                   final slide = _slides[index];
                   return Padding(
-                    padding: AppSpacing.screenPadding,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Card container for illustration / icon
                         Container(
-                          width: 200.0,
-                          height: 200.0,
+                          width: 180.0,
+                          height: 180.0,
                           decoration: BoxDecoration(
-                            color: AppColors.sage,
-                            borderRadius: AppRadii.borderLg24,
+                            color: AppColors.sage.withValues(alpha: 0.5),
+                            shape: BoxShape.circle,
                             border: Border.all(
-                              color: AppColors.borderSubtle,
+                              color: AppColors.gold,
                               width: 1.5,
                             ),
                           ),
                           child: Icon(
                             slide.icon,
-                            size: 96.0,
+                            size: 80.0,
                             color: AppColors.forest,
                           ),
                         ),
-                        const SizedBox(height: AppSpacing.xxxl32),
+                        const SizedBox(height: 32),
                         Text(
                           slide.title,
                           style: AppTypography.headingLarge.copyWith(
@@ -178,7 +173,7 @@ class _OnboardingSlideScreenState extends State<OnboardingSlideScreen> {
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: AppSpacing.md12),
+                        const SizedBox(height: 12),
                         Text(
                           slide.description,
                           style: AppTypography.bodyLarge.copyWith(
@@ -192,42 +187,28 @@ class _OnboardingSlideScreenState extends State<OnboardingSlideScreen> {
                 },
               ),
             ),
-
-            // Bottom control section with page dots & action button
-            Padding(
-              padding: AppSpacing.screenPadding,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // 3 Slide Page Dots Indicator
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      _slides.length,
-                      (index) => AnimatedContainer(
-                        duration: const Duration(milliseconds: 250),
-                        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xs4),
-                        width: index == currentIndex ? 24.0 : 8.0,
-                        height: 8.0,
-                        decoration: BoxDecoration(
-                          color: index == currentIndex ? AppColors.forest : AppColors.border,
-                          borderRadius: AppRadii.borderPill,
-                        ),
-                      ),
-                    ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                _slides.length,
+                (index) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: index == currentIndex ? 24.0 : 8.0,
+                  height: 8.0,
+                  decoration: BoxDecoration(
+                    color: index == currentIndex ? AppColors.forest : AppColors.border,
+                    borderRadius: AppRadii.borderPill,
                   ),
-                  const SizedBox(height: AppSpacing.xxl24),
-
-                  // Primary Next / Select Interests Button with min height 48dp
-                  AppButton(
-                    label: isLastStep ? _getStartedText : _nextText,
-                    onPressed: _onNextPressed,
-                    isFullWidth: true,
-                    minHeight: AppTouchTarget.minSize,
-                  ),
-                  const SizedBox(height: AppSpacing.lg16),
-                ],
+                ),
               ),
+            ),
+            const SizedBox(height: 24),
+            AppButton(
+              label: isLastStep ? _getStartedText : _nextText,
+              onPressed: _onNextPressed,
+              isFullWidth: true,
+              minHeight: AppTouchTarget.minSize,
             ),
           ],
         ),

@@ -5,11 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
 import '../../theme/theme.dart';
-import '../../widgets/app_button.dart';
-import '../../widgets/app_card.dart';
-import '../../widgets/app_text_field.dart';
-import '../../widgets/counter_field.dart';
-import '../../widgets/progress_steps.dart';
+import '../../widgets/widgets.dart';
 import 'host_provider.dart';
 
 class HostStep2Screen extends ConsumerStatefulWidget {
@@ -91,184 +87,186 @@ class _HostStep2ScreenState extends ConsumerState<HostStep2Screen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.ivory,
-      appBar: AppBar(
-        title: Text(
-          'Host Application',
-          style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
-        ),
-        backgroundColor: AppColors.ivory,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.ink),
-          constraints: AppTouchTarget.minConstraints,
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: Column(
-        children: [
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg16),
-            child: ProgressSteps(
-              steps: ['Basic Info', 'Experience', 'ID Verify', 'Bank Details'],
-              currentStep: 1,
-            ),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSpacing.lg16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      body: PlanEBackground(
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Text(
-                      'Step 2: Experience / Listing Details',
-                      style: AppTypography.headingMedium.copyWith(fontSize: 20),
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: AppColors.ink),
+                      onPressed: () => context.pop(),
                     ),
-                    const SizedBox(height: AppSpacing.xs4),
-                    Text(
-                      'Describe the experience or homestay service you plan to offer.',
-                      style: AppTypography.caption.copyWith(color: AppColors.disabledText),
-                    ),
-                    const SizedBox(height: AppSpacing.lg16),
-
-                    AppCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AppTextField(
-                            controller: _titleController,
-                            label: 'Experience Title',
-                            hint: 'e.g. Panauti Organic Homestay & Cooking Class',
-                            prefixIcon: const Icon(Icons.explore_outlined),
-                            validator: (val) {
-                              if (val == null || val.trim().isEmpty) {
-                                return 'Title is required';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: AppSpacing.lg16),
-
-                          Text(
-                            'Category',
-                            style: AppTypography.bodyMedium.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.ink,
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.xs4),
-                          DropdownButtonFormField<String>(
-                            initialValue: _selectedCategory,
-                            decoration: const InputDecoration(
-                              filled: true,
-                              fillColor: AppColors.white,
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: AppSpacing.lg16,
-                                vertical: AppSpacing.md12,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: AppRadii.borderMd16,
-                                borderSide: BorderSide(color: AppColors.border),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: AppRadii.borderMd16,
-                                borderSide: BorderSide(color: AppColors.border),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: AppRadii.borderMd16,
-                                borderSide: BorderSide(color: AppColors.forest, width: 2),
-                              ),
-                            ),
-                            items: _categories.map((c) {
-                              return DropdownMenuItem(
-                                value: c,
-                                child: Text(c, style: AppTypography.bodyMedium),
-                              );
-                            }).toList(),
-                            onChanged: (val) {
-                              if (val != null) {
-                                setState(() => _selectedCategory = val);
-                              }
-                            },
-                          ),
-                          const SizedBox(height: AppSpacing.lg16),
-
-                          Row(
-                            children: [
-                              Expanded(
-                                child: CounterField(
-                                  label: 'Duration (Hours)',
-                                  value: _durationHours,
-                                  min: 1,
-                                  max: 72,
-                                  onChanged: (val) => setState(() => _durationHours = val),
-                                ),
-                              ),
-                              const SizedBox(width: AppSpacing.md12),
-                              Expanded(
-                                child: CounterField(
-                                  label: 'Max Guests',
-                                  value: _maxGroupSize,
-                                  min: 1,
-                                  max: 30,
-                                  onChanged: (val) => setState(() => _maxGroupSize = val),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: AppSpacing.lg16),
-
-                          AppTextField(
-                            controller: _priceRupeesController,
-                            label: 'Price per Guest (in NPR)',
-                            hint: '3500',
-                            prefixIcon: const Icon(Icons.payments_outlined),
-                            keyboardType: TextInputType.number,
-                            onChanged: (_) => setState(() {}),
-                            validator: (val) {
-                              final p = int.tryParse(val?.trim() ?? '');
-                              if (p == null || p <= 0) {
-                                return 'Enter a valid price in NPR';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: AppSpacing.xs4),
-                          Text(
-                            'Formatted display: ${AppFormatters.formatNpr(_parsedPricePaisa)}',
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.forest,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.lg16),
-
-                          AppTextField(
-                            controller: _descController,
-                            label: 'Full Description',
-                            hint: 'Explain what is included, schedule, guidelines...',
-                            prefixIcon: const Icon(Icons.description_outlined),
-                            maxLines: 4,
-                          ),
-                        ],
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Host Application',
+                      style: TextStyle(
+                        fontFamily: 'serif',
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.forest,
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.xxl24),
-
-                    AppButton(
-                      label: 'Continue to Step 3',
-                      icon: Icons.arrow_forward,
-                      isFullWidth: true,
-                      onPressed: _onNext,
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.sage,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Text(
+                    'Step 2 of 4',
+                    style: TextStyle(fontSize: 12, color: AppColors.forest, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Experience Details',
+                  style: TextStyle(
+                    fontFamily: 'serif',
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.forest,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const ProgressSteps(
+                  steps: ['Basic Info', 'Experience', 'ID Verify', 'Bank Details'],
+                  currentStep: 1,
+                ),
+                const SizedBox(height: 20),
+
+                PlanECard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppTextField(
+                        controller: _titleController,
+                        label: 'Experience Title',
+                        hint: 'e.g. Panauti Organic Homestay & Cooking Class',
+                        prefixIcon: const Icon(Icons.explore_outlined),
+                        validator: (val) {
+                          if (val == null || val.trim().isEmpty) {
+                            return 'Title is required';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      const Text(
+                        'Category',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.forest),
+                      ),
+                      const SizedBox(height: 6),
+                      DropdownButtonFormField<String>(
+                        initialValue: _selectedCategory,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: AppColors.white,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: const BorderSide(color: AppColors.border),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: const BorderSide(color: AppColors.border),
+                          ),
+                        ),
+                        items: _categories.map((c) {
+                          return DropdownMenuItem(
+                            value: c,
+                            child: Text(c, style: const TextStyle(fontSize: 14)),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() => _selectedCategory = val);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: CounterField(
+                              label: 'Duration (Hours)',
+                              value: _durationHours,
+                              min: 1,
+                              max: 72,
+                              onChanged: (val) => setState(() => _durationHours = val),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: CounterField(
+                              label: 'Max Guests',
+                              value: _maxGroupSize,
+                              min: 1,
+                              max: 30,
+                              onChanged: (val) => setState(() => _maxGroupSize = val),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      AppTextField(
+                        controller: _priceRupeesController,
+                        label: 'Price per Guest (in NPR)',
+                        hint: '3500',
+                        prefixIcon: const Icon(Icons.payments_outlined),
+                        keyboardType: TextInputType.number,
+                        onChanged: (_) => setState(() {}),
+                        validator: (val) {
+                          final p = int.tryParse(val?.trim() ?? '');
+                          if (p == null || p <= 0) {
+                            return 'Enter a valid price in NPR';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Formatted display: ${AppFormatters.formatNpr(_parsedPricePaisa)}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.forest,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      AppTextField(
+                        controller: _descController,
+                        label: 'Full Description',
+                        hint: 'Explain what is included, schedule, guidelines...',
+                        prefixIcon: const Icon(Icons.description_outlined),
+                        maxLines: 4,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                AppButton(
+                  label: 'CONTINUE TO STEP 3',
+                  icon: Icons.arrow_forward,
+                  isFullWidth: true,
+                  onPressed: _onNext,
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

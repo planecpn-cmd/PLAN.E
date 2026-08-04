@@ -21,19 +21,13 @@ class SavedScreen extends ConsumerWidget {
 
     if (user == null) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            l10n.savedExperiences,
-            style: AppTypography.headingMedium,
+        body: PlanEBackground(
+          child: EmptyStateView(
+            icon: Icons.bookmark_border_rounded,
+            title: l10n.noSavedExperiences,
+            actionLabel: l10n.login,
+            onActionPressed: () => context.push('/auth/login'),
           ),
-          backgroundColor: AppColors.white,
-          elevation: 0,
-        ),
-        body: EmptyStateView(
-          icon: Icons.bookmark_border_rounded,
-          title: l10n.noSavedExperiences,
-          actionLabel: l10n.login,
-          onActionPressed: () => context.push('/auth/login'),
         ),
       );
     }
@@ -41,70 +35,156 @@ class SavedScreen extends ConsumerWidget {
     final savedExperiencesAsync = ref.watch(savedExperiencesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.white,
-      appBar: AppBar(
-        title: Text(
-          l10n.savedExperiences,
-          style: AppTypography.headingMedium,
-        ),
-        backgroundColor: AppColors.white,
-        elevation: 0,
-        centerTitle: false,
-      ),
-      body: AsyncValueView<List<Experience>>(
-        value: savedExperiencesAsync,
-        onRetry: () => ref.refresh(savedExperiencesProvider),
-        isEmpty: (data) => data.isEmpty,
-        emptyView: EmptyStateView(
-          icon: Icons.bookmark_border_rounded,
-          title: l10n.noSavedExperiences,
-          description: 'Save your favorite Nepal experiences to view them anytime offline.',
-          actionLabel: l10n.exploreExperiences,
-          onActionPressed: () => context.go('/explore'),
-        ),
-        data: (experiences) {
-          return Padding(
-            padding: AppSpacing.screenPadding,
-            child: GridView.builder(
-              physics: const BouncingScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.64,
-                crossAxisSpacing: AppSpacing.md12,
-                mainAxisSpacing: AppSpacing.md12,
+      body: PlanEBackground(
+        safeArea: false,
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Text(
+                  l10n.savedExperiences,
+                  style: const TextStyle(
+                    fontFamily: 'serif',
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.forest,
+                  ),
+                ),
               ),
-              itemCount: experiences.length,
-              itemBuilder: (context, index) {
-                final exp = experiences[index];
-                return ExperienceCard(
-                  width: double.infinity,
-                  title: exp.title,
-                  location: exp.locationName ?? 'Nepal',
-                  rating: exp.ratingAvg,
-                  reviewCount: exp.ratingCount,
-                  priceText: AppFormatters.formatNpr(exp.pricePaisa),
-                  imageUrl: exp.coverImageUrl,
-                  isSaved: true,
-                  onTap: () {
-                    context.push('/experience/${exp.id}');
+              Expanded(
+                child: AsyncValueView<List<Experience>>(
+                  value: savedExperiencesAsync,
+                  onRetry: () => ref.refresh(savedExperiencesProvider),
+                  isEmpty: (data) => data.isEmpty,
+                  emptyView: EmptyStateView(
+                    icon: Icons.bookmark_border_rounded,
+                    title: l10n.noSavedExperiences,
+                    description: 'Save your favorite Nepal experiences to view them anytime offline.',
+                    actionLabel: l10n.exploreExperiences,
+                    onActionPressed: () => context.go('/explore'),
+                  ),
+                  data: (experiences) {
+                    return GridView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                      physics: const BouncingScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: .78,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                      ),
+                      itemCount: experiences.length,
+                      itemBuilder: (context, index) {
+                        final exp = experiences[index];
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: AppColors.border),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.black.withValues(alpha: .06),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => context.push('/experience/${exp.id}'),
+                                  child: PlanEPhoto(
+                                    imageUrl: exp.coverImageUrl,
+                                    radius: 20,
+                                    overlay: Align(
+                                      alignment: Alignment.topRight,
+                                      child: GestureDetector(
+                                        onTap: () async {
+                                          final savedRepo = ref.read(savedRepositoryProvider);
+                                          await savedRepo.toggleSave(exp.id, true);
+                                          ref.invalidate(savedExperiencesProvider);
+                                          if (context.mounted) {
+                                            AppToast.show(
+                                              context,
+                                              message: l10n.removedFromSaved,
+                                              variant: AppToastVariant.info,
+                                            );
+                                          }
+                                        },
+                                        child: Container(
+                                          width: 36,
+                                          height: 36,
+                                          margin: const EdgeInsets.all(8),
+                                          decoration: const BoxDecoration(
+                                            color: AppColors.forest,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.favorite,
+                                            color: AppColors.white,
+                                            size: 18,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      exp.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontFamily: 'serif',
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.forest,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.star, color: AppColors.gold, size: 16),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '${exp.ratingAvg}',
+                                          style: const TextStyle(fontSize: 12, color: AppColors.disabledText),
+                                        ),
+                                        const Spacer(),
+                                        Text(
+                                          AppFormatters.formatNpr(exp.pricePaisa),
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.forest,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
                   },
-                  onBookmarkTap: () async {
-                    final savedRepo = ref.read(savedRepositoryProvider);
-                    await savedRepo.toggleSave(exp.id, true);
-                    ref.invalidate(savedExperiencesProvider);
-                    if (context.mounted) {
-                      AppToast.show(
-                        context,
-                        message: l10n.removedFromSaved,
-                        variant: AppToastVariant.info,
-                      );
-                    }
-                  },
-                );
-              },
-            ),
-          );
-        },
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

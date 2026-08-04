@@ -5,8 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
-import '../../widgets/app_button.dart';
-import '../../widgets/app_card.dart';
+import '../../widgets/widgets.dart';
 import 'host_provider.dart';
 
 class BecomeHostScreen extends ConsumerWidget {
@@ -17,260 +16,225 @@ class BecomeHostScreen extends ConsumerWidget {
     final profile = ref.watch(profileProvider).asData?.value;
     final hostData = ref.watch(hostApplicationProvider);
 
+    const benefits = [
+      (Icons.attach_money, 'Earn extra\nincome'),
+      (Icons.calendar_month_outlined, 'Flexible\nschedule'),
+      (Icons.language, 'Reach global\ntravelers'),
+      (Icons.support_agent, 'Full support\nfrom PLAN E'),
+    ];
+
     return Scaffold(
-      backgroundColor: AppColors.ivory,
-      appBar: AppBar(
-        title: Text(
-          'Become a Host',
-          style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
-        ),
-        backgroundColor: AppColors.ivory,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.ink),
-          constraints: AppTouchTarget.minConstraints,
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.lg16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Hero Banner
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppSpacing.xxl24),
-              decoration: BoxDecoration(
-                color: AppColors.forest,
-                borderRadius: AppRadii.borderLg24,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.black.withValues(alpha: 0.12),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      body: PlanEBackground(
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md12,
-                      vertical: AppSpacing.xs4,
-                    ),
-                    decoration: const BoxDecoration(
-                      color: AppColors.gold,
-                      borderRadius: AppRadii.borderPill,
-                    ),
-                    child: Text(
-                      'HOST IN NEPAL',
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.white,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.0,
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: AppColors.ink),
+                    onPressed: () => context.pop(),
+                  ),
+                  const Expanded(
+                    child: Center(
+                      child: Text(
+                        'Become a Host',
+                        style: TextStyle(
+                          fontFamily: 'serif',
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.forest,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.md12),
-                  Text(
-                    'Turn your local culture & home into an experience.',
-                    style: AppTypography.displayMedium.copyWith(
-                      color: AppColors.ivory,
-                      height: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm8),
-                  Text(
-                    'Welcome travelers from around the world to your homestay, cooking class, or guided trail in Nepal.',
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.sage,
-                    ),
-                  ),
+                  const SizedBox(width: 48),
                 ],
               ),
-            ),
-            const SizedBox(height: AppSpacing.xxl24),
-
-            Text(
-              'Why Host on PLAN E?',
-              style: AppTypography.headingMedium.copyWith(fontSize: 20),
-            ),
-            const SizedBox(height: AppSpacing.md12),
-
-            // Benefits Grid
-            const Row(
-              children: [
-                Expanded(
-                  child: _BenefitCard(
-                    icon: Icons.payments_outlined,
-                    title: 'Direct NPR Payouts',
-                    description: 'Receive fast payouts via Khalti, eSewa or direct bank transfer.',
-                  ),
+              const SizedBox(height: 12),
+              const Center(
+                child: Column(
+                  children: [
+                    Text(
+                      'Share Nepal. Create unforgettable journeys.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'serif',
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.forest,
+                      ),
+                    ),
+                    SizedBox(height: 6),
+                    Text(
+                      'Turn your local knowledge into experiences travelers will remember.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13, color: AppColors.disabledText),
+                    ),
+                  ],
                 ),
-                SizedBox(width: AppSpacing.md12),
-                Expanded(
-                  child: _BenefitCard(
-                    icon: Icons.holiday_village_outlined,
-                    title: 'Homestay Support',
-                    description: 'List your rooms, organic meals & village activities with ease.',
-                  ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Why host with PLAN E',
+                style: TextStyle(
+                  fontFamily: 'serif',
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.forest,
                 ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md12),
-            const Row(
-              children: [
-                Expanded(
-                  child: _BenefitCard(
-                    icon: Icons.people_outline,
-                    title: 'Community Impact',
-                    description: '100% of booking revenue directly empowers your local community.',
-                  ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: List.generate(benefits.length, (index) {
+                  final benefit = benefits[index];
+                  return Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(right: index == benefits.length - 1 ? 0 : 6),
+                      child: PlanECard(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+                        child: Column(
+                          children: [
+                            Icon(benefit.$1, size: 26, color: AppColors.forest),
+                            const SizedBox(height: 8),
+                            Text(
+                              benefit.$2,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 11, height: 1.2, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'How it works',
+                style: TextStyle(
+                  fontFamily: 'serif',
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.forest,
                 ),
-                SizedBox(width: AppSpacing.md12),
-                Expanded(
-                  child: _BenefitCard(
-                    icon: Icons.security_outlined,
-                    title: 'Verified Safety',
-                    description: 'Host with peace of mind through mandatory traveler ID verification.',
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.xxl24),
-
-            // Process steps preview
-            AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              ),
+              const SizedBox(height: 10),
+              const Row(
                 children: [
-                  Text(
-                    'Application Process (4 Steps)',
-                    style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: AppSpacing.sm8),
-                  const _StepPreviewRow(number: '1', text: 'Basic Profile & Host Information'),
-                  const _StepPreviewRow(number: '2', text: 'First Experience or Homestay Listing'),
-                  const _StepPreviewRow(number: '3', text: 'Citizenship / Government ID Verification'),
-                  const _StepPreviewRow(number: '4', text: 'Bank & Payout Setup'),
+                  Expanded(child: _ProcessStep(number: '1', label: 'Apply')),
+                  _StepLine(),
+                  Expanded(child: _ProcessStep(number: '2', label: 'Get verified')),
+                  _StepLine(),
+                  Expanded(child: _ProcessStep(number: '3', label: 'List experience')),
+                  _StepLine(),
+                  Expanded(child: _ProcessStep(number: '4', label: 'Start hosting')),
                 ],
               ),
-            ),
-            const SizedBox(height: AppSpacing.xxl24),
-
-            // Start / Continue Application Button
-            AppButton(
-              label: hostData.status == 'under_review'
-                  ? 'View Submitted Status'
-                  : 'Start Host Application',
-              icon: Icons.arrow_forward,
-              isFullWidth: true,
-              onPressed: () {
-                if (profile?.role.name == 'hostApplicant' || hostData.status == 'under_review') {
-                  context.push('/host/submitted');
-                } else {
-                  context.push('/host/step-1');
-                }
-              },
-            ),
-            const SizedBox(height: AppSpacing.lg16),
-          ],
+              const SizedBox(height: 16),
+              const PlanECard(
+                padding: EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: AppColors.sage,
+                      child: Icon(Icons.landscape_outlined, color: AppColors.forest, size: 28),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '“Hosting connected me with travelers from 20+ countries.”',
+                            style: TextStyle(
+                              fontFamily: 'serif',
+                              fontStyle: FontStyle.italic,
+                              fontSize: 14,
+                              color: AppColors.forest,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            '— Pemba, Trekking Guide in Solukhumbu',
+                            style: TextStyle(color: AppColors.disabledText, fontSize: 11, fontStyle: FontStyle.italic),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              AppButton(
+                label: hostData.status == 'under_review'
+                    ? 'VIEW SUBMITTED STATUS'
+                    : 'START YOUR APPLICATION',
+                icon: Icons.arrow_forward,
+                isFullWidth: true,
+                onPressed: () {
+                  if (profile?.role.name == 'hostApplicant' || hostData.status == 'under_review') {
+                    context.push('/host/submitted');
+                  } else {
+                    context.push('/host/step-1');
+                  }
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _BenefitCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String description;
+class _ProcessStep extends StatelessWidget {
+  final String number;
+  final String label;
 
-  const _BenefitCard({
-    required this.icon,
-    required this.title,
-    required this.description,
-  });
+  const _ProcessStep({required this.number, required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.md12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.sm8),
-            decoration: const BoxDecoration(
-              color: AppColors.sage,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: AppColors.forest, size: 22),
+    return Column(
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.border),
+            color: AppColors.white,
           ),
-          const SizedBox(height: AppSpacing.sm8),
-          Text(
-            title,
-            style: AppTypography.bodyLarge.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
+          child: Text(
+            number,
+            style: const TextStyle(fontSize: 16, color: AppColors.gold, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: AppSpacing.xs4),
-          Text(
-            description,
-            style: AppTypography.caption.copyWith(
-              color: AppColors.disabledText,
-              height: 1.3,
-            ),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 11, height: 1.1, color: AppColors.ink),
+        ),
+      ],
     );
   }
 }
 
-class _StepPreviewRow extends StatelessWidget {
-  final String number;
-  final String text;
-
-  const _StepPreviewRow({
-    required this.number,
-    required this.text,
-  });
+class _StepLine extends StatelessWidget {
+  const _StepLine();
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs4),
-      child: Row(
-        children: [
-          Container(
-            width: 22,
-            height: 22,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: AppColors.forest,
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              number,
-              style: AppTypography.caption.copyWith(
-                color: AppColors.ivory,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm8),
-          Expanded(
-            child: Text(
-              text,
-              style: AppTypography.bodyMedium.copyWith(color: AppColors.ink),
-            ),
-          ),
-        ],
-      ),
+    return Container(
+      width: 16,
+      height: 1,
+      margin: const EdgeInsets.only(bottom: 24),
+      color: AppColors.sage,
     );
   }
 }

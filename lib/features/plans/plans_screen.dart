@@ -8,11 +8,7 @@ import '../../l10n/app_localizations.dart';
 import '../../models/booking.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
-import '../../widgets/app_card.dart';
-import '../../widgets/app_tabs.dart';
-import '../../widgets/app_toast.dart';
-import '../../widgets/async_value_view.dart';
-import '../../widgets/empty_state_view.dart';
+import '../../widgets/widgets.dart';
 import 'delete_draft_dialog.dart';
 
 class PlansScreen extends ConsumerStatefulWidget {
@@ -33,69 +29,123 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
     final bookingsAsync = ref.watch(bookingsProvider(statusQuery));
 
     return Scaffold(
-      backgroundColor: AppColors.ivory,
-      appBar: AppBar(
-        title: Text(
-          l10n.myPlans,
-          style: AppTypography.headingLarge.copyWith(color: AppColors.ink),
+      body: PlanEBackground(
+        safeArea: false,
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                child: Text(
+                  l10n.myPlans,
+                  style: const TextStyle(
+                    fontFamily: 'serif',
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.forest,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: AppTabs(
+                  tabs: tabs,
+                  selectedIndex: _selectedTabIndex,
+                  onTabSelected: (index) {
+                    setState(() {
+                      _selectedTabIndex = index;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: RefreshIndicator(
+                  color: AppColors.forest,
+                  onRefresh: () async {
+                    ref.invalidate(bookingsProvider(statusQuery));
+                  },
+                  child: AsyncValueView<List<Booking>>(
+                    value: bookingsAsync,
+                    isEmpty: (data) => data.isEmpty,
+                    emptyView: EmptyStateView(
+                      title: _selectedTabIndex == 0 ? 'No Upcoming Plans' : 'No Draft Plans',
+                      description: _selectedTabIndex == 0
+                          ? 'Your confirmed trips and upcoming adventures will appear here.'
+                          : 'Any incomplete bookings or saved drafts will appear here.',
+                      actionLabel: 'Explore Experiences',
+                      onActionPressed: () => context.go('/explore'),
+                    ),
+                    onRetry: () => ref.invalidate(bookingsProvider(statusQuery)),
+                    data: (bookings) {
+                      return ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        itemCount: bookings.length + 1,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 14),
+                        itemBuilder: (context, index) {
+                          if (index == bookings.length) {
+                            return _buildToolsSection(context);
+                          }
+                          final booking = bookings[index];
+                          return _selectedTabIndex == 0
+                              ? _buildUpcomingCard(context, booking)
+                              : _buildDraftCard(context, booking);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        backgroundColor: AppColors.ivory,
-        elevation: 0,
-        centerTitle: false,
       ),
-      body: SafeArea(
-        child: Column(
+    );
+  }
+
+  Widget _buildToolsSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 12),
+        const Text(
+          'Trip Planning Tools',
+          style: TextStyle(
+            fontFamily: 'serif',
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: AppColors.forest,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
           children: [
-            Padding(
-              padding: AppSpacing.screenPadding,
-              child: AppTabs(
-                tabs: tabs,
-                selectedIndex: _selectedTabIndex,
-                onTabSelected: (index) {
-                  setState(() {
-                    _selectedTabIndex = index;
-                  });
-                },
+            Expanded(
+              child: GestureDetector(
+                onTap: () => context.push('/search'),
+                child: const _ToolCard(
+                  icon: Icons.backpack_outlined,
+                  label: 'Gear Checklist',
+                ),
               ),
             ),
+            const SizedBox(width: 12),
             Expanded(
-              child: RefreshIndicator(
-                color: AppColors.forest,
-                onRefresh: () async {
-                  ref.invalidate(bookingsProvider(statusQuery));
-                },
-                child: AsyncValueView<List<Booking>>(
-                  value: bookingsAsync,
-                  isEmpty: (data) => data.isEmpty,
-                  emptyView: EmptyStateView(
-                    title: _selectedTabIndex == 0 ? 'No Upcoming Plans' : 'No Draft Plans',
-                    description: _selectedTabIndex == 0
-                        ? 'Your confirmed trips and upcoming adventures will appear here.'
-                        : 'Any incomplete bookings or saved drafts will appear here.',
-                    actionLabel: 'Explore Experiences',
-                    onActionPressed: () => context.go('/explore'),
-                  ),
-                  onRetry: () => ref.invalidate(bookingsProvider(statusQuery)),
-                  data: (bookings) {
-                    return ListView.separated(
-                      padding: AppSpacing.screenPadding,
-                      itemCount: bookings.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: AppSpacing.md12),
-                      itemBuilder: (context, index) {
-                        final booking = bookings[index];
-                        return _selectedTabIndex == 0
-                            ? _buildUpcomingCard(context, booking)
-                            : _buildDraftCard(context, booking);
-                      },
-                    );
-                  },
+              child: GestureDetector(
+                onTap: () => context.push('/search'),
+                child: const _ToolCard(
+                  icon: Icons.calculate_outlined,
+                  label: 'Budget Tracker',
                 ),
               ),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 20),
+      ],
     );
   }
 
@@ -103,7 +153,7 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
     final String formattedDate = AppFormatters.formatTripDate(booking.createdAt);
     final String formattedPrice = AppFormatters.formatNpr(booking.totalPaisa);
 
-    return AppCard(
+    return PlanECard(
       onTap: () => context.push('/itinerary/${booking.id}'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,69 +162,63 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm8,
-                  vertical: AppSpacing.xs4,
-                ),
-                decoration: const BoxDecoration(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
                   color: AppColors.successContainer,
-                  borderRadius: AppRadii.borderSm8,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
+                child: const Text(
                   'CONFIRMED',
-                  style: AppTypography.caption.copyWith(
+                  style: TextStyle(
                     color: AppColors.success,
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
               Text(
-                'Ref: ${booking.bookingRef}',
-                style: AppTypography.caption.copyWith(
-                  color: AppColors.disabledText,
-                ),
+                '#${booking.bookingRef}',
+                style: const TextStyle(fontSize: 12, color: AppColors.disabledText),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm8),
+          const SizedBox(height: 8),
           Text(
             'Booking #${booking.bookingRef}',
-            style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
+            style: const TextStyle(
+              fontFamily: 'serif',
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.forest,
+            ),
           ),
-          const SizedBox(height: AppSpacing.xs4),
+          const SizedBox(height: 4),
           Row(
             children: [
               const Icon(Icons.calendar_today_outlined, size: 14, color: AppColors.ink),
-              const SizedBox(width: AppSpacing.xs4),
-              Text(
-                formattedDate,
-                style: AppTypography.caption.copyWith(color: AppColors.ink),
-              ),
-              const SizedBox(width: AppSpacing.md12),
+              const SizedBox(width: 4),
+              Text(formattedDate, style: const TextStyle(fontSize: 13, color: AppColors.ink)),
+              const SizedBox(width: 12),
               const Icon(Icons.people_outline, size: 14, color: AppColors.ink),
-              const SizedBox(width: AppSpacing.xs4),
+              const SizedBox(width: 4),
               Text(
                 '${booking.adults} Adults${booking.children > 0 ? ', ${booking.children} Children' : ''}',
-                style: AppTypography.caption.copyWith(color: AppColors.ink),
+                style: const TextStyle(fontSize: 13, color: AppColors.ink),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.md12),
-          const Divider(color: AppColors.borderSubtle, height: 1),
-          const SizedBox(height: AppSpacing.sm8),
+          const Divider(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Total Paid',
-                    style: AppTypography.caption.copyWith(color: AppColors.disabledText),
-                  ),
+                  const Text('Total Paid', style: TextStyle(fontSize: 11, color: AppColors.disabledText)),
                   Text(
                     formattedPrice,
-                    style: AppTypography.bodyLarge.copyWith(
+                    style: const TextStyle(
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: AppColors.forest,
                     ),
@@ -183,25 +227,15 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
               ),
               Row(
                 children: [
-                  _IconButtonMinTarget(
-                    icon: Icons.map_outlined,
-                    tooltip: 'Itinerary',
+                  IconButton(
+                    icon: const Icon(Icons.map_outlined, color: AppColors.forest, size: 20),
                     onPressed: () => context.push('/itinerary/${booking.id}'),
+                    tooltip: 'Itinerary',
                   ),
-                  _IconButtonMinTarget(
-                    icon: Icons.chat_bubble_outline,
+                  IconButton(
+                    icon: const Icon(Icons.chat_bubble_outline, color: AppColors.forest, size: 20),
+                    onPressed: () => context.push('/itinerary/${booking.id}'),
                     tooltip: 'Trip Chat',
-                    onPressed: () => context.push('/chat/${booking.id}'),
-                  ),
-                  _IconButtonMinTarget(
-                    icon: Icons.checklist_outlined,
-                    tooltip: 'Gear List',
-                    onPressed: () => context.push('/gear/${booking.id}'),
-                  ),
-                  _IconButtonMinTarget(
-                    icon: Icons.account_balance_wallet_outlined,
-                    tooltip: 'Budget',
-                    onPressed: () => context.push('/budget/${booking.id}'),
                   ),
                 ],
               ),
@@ -217,7 +251,7 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
     final String formattedDate = AppFormatters.formatTripDate(booking.createdAt);
     final String formattedPrice = AppFormatters.formatNpr(booking.totalPaisa);
 
-    return AppCard(
+    return PlanECard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -225,86 +259,66 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm8,
-                  vertical: AppSpacing.xs4,
-                ),
-                decoration: const BoxDecoration(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
                   color: AppColors.warningContainer,
-                  borderRadius: AppRadii.borderSm8,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
+                child: const Text(
                   'DRAFT',
-                  style: AppTypography.caption.copyWith(
+                  style: TextStyle(
                     color: AppColors.warning,
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-              Text(
-                formattedDate,
-                style: AppTypography.caption.copyWith(
-                  color: AppColors.disabledText,
-                ),
-              ),
+              Text(formattedDate, style: const TextStyle(fontSize: 12, color: AppColors.disabledText)),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm8),
+          const SizedBox(height: 8),
           Text(
             'Draft #${booking.bookingRef}',
-            style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
-          ),
-          const SizedBox(height: AppSpacing.xs4),
-          Text(
-            'Estimated Total: $formattedPrice',
-            style: AppTypography.bodyMedium.copyWith(
-              fontWeight: FontWeight.w600,
+            style: const TextStyle(
+              fontFamily: 'serif',
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
               color: AppColors.forest,
             ),
           ),
-          const SizedBox(height: AppSpacing.md12),
+          const SizedBox(height: 4),
+          Text(
+            'Estimated Total: $formattedPrice',
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.forest),
+          ),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
-                child: SizedBox(
-                  height: AppTouchTarget.minSize,
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.error,
-                      side: const BorderSide(color: AppColors.error),
-                      shape: const RoundedRectangleBorder(borderRadius: AppRadii.borderPill),
-                    ),
-                    onPressed: () async {
-                      final confirm = await DeleteDraftDialog.show(
-                        context,
-                        planTitle: 'Draft #${booking.bookingRef}',
-                      );
-                      if (confirm == true && context.mounted) {
-                        AppToast.show(context, message: 'Draft deleted successfully');
-                        ref.invalidate(bookingsProvider('pending'));
-                      }
-                    },
-                    icon: const Icon(Icons.delete_outline, size: 18),
-                    label: Text(l10n.delete),
-                  ),
+                child: AppButton(
+                  label: l10n.delete,
+                  variant: AppButtonVariant.secondary,
+                  minHeight: 40,
+                  onPressed: () async {
+                    final confirm = await DeleteDraftDialog.show(
+                      context,
+                      planTitle: 'Draft #${booking.bookingRef}',
+                    );
+                    if (confirm == true && context.mounted) {
+                      AppToast.show(context, message: 'Draft deleted successfully');
+                      ref.invalidate(bookingsProvider('pending'));
+                    }
+                  },
                 ),
               ),
-              const SizedBox(width: AppSpacing.md12),
+              const SizedBox(width: 12),
               Expanded(
-                child: SizedBox(
-                  height: AppTouchTarget.minSize,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.forest,
-                      foregroundColor: AppColors.ivory,
-                      shape: const RoundedRectangleBorder(borderRadius: AppRadii.borderPill),
-                    ),
-                    onPressed: () {
-                      context.push('/booking/${booking.experienceId}');
-                    },
-                    icon: const Icon(Icons.arrow_forward, size: 18),
-                    label: Text(l10n.continueText),
-                  ),
+                child: AppButton(
+                  label: l10n.continueText,
+                  minHeight: 40,
+                  onPressed: () {
+                    context.push('/booking/${booking.experienceId}');
+                  },
                 ),
               ),
             ],
@@ -315,28 +329,32 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
   }
 }
 
-class _IconButtonMinTarget extends StatelessWidget {
+class _ToolCard extends StatelessWidget {
   final IconData icon;
-  final String tooltip;
-  final VoidCallback onPressed;
+  final String label;
 
-  const _IconButtonMinTarget({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-  });
+  const _ToolCard({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: AppTouchTarget.minConstraints,
-      child: IconButton(
-        icon: Icon(icon, color: AppColors.forest, size: 20),
-        tooltip: tooltip,
-        onPressed: onPressed,
+    return PlanECard(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: AppColors.sage,
+            child: Icon(icon, color: AppColors.forest, size: 20),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
-
-
