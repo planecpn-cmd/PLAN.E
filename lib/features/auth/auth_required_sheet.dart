@@ -1,7 +1,7 @@
-// RM-05 Auth Required
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../l10n/app_localizations.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/app_button.dart';
@@ -9,16 +9,11 @@ import '../../widgets/app_button.dart';
 class AuthRequiredSheet extends ConsumerWidget {
   const AuthRequiredSheet({super.key});
 
-  static const String _sheetTitle = 'Authentication Required';
-  static const String _defaultActionText = 'proceed with this feature';
-  static const String _loginText = 'Log In';
-  static const String _signUpText = 'Create Account';
-  static const String _cancelText = 'Continue as Guest';
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final deferredAction = ref.watch(deferredActionProvider);
-    final actionDescription = deferredAction?.action ?? _defaultActionText;
+    final actionDescription = deferredAction?.action ?? 'proceed with this feature';
 
     return Scaffold(
       backgroundColor: AppColors.ivory,
@@ -26,7 +21,7 @@ class AuthRequiredSheet extends ConsumerWidget {
         backgroundColor: AppColors.ivory,
         elevation: 0,
         title: Text(
-          'RM-05 Auth Required',
+          l10n.authRequiredTitle,
           style: AppTypography.headingMedium.copyWith(color: AppColors.forest),
         ),
       ),
@@ -54,7 +49,7 @@ class AuthRequiredSheet extends ConsumerWidget {
               const SizedBox(height: AppSpacing.xxl24),
 
               Text(
-                _sheetTitle,
+                l10n.authRequiredTitle,
                 style: AppTypography.headingLarge.copyWith(color: AppColors.deep),
                 textAlign: TextAlign.center,
               ),
@@ -68,7 +63,7 @@ class AuthRequiredSheet extends ConsumerWidget {
               const Spacer(),
 
               AppButton(
-                label: _loginText,
+                label: l10n.login,
                 onPressed: () {
                   context.go('/auth/login');
                 },
@@ -78,7 +73,7 @@ class AuthRequiredSheet extends ConsumerWidget {
               const SizedBox(height: AppSpacing.md12),
 
               AppButton.secondary(
-                label: _signUpText,
+                label: l10n.createAccount,
                 onPressed: () {
                   context.go('/auth/sign-up');
                 },
@@ -102,7 +97,7 @@ class AuthRequiredSheet extends ConsumerWidget {
                     }
                   },
                   child: Text(
-                    _cancelText,
+                    'Continue as Guest',
                     style: AppTypography.bodyMedium.copyWith(
                       color: AppColors.disabledText,
                       fontWeight: FontWeight.w600,

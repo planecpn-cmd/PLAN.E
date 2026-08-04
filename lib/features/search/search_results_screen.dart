@@ -277,15 +277,15 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
               ),
               child: Row(
                 children: [
-                  _buildDifficultyChip('all', 'All Levels'),
+                  _buildDifficultyChip('all', l10n.allLevels),
                   const SizedBox(width: AppSpacing.sm8),
-                  _buildDifficultyChip('easy', 'Easy'),
+                  _buildDifficultyChip('easy', l10n.easy),
                   const SizedBox(width: AppSpacing.sm8),
-                  _buildDifficultyChip('moderate', 'Moderate'),
+                  _buildDifficultyChip('moderate', l10n.moderate),
                   const SizedBox(width: AppSpacing.sm8),
-                  _buildDifficultyChip('challenging', 'Challenging'),
+                  _buildDifficultyChip('challenging', l10n.challenging),
                   const SizedBox(width: AppSpacing.sm8),
-                  _buildDifficultyChip('strenuous', 'Strenuous'),
+                  _buildDifficultyChip('strenuous', l10n.strenuous),
                 ],
               ),
             ),
@@ -299,7 +299,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Search Results',
+                    l10n.searchResults,
                     style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
                   ),
                   if (_categoryId != null ||
@@ -340,11 +340,11 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                 isEmpty: (list) => list.isEmpty,
                 emptyView: EmptyStateView(
                   icon: Icons.search_off,
-                  title: 'No Experiences Found',
+                  title: l10n.noExperiencesFound,
                   description: _searchQuery.isNotEmpty
                       ? 'No results for "$_searchQuery". Try searching for "Everest", "Annapurna", or "Pokhara".'
                       : 'No experiences match the selected criteria.',
-                  actionLabel: 'Reset Search',
+                  actionLabel: l10n.resetSearch,
                   onActionPressed: () {
                     setState(() {
                       _selectedDifficulty = null;

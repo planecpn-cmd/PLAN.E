@@ -59,7 +59,7 @@ class SavedScreen extends ConsumerWidget {
           icon: Icons.bookmark_border_rounded,
           title: l10n.noSavedExperiences,
           description: 'Save your favorite Nepal experiences to view them anytime offline.',
-          actionLabel: 'Explore Experiences',
+          actionLabel: l10n.exploreExperiences,
           onActionPressed: () => context.go('/explore'),
         ),
         data: (experiences) {
@@ -95,7 +95,7 @@ class SavedScreen extends ConsumerWidget {
                     if (context.mounted) {
                       AppToast.show(
                         context,
-                        message: 'Removed from saved experiences',
+                        message: l10n.removedFromSaved,
                         variant: AppToastVariant.info,
                       );
                     }

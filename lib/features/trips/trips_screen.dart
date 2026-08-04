@@ -71,7 +71,7 @@ class _TripsScreenState extends ConsumerState<TripsScreen> {
                     description: _selectedTabIndex == 0
                         ? 'Trips you complete will be listed here with memories & review options.'
                         : 'Any cancelled trip reservations will be shown here.',
-                    actionLabel: 'Explore Experiences',
+                    actionLabel: l10n.exploreExperiences,
                     onActionPressed: () => context.go('/explore'),
                   ),
                   onRetry: () => ref.invalidate(bookingsProvider(statusQuery)),
@@ -84,8 +84,8 @@ class _TripsScreenState extends ConsumerState<TripsScreen> {
                       itemBuilder: (context, index) {
                         final booking = bookings[index];
                         return _selectedTabIndex == 0
-                            ? _buildCompletedCard(context, booking)
-                            : _buildCancelledCard(context, booking);
+                            ? _buildCompletedCard(context, booking, l10n)
+                            : _buildCancelledCard(context, booking, l10n);
                       },
                     );
                   },
@@ -98,7 +98,7 @@ class _TripsScreenState extends ConsumerState<TripsScreen> {
     );
   }
 
-  Widget _buildCompletedCard(BuildContext context, Booking booking) {
+  Widget _buildCompletedCard(BuildContext context, Booking booking, AppLocalizations l10n) {
     final String formattedDate = AppFormatters.formatTripDate(
       booking.completedAt ?? booking.createdAt,
     );
@@ -172,7 +172,7 @@ class _TripsScreenState extends ConsumerState<TripsScreen> {
               const SizedBox(width: AppSpacing.md12),
               Expanded(
                 child: AppButton(
-                  label: 'Leave Review',
+                  label: l10n.leaveReview,
                   variant: AppButtonVariant.primary,
                   onPressed: () => context.push('/review/${booking.id}'),
                 ),
@@ -184,7 +184,7 @@ class _TripsScreenState extends ConsumerState<TripsScreen> {
     );
   }
 
-  Widget _buildCancelledCard(BuildContext context, Booking booking) {
+  Widget _buildCancelledCard(BuildContext context, Booking booking, AppLocalizations l10n) {
     final String formattedDate = AppFormatters.formatTripDate(
       booking.cancelledAt ?? booking.createdAt,
     );
@@ -242,7 +242,7 @@ class _TripsScreenState extends ConsumerState<TripsScreen> {
           SizedBox(
             width: double.infinity,
             child: AppButton(
-              label: 'Book Again',
+              label: l10n.bookAgain,
               variant: AppButtonVariant.secondary,
               onPressed: () => context.push('/booking/${booking.experienceId}'),
             ),

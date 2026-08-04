@@ -27,20 +27,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
-  static const String _titleText = 'Create Your Account';
-  static const String _subtitleText = 'Join PLAN E to book authentic experiences across Nepal.';
-  static const String _nameLabel = 'Full Name';
-  static const String _nameHint = 'Enter your full name';
-  static const String _emailPhoneLabel = 'Email or Phone Number';
-  static const String _emailPhoneHint = 'e.g. name@example.com or 98XXXXXXXX';
-  static const String _passwordLabel = 'Password';
-  static const String _passwordHint = 'At least 6 characters';
-  static const String _confirmPasswordLabel = 'Confirm Password';
-  static const String _confirmPasswordHint = 'Re-enter your password';
-  static const String _signUpButtonText = 'Create Account';
-  static const String _hasAccountText = 'Already have an account?';
-  static const String _loginText = 'Log In';
-
   @override
   void dispose() {
     _nameController.dispose();
@@ -51,6 +37,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   }
 
   Future<void> _handleSignUp() async {
+    final l10n = AppLocalizations.of(context)!;
     if (!_formKey.currentState!.validate()) return;
 
     final name = _nameController.text.trim();
@@ -71,7 +58,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     if (!mounted) return;
 
     if (success) {
-      AppToast.show(context, message: 'Account created successfully!', variant: AppToastVariant.success);
+      AppToast.show(context, message: l10n.accountCreatedSuccess, variant: AppToastVariant.success);
       final deferred = ref.read(deferredActionProvider);
       if (deferred != null) {
         ref.read(deferredActionProvider.notifier).clear();
@@ -130,20 +117,20 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   const SizedBox(height: AppSpacing.lg16),
                 ],
                 Text(
-                  _titleText,
+                  'Create Your Account',
                   style: AppTypography.headingLarge.copyWith(color: AppColors.deep),
                 ),
                 const SizedBox(height: AppSpacing.sm8),
                 Text(
-                  _subtitleText,
+                  l10n.signUpSubtitle,
                   style: AppTypography.bodyMedium.copyWith(color: AppColors.ink),
                 ),
                 const SizedBox(height: AppSpacing.xxl24),
 
                 // Name input
                 AppTextField(
-                  label: _nameLabel,
-                  hint: _nameHint,
+                  label: l10n.fullName,
+                  hint: 'Enter your full name',
                   controller: _nameController,
                   prefixIcon: const Icon(Icons.person_outline, color: AppColors.forest),
                   validator: (val) {
@@ -157,8 +144,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
                 // Email / Phone input
                 AppTextField(
-                  label: _emailPhoneLabel,
-                  hint: _emailPhoneHint,
+                  label: l10n.emailOrPhoneLabel,
+                  hint: 'e.g. name@example.com or 98XXXXXXXX',
                   controller: _emailPhoneController,
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: const Icon(Icons.contact_mail_outlined, color: AppColors.forest),
@@ -177,8 +164,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
                 // Password input
                 AppTextField(
-                  label: _passwordLabel,
-                  hint: _passwordHint,
+                  label: l10n.passwordLabel,
+                  hint: 'At least 6 characters',
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   prefixIcon: const Icon(Icons.lock_outline, color: AppColors.forest),
@@ -205,8 +192,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
                 // Confirm Password input
                 AppTextField(
-                  label: _confirmPasswordLabel,
-                  hint: _confirmPasswordHint,
+                  label: l10n.confirmPasswordLabel,
+                  hint: 'Re-enter your password',
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
                   prefixIcon: const Icon(Icons.lock_outline, color: AppColors.forest),
@@ -233,7 +220,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
                 // Submit Button
                 AppButton(
-                  label: _signUpButtonText,
+                  label: l10n.createAccount,
                   onPressed: authState.isLoading ? null : _handleSignUp,
                   isLoading: authState.isLoading,
                   isFullWidth: true,
@@ -246,7 +233,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      _hasAccountText,
+                      'Already have an account?',
                       style: AppTypography.bodyMedium.copyWith(color: AppColors.ink),
                     ),
                     ConstrainedBox(
@@ -257,7 +244,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       child: TextButton(
                         onPressed: () => context.go('/auth/login'),
                         child: Text(
-                          _loginText,
+                          l10n.login,
                           style: AppTypography.bodyMedium.copyWith(
                             color: AppColors.gold,
                             fontWeight: FontWeight.bold,

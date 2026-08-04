@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/experience.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
@@ -49,6 +50,7 @@ class CollectionScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     // If slug is one of the rail types, we can use homeRailsProvider or experiencesProvider
     final isRailType = ['recommended', 'trending', 'homestays', 'community'].contains(slug.toLowerCase());
 
@@ -82,9 +84,9 @@ class CollectionScreen extends ConsumerWidget {
             onRetry: () => ref.refresh(homeRailsProvider),
             isEmpty: (railsMap) => (railsMap[slug.toLowerCase()]?.isEmpty ?? true),
             emptyView: EmptyStateView(
-              title: 'No Experiences Found',
+              title: l10n.noExperiencesFound,
               description: 'There are currently no items in this collection.',
-              actionLabel: 'Return Home',
+              actionLabel: l10n.returnHome,
               onActionPressed: () => context.go('/home'),
             ),
             data: (railsMap) {
@@ -129,9 +131,9 @@ class CollectionScreen extends ConsumerWidget {
             onRetry: () => ref.refresh(experiencesProvider(filterMap)),
             isEmpty: (list) => list.isEmpty,
             emptyView: EmptyStateView(
-              title: 'No Experiences Found',
+              title: l10n.noExperiencesFound,
               description: 'No experiences found in this collection.',
-              actionLabel: 'Explore All',
+              actionLabel: l10n.exploreAll,
               onActionPressed: () => context.go('/explore'),
             ),
             data: (experiences) => _buildList(context, experiences),

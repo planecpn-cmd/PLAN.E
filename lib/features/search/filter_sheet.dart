@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../models/category.dart';
 import '../../models/region.dart';
 import '../../providers/app_providers.dart';
@@ -61,6 +62,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final categoriesAsync = ref.watch(categoriesProvider);
     final regionsAsync = ref.watch(regionsProvider);
 
@@ -99,7 +101,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Filter & Sort',
+                    l10n.filterAndSort,
                     style: AppTypography.headingMedium.copyWith(color: AppColors.forest),
                   ),
                   TextButton(
@@ -108,7 +110,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                       minimumSize: const Size(AppTouchTarget.minSize, AppTouchTarget.minSize),
                     ),
                     child: Text(
-                      'Reset All',
+                      l10n.resetAll,
                       style: AppTypography.bodyMedium.copyWith(
                         color: AppColors.error,
                         fontWeight: FontWeight.bold,
@@ -123,7 +125,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
 
               // 1. Sort By Options
               Text(
-                'Sort By',
+                l10n.sortBy,
                 style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
               ),
               const SizedBox(height: AppSpacing.sm8),
@@ -144,7 +146,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
 
               // 2. Difficulty Level
               Text(
-                'Difficulty Level',
+                l10n.difficultyLevel,
                 style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
               ),
               const SizedBox(height: AppSpacing.sm8),
@@ -152,10 +154,10 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                 spacing: AppSpacing.sm8,
                 runSpacing: AppSpacing.sm8,
                 children: [
-                  _buildDifficultyChip('easy', 'Easy'),
-                  _buildDifficultyChip('moderate', 'Moderate'),
-                  _buildDifficultyChip('challenging', 'Challenging'),
-                  _buildDifficultyChip('strenuous', 'Strenuous'),
+                  _buildDifficultyChip('easy', l10n.easy),
+                  _buildDifficultyChip('moderate', l10n.moderate),
+                  _buildDifficultyChip('challenging', l10n.challenging),
+                  _buildDifficultyChip('strenuous', l10n.strenuous),
                 ],
               ),
 
@@ -163,7 +165,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
 
               // 3. Categories Section
               Text(
-                'Category',
+                l10n.category,
                 style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
               ),
               const SizedBox(height: AppSpacing.sm8),
@@ -200,7 +202,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
 
               // 4. Regions Section
               Text(
-                'Region',
+                l10n.region,
                 style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
               ),
               const SizedBox(height: AppSpacing.sm8),
@@ -237,7 +239,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
 
               // Bottom Action Button
               AppButton(
-                label: 'Apply Filters',
+                label: l10n.applyFilters,
                 onPressed: _applyFilters,
                 variant: AppButtonVariant.primary,
                 isFullWidth: true,

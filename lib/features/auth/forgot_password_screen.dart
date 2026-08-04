@@ -1,8 +1,8 @@
-// RM-03 Forgot Password
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/format.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/theme.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_text_field.dart';
@@ -19,14 +19,6 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailPhoneController = TextEditingController();
-
-  static const String _titleText = 'Reset Your Password';
-  static const String _subtitleText =
-      'Enter your email or mobile phone number below and we will send password reset instructions.';
-  static const String _emailPhoneLabel = 'Email or Phone Number';
-  static const String _emailPhoneHint = 'e.g. name@example.com or 98XXXXXXXX';
-  static const String _sendResetText = 'Send Reset Instructions';
-  static const String _backToLoginText = 'Back to Login';
 
   @override
   void dispose() {
@@ -56,6 +48,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final authState = ref.watch(authNotifierProvider);
 
     return Scaffold(
@@ -64,7 +57,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         backgroundColor: AppColors.ivory,
         elevation: 0,
         title: Text(
-          'RM-03 Forgot Password',
+          l10n.forgotPassword,
           style: AppTypography.headingMedium.copyWith(color: AppColors.forest),
         ),
       ),
@@ -77,19 +70,19 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _titleText,
+                  l10n.forgotPassword,
                   style: AppTypography.headingLarge.copyWith(color: AppColors.deep),
                 ),
                 const SizedBox(height: AppSpacing.sm8),
                 Text(
-                  _subtitleText,
+                  l10n.forgotPasswordSubtitle,
                   style: AppTypography.bodyMedium.copyWith(color: AppColors.ink),
                 ),
                 const SizedBox(height: AppSpacing.xxl24),
 
                 AppTextField(
-                  label: _emailPhoneLabel,
-                  hint: _emailPhoneHint,
+                  label: l10n.emailOrPhoneLabel,
+                  hint: 'e.g. name@example.com or 98XXXXXXXX',
                   controller: _emailPhoneController,
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: const Icon(Icons.mark_email_read_outlined, color: AppColors.forest),
@@ -107,7 +100,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 const SizedBox(height: AppSpacing.xxl24),
 
                 AppButton(
-                  label: _sendResetText,
+                  label: l10n.sendResetLink,
                   onPressed: authState.isLoading ? null : _handleResetRequest,
                   isLoading: authState.isLoading,
                   isFullWidth: true,
@@ -124,7 +117,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     child: TextButton(
                       onPressed: () => context.go('/auth/login'),
                       child: Text(
-                        _backToLoginText,
+                        'Back to Login',
                         style: AppTypography.bodyMedium.copyWith(
                           color: AppColors.forest,
                           fontWeight: FontWeight.w600,

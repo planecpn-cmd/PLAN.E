@@ -154,7 +154,7 @@ class ProfileScreen extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: _CounterTile(
-                        label: 'Saved',
+                        label: l10n.savedExperiences,
                         value: '$savedCount',
                         icon: Icons.bookmark_outline,
                         onTap: () => context.push('/saved'),
@@ -163,7 +163,7 @@ class ProfileScreen extends ConsumerWidget {
                     const SizedBox(width: AppSpacing.md12),
                     Expanded(
                       child: _CounterTile(
-                        label: 'Trips',
+                        label: l10n.trips,
                         value: '$tripsCount',
                         icon: Icons.card_travel_outlined,
                         onTap: () => context.go('/trips'),
@@ -172,7 +172,7 @@ class ProfileScreen extends ConsumerWidget {
                     const SizedBox(width: AppSpacing.md12),
                     Expanded(
                       child: _CounterTile(
-                        label: 'Points',
+                        label: l10n.overview,
                         value: '$points',
                         icon: Icons.stars_outlined,
                         onTap: () {},
@@ -188,7 +188,7 @@ class ProfileScreen extends ConsumerWidget {
 
                 // Settings & Links Section
                 Text(
-                  'Account Settings',
+                  l10n.accountSettings,
                   style: AppTypography.headingMedium.copyWith(fontSize: 18.0),
                 ),
                 const SizedBox(height: AppSpacing.md12),
@@ -199,49 +199,49 @@ class ProfileScreen extends ConsumerWidget {
                       _SettingsTile(
                         icon: Icons.person_outline,
                         title: l10n.editProfile,
-                        subtitle: 'Name, phone, bio & photo',
+                        subtitle: l10n.subEditProfile,
                         onTap: () => context.push('/profile/edit'),
                       ),
                       const Divider(height: 1, color: AppColors.borderSubtle),
                       _SettingsTile(
                         icon: Icons.account_balance_wallet_outlined,
                         title: l10n.paymentMethods,
-                        subtitle: 'Khalti, eSewa & cards',
+                        subtitle: l10n.subPaymentMethods,
                         onTap: () => context.push('/profile/payment-methods'),
                       ),
                       const Divider(height: 1, color: AppColors.borderSubtle),
                       _SettingsTile(
                         icon: Icons.notifications_none_outlined,
                         title: l10n.notifications,
-                        subtitle: 'Trip alerts & recommendations',
+                        subtitle: l10n.subNotifications,
                         onTap: () => context.push('/profile/notifications'),
                       ),
                       const Divider(height: 1, color: AppColors.borderSubtle),
                       _SettingsTile(
                         icon: Icons.language_outlined,
                         title: l10n.languageAndRegion,
-                        subtitle: 'English (NPR - Rs)',
+                        subtitle: l10n.subLanguageRegion,
                         onTap: () => context.push('/profile/language'),
                       ),
                       const Divider(height: 1, color: AppColors.borderSubtle),
                       _SettingsTile(
                         icon: Icons.rate_review_outlined,
                         title: l10n.myReviews,
-                        subtitle: 'Past ratings & feedback',
+                        subtitle: l10n.subMyReviews,
                         onTap: () => context.push('/profile/my-reviews'),
                       ),
                       const Divider(height: 1, color: AppColors.borderSubtle),
                       _SettingsTile(
                         icon: Icons.help_outline,
                         title: l10n.helpAndSupport,
-                        subtitle: 'FAQs, contact & policies',
+                        subtitle: l10n.subHelpSupport,
                         onTap: () => context.push('/profile/help'),
                       ),
                       const Divider(height: 1, color: AppColors.borderSubtle),
                       _SettingsTile(
                         icon: Icons.tune_outlined,
                         title: l10n.settings,
-                        subtitle: 'Cache, privacy & app info',
+                        subtitle: l10n.subSettings,
                         onTap: () => context.push('/profile/settings'),
                       ),
                     ],
@@ -324,6 +324,7 @@ class _BecomeHostCtaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (role == UserRole.hostApplicant) {
       return Container(
         width: double.infinity,
@@ -341,7 +342,7 @@ class _BecomeHostCtaCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Host Application Under Review',
+                    l10n.hostUnderReviewTitle,
                     style: AppTypography.bodyLarge.copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppColors.warning,
@@ -382,7 +383,7 @@ class _BecomeHostCtaCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Verified PLAN E Host',
+                    l10n.hostVerifiedTitle,
                     style: AppTypography.bodyLarge.copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppColors.success,
@@ -423,7 +424,7 @@ class _BecomeHostCtaCard extends StatelessWidget {
               const Icon(Icons.cabin, color: AppColors.gold, size: 28),
               const SizedBox(width: AppSpacing.sm8),
               Text(
-                'Become a Local Host',
+                l10n.becomeLocalHostTitle,
                 style: AppTypography.headingMedium.copyWith(
                   color: AppColors.ivory,
                 ),
@@ -432,14 +433,14 @@ class _BecomeHostCtaCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm8),
           Text(
-            'Share authentic Nepali culture, homestays, or adventure tours with travelers worldwide.',
+            l10n.becomeLocalHostSub,
             style: AppTypography.bodyMedium.copyWith(
               color: AppColors.sage,
             ),
           ),
           const SizedBox(height: AppSpacing.md12),
           AppButton(
-            label: 'Start Host Application',
+            label: l10n.startHostAppBtn,
             icon: Icons.arrow_forward,
             onPressed: () => context.push('/host'),
           ),

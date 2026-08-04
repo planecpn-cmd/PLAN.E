@@ -24,17 +24,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
-  static const String _titleText = 'Welcome Back';
-  static const String _subtitleText = 'Log in to manage your bookings and saved Nepal itineraries.';
-  static const String _emailPhoneLabel = 'Email or Phone Number';
-  static const String _emailPhoneHint = 'e.g. name@example.com or 98XXXXXXXX';
-  static const String _passwordLabel = 'Password';
-  static const String _passwordHint = 'Enter your password';
-  static const String _forgotPasswordText = 'Forgot Password?';
-  static const String _loginButtonText = 'Log In';
-  static const String _noAccountText = "Don't have an account?";
-  static const String _signUpText = 'Sign Up';
-
   @override
   void dispose() {
     _emailPhoneController.dispose();
@@ -43,6 +32,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
+    final l10n = AppLocalizations.of(context)!;
     if (!_formKey.currentState!.validate()) return;
 
     final emailOrPhone = _emailPhoneController.text.trim();
@@ -56,7 +46,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      AppToast.show(context, message: 'Logged in successfully!', variant: AppToastVariant.success);
+      AppToast.show(context, message: l10n.loggedInSuccess, variant: AppToastVariant.success);
       final deferred = ref.read(deferredActionProvider);
       if (deferred != null) {
         ref.read(deferredActionProvider.notifier).clear();
@@ -115,20 +105,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: AppSpacing.lg16),
                 ],
                 Text(
-                  _titleText,
+                  l10n.welcomeBack,
                   style: AppTypography.headingLarge.copyWith(color: AppColors.deep),
                 ),
                 const SizedBox(height: AppSpacing.sm8),
                 Text(
-                  _subtitleText,
+                  l10n.loginSubtitle,
                   style: AppTypography.bodyMedium.copyWith(color: AppColors.ink),
                 ),
                 const SizedBox(height: AppSpacing.xxl24),
 
                 // Email or Phone field
                 AppTextField(
-                  label: _emailPhoneLabel,
-                  hint: _emailPhoneHint,
+                  label: l10n.emailOrPhoneLabel,
+                  hint: 'e.g. name@example.com or 98XXXXXXXX',
                   controller: _emailPhoneController,
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: const Icon(Icons.contact_mail_outlined, color: AppColors.forest),
@@ -147,8 +137,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // Password field
                 AppTextField(
-                  label: _passwordLabel,
-                  hint: _passwordHint,
+                  label: l10n.passwordLabel,
+                  hint: 'Enter your password',
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   prefixIcon: const Icon(Icons.lock_outline, color: AppColors.forest),
@@ -184,7 +174,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: TextButton(
                       onPressed: () => context.go('/auth/forgot-password'),
                       child: Text(
-                        _forgotPasswordText,
+                        l10n.forgotPassword,
                         style: AppTypography.bodyMedium.copyWith(
                           color: AppColors.gold,
                           fontWeight: FontWeight.w600,
@@ -197,7 +187,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // Submit Button
                 AppButton(
-                  label: _loginButtonText,
+                  label: l10n.login,
                   onPressed: authState.isLoading ? null : _handleLogin,
                   isLoading: authState.isLoading,
                   isFullWidth: true,
@@ -210,7 +200,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      _noAccountText,
+                      l10n.dontHaveAccount,
                       style: AppTypography.bodyMedium.copyWith(color: AppColors.ink),
                     ),
                     ConstrainedBox(
@@ -221,7 +211,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: TextButton(
                         onPressed: () => context.go('/auth/sign-up'),
                         child: Text(
-                          _signUpText,
+                          l10n.signUp,
                           style: AppTypography.bodyMedium.copyWith(
                             color: AppColors.gold,
                             fontWeight: FontWeight.bold,

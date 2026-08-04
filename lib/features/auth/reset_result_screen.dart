@@ -1,26 +1,23 @@
-// RM-04 Reset Result
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/theme.dart';
 import '../../widgets/app_button.dart';
 
 class ResetResultScreen extends StatelessWidget {
   const ResetResultScreen({super.key});
 
-  static const String _screenTitle = 'Check Your Inbox';
-  static const String _screenSubtitle =
-      'We have sent password reset instructions to your email address or mobile phone. Please follow the instructions to set a new password.';
-  static const String _backToLoginText = 'Return to Login';
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: AppColors.ivory,
       appBar: AppBar(
         backgroundColor: AppColors.ivory,
         elevation: 0,
         title: Text(
-          'RM-04 Reset Result',
+          l10n.resetResultTitle,
           style: AppTypography.headingMedium.copyWith(color: AppColors.forest),
         ),
       ),
@@ -49,21 +46,21 @@ class ResetResultScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.xxxl32),
 
               Text(
-                _screenTitle,
+                l10n.resetResultTitle,
                 style: AppTypography.headingLarge.copyWith(color: AppColors.deep),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.md12),
 
               Text(
-                _screenSubtitle,
+                l10n.resetResultSubtitle,
                 style: AppTypography.bodyLarge.copyWith(color: AppColors.ink),
                 textAlign: TextAlign.center,
               ),
               const Spacer(),
 
               AppButton(
-                label: _backToLoginText,
+                label: l10n.login,
                 onPressed: () => context.go('/auth/login'),
                 isFullWidth: true,
                 minHeight: AppTouchTarget.minSize,

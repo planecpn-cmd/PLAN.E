@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../theme/theme.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_card.dart';
@@ -24,28 +25,28 @@ class PaymentMethodItem {
   });
 }
 
-final paymentMethodsProvider = FutureProvider<List<PaymentMethodItem>>((ref) async {
+final paymentMethodsProvider = FutureProvider.family<List<PaymentMethodItem>, AppLocalizations>((ref, l10n) async {
   // Simulating async loading of saved payment methods
   await Future.delayed(const Duration(milliseconds: 300));
-  return const [
+  return [
     PaymentMethodItem(
       id: 'khalti',
-      title: 'Khalti Wallet',
-      subtitle: 'Primary payment gateway (+977 9800000000)',
+      title: l10n.khaltiWalletTitle,
+      subtitle: l10n.khaltiWalletSub,
       icon: Icons.account_balance_wallet,
       isDefault: true,
     ),
     PaymentMethodItem(
       id: 'esewa',
-      title: 'eSewa Mobile Wallet',
-      subtitle: 'Instant online payout & booking',
+      title: l10n.esewaWalletTitle,
+      subtitle: l10n.esewaWalletSub,
       icon: Icons.account_balance_wallet_outlined,
       isDefault: false,
     ),
     PaymentMethodItem(
       id: 'cash',
-      title: 'Cash on Arrival',
-      subtitle: 'Pay directly to local host at check-in',
+      title: l10n.cashOnArrivalTitle,
+      subtitle: l10n.cashOnArrivalSub,
       icon: Icons.payments_outlined,
       isDefault: false,
     ),
@@ -64,13 +65,14 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final methodsAsync = ref.watch(paymentMethodsProvider);
+    final l10n = AppLocalizations.of(context)!;
+    final methodsAsync = ref.watch(paymentMethodsProvider(l10n));
 
     return Scaffold(
       backgroundColor: AppColors.ivory,
       appBar: AppBar(
         title: Text(
-          'Payment Methods',
+          l10n.paymentMethods,
           style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
         ),
         backgroundColor: AppColors.ivory,
@@ -83,7 +85,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
       ),
       body: AsyncValueView<List<PaymentMethodItem>>(
         value: methodsAsync,
-        onRetry: () => ref.refresh(paymentMethodsProvider),
+        onRetry: () => ref.refresh(paymentMethodsProvider(l10n)),
         data: (methods) {
           return Padding(
             padding: const EdgeInsets.all(AppSpacing.lg16),
@@ -91,12 +93,12 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Saved Payment Gateways',
+                  l10n.savedPaymentGateways,
                   style: AppTypography.headingMedium.copyWith(fontSize: 18),
                 ),
                 const SizedBox(height: AppSpacing.xs4),
                 Text(
-                  'Choose your preferred payment method for booking local experiences.',
+                  l10n.paymentMethodsPageSub,
                   style: AppTypography.caption.copyWith(color: AppColors.disabledText),
                 ),
                 const SizedBox(height: AppSpacing.lg16),
@@ -159,7 +161,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
                                               borderRadius: AppRadii.borderPill,
                                             ),
                                             child: Text(
-                                              'DEFAULT',
+                                              l10n.defaultTag,
                                               style: AppTypography.caption.copyWith(
                                                 color: AppColors.ivory,
                                                 fontSize: 10,
@@ -193,11 +195,11 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
                   ),
                 ),
                 AppButton.secondary(
-                  label: 'Add Payment Gateway',
+                  label: l10n.addPaymentGatewayBtn,
                   icon: Icons.add,
                   isFullWidth: true,
                   onPressed: () {
-                    AppToast.show(context, message: 'Payment gateway integration mode active');
+                    AppToast.show(context, message: l10n.paymentGatewayModeActive);
                   },
                 ),
                 const SizedBox(height: AppSpacing.md12),
