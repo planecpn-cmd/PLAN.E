@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/experience.dart';
 import '../../models/experience_departure.dart';
 import '../../theme/theme.dart';
@@ -76,7 +77,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
   void _handleProceedToPayment(Experience experience) {
     if (_selectedDeparture == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a departure date.')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.selectDepartureDate)),
       );
       return;
     }
@@ -242,7 +243,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
     return Scaffold(
       backgroundColor: AppColors.ivory,
       appBar: AppBar(
-        title: const Text('Book Experience'),
+        title: Text(AppLocalizations.of(context)!.bookingForm),
         backgroundColor: AppColors.white,
         elevation: 0,
       ),
@@ -523,7 +524,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text('Subtotal', style: AppTypography.bodyMedium),
+                                  Text(AppLocalizations.of(context)!.subtotal, style: AppTypography.bodyMedium),
                                   Text(
                                     AppFormatters.formatNpr(subtotalPaisa),
                                     style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
@@ -534,7 +535,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('Service & Tech Fee (5%)', style: AppTypography.caption.copyWith(color: AppColors.disabledText)),
+                                  Text(AppLocalizations.of(context)!.serviceFee, style: AppTypography.caption.copyWith(color: AppColors.disabledText)),
                                   Text(
                                     AppFormatters.formatNpr(feesPaisa),
                                     style: AppTypography.caption.copyWith(color: AppColors.disabledText),

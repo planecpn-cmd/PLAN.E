@@ -213,6 +213,7 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
   }
 
   Widget _buildDraftCard(BuildContext context, Booking booking) {
+    final l10n = AppLocalizations.of(context)!;
     final String formattedDate = AppFormatters.formatTripDate(booking.createdAt);
     final String formattedPrice = AppFormatters.formatNpr(booking.totalPaisa);
 
@@ -284,7 +285,7 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
                       }
                     },
                     icon: const Icon(Icons.delete_outline, size: 18),
-                    label: const Text('Delete'),
+                    label: Text(l10n.delete),
                   ),
                 ),
               ),
@@ -302,7 +303,7 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
                       context.push('/booking/${booking.experienceId}');
                     },
                     icon: const Icon(Icons.arrow_forward, size: 18),
-                    label: const Text('Continue'),
+                    label: Text(l10n.continueText),
                   ),
                 ),
               ),

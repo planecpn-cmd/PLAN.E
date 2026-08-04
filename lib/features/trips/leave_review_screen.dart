@@ -1,5 +1,7 @@
 // RM-14 Leave a Review
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
+import '../../theme/theme.dart';
 
 class LeaveReviewScreen extends StatelessWidget {
   final String bookingId;
@@ -7,10 +9,16 @@ class LeaveReviewScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: Text('RM-14 Leave Review ($bookingId)')),
+      backgroundColor: AppColors.ivory,
+      appBar: AppBar(
+        backgroundColor: AppColors.ivory,
+        elevation: 0,
+        title: Text(l10n.leaveReview, style: AppTypography.headingMedium.copyWith(color: AppColors.forest)),
+      ),
       body: Center(
-        child: Text('RM-14 Leave a Review Screen ($bookingId)'),
+        child: Text(l10n.leaveReview, style: AppTypography.bodyLarge),
       ),
     );
   }

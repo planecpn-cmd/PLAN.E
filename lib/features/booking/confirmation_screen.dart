@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/booking.dart';
 import '../../theme/theme.dart';
 import '../../widgets/app_button.dart';
@@ -22,12 +23,13 @@ class ConfirmationScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final asyncBooking = ref.watch(bookingDetailProvider(bookingId));
 
     return Scaffold(
       backgroundColor: AppColors.ivory,
       appBar: AppBar(
-        title: const Text('Booking Confirmation'),
+        title: Text(AppLocalizations.of(context)!.bookingConfirmation),
         backgroundColor: AppColors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
@@ -169,7 +171,7 @@ class ConfirmationScreen extends ConsumerWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Lead Traveler', style: AppTypography.caption.copyWith(color: AppColors.disabledText)),
+                                Text(l10n.fullName, style: AppTypography.caption.copyWith(color: AppColors.disabledText)),
                                 Text(
                                   booking.contactName,
                                   style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
@@ -195,7 +197,7 @@ class ConfirmationScreen extends ConsumerWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Guests', style: AppTypography.caption.copyWith(color: AppColors.disabledText)),
+                                Text(l10n.adults, style: AppTypography.caption.copyWith(color: AppColors.disabledText)),
                                 Text(
                                   '${booking.adults} Adult${booking.adults > 1 ? "s" : ""}${booking.children > 0 ? ", ${booking.children} Child${booking.children > 1 ? "ren" : ""}" : ""}',
                                   style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
@@ -217,7 +219,7 @@ class ConfirmationScreen extends ConsumerWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Booking Date', style: AppTypography.caption.copyWith(color: AppColors.disabledText)),
+                                Text(l10n.bookingRef, style: AppTypography.caption.copyWith(color: AppColors.disabledText)),
                                 Text(
                                   AppFormatters.formatTripDate(booking.createdAt, pattern: 'd MMM yyyy, h:mm a'),
                                   style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
@@ -231,14 +233,14 @@ class ConfirmationScreen extends ConsumerWidget {
 
                       // Payment summary
                       Text(
-                        'Payment Summary',
+                        l10n.subtotal,
                         style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: AppSpacing.sm8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Subtotal', style: AppTypography.bodyMedium),
+                          Text(l10n.subtotal, style: AppTypography.bodyMedium),
                           Text(
                             AppFormatters.formatNpr(booking.subtotalPaisa),
                             style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
@@ -249,7 +251,7 @@ class ConfirmationScreen extends ConsumerWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Service Fee', style: AppTypography.caption.copyWith(color: AppColors.disabledText)),
+                          Text(l10n.serviceFee, style: AppTypography.caption.copyWith(color: AppColors.disabledText)),
                           Text(
                             AppFormatters.formatNpr(booking.feesPaisa),
                             style: AppTypography.caption.copyWith(color: AppColors.disabledText),

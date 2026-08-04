@@ -124,6 +124,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get children => 'Children';
 
   @override
+  String get subtotal => 'Subtotal';
+
+  @override
+  String get serviceFee => 'Service & Tech Fee (5%)';
+
+  @override
   String get proceedToPayment => 'Proceed to Payment';
 
   @override
@@ -291,4 +297,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get perPerson => 'per person';
+
+  @override
+  String get viewGuide => 'View Guide';
+
+  @override
+  String get leaveReview => 'Leave Review';
+
+  @override
+  String get reviewSubmitted => 'Review Submitted';
 }

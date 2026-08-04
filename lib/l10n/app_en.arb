@@ -38,6 +38,8 @@
   "phoneNumber": "Phone Number",
   "adults": "Adults",
   "children": "Children",
+  "subtotal": "Subtotal",
+  "serviceFee": "Service & Tech Fee (5%)",
   "proceedToPayment": "Proceed to Payment",
   "paymentsComingSoon": "Payments Coming Soon",
   "bookingConfirmation": "Booking Confirmation",
@@ -93,5 +95,8 @@
   "organizer": "Organizer",
   "joinExperience": "Join Experience",
   "spotsLeft": "spots left",
-  "perPerson": "per person"
+  "perPerson": "per person",
+  "viewGuide": "View Guide",
+  "leaveReview": "Leave Review",
+  "reviewSubmitted": "Review Submitted"
 }

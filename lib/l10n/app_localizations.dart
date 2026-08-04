@@ -322,6 +322,18 @@ abstract class AppLocalizations {
   /// **'Children'**
   String get children;
 
+  /// No description provided for @subtotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtotal'**
+  String get subtotal;
+
+  /// No description provided for @serviceFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Service & Tech Fee (5%)'**
+  String get serviceFee;
+
   /// No description provided for @proceedToPayment.
   ///
   /// In en, this message translates to:
@@ -657,6 +669,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'per person'**
   String get perPerson;
+
+  /// No description provided for @viewGuide.
+  ///
+  /// In en, this message translates to:
+  /// **'View Guide'**
+  String get viewGuide;
+
+  /// No description provided for @leaveReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave Review'**
+  String get leaveReview;
+
+  /// No description provided for @reviewSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Review Submitted'**
+  String get reviewSubmitted;
 }
 
 class _AppLocalizationsDelegate
