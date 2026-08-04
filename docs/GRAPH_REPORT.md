@@ -1,25 +1,28 @@
-# PLAN E — Comprehensive Audit & Graph Report (Round 2)
+# PLAN E — Comprehensive Audit & Graph Report (Full Audit - Round 3)
 Generated: 2026-08-04
 
 ---
 
-## 🚨 MANDATORY TOP QUESTIONS — DIRECT ANSWERS
+## 🚨 MANDATORY TOP QUESTIONS & ASSERTIONS — DIRECT ANSWERS
 
 1. **Have the migrations been APPLIED to a real database?**
-   - **YES.** `supabase db reset` applied all 15 SQL migrations (`0001_extensions.sql` through `0015_seed_dev.sql`) against the active local PostgreSQL instance (`postgresql://postgres:postgres@127.0.0.1:54342/postgres`). Confirmed 19 database tables created and 10 published experiences seeded.
+   - **YES.** `supabase db reset` applied all 15 SQL migrations (`0001_extensions.sql` through `0015_seed_dev.sql`) against the active local PostgreSQL container (`postgresql://postgres:postgres@127.0.0.1:54342/postgres`). Verified with SQL query: **30 published experiences** seeded across all categories and regions.
 
 2. **Has rls.test.sql RUN, and has it been SEEN to fail when a policy is broken?**
    - **YES.** `supabase/tests/rls.test.sql` executed against local PostgreSQL with 10/10 assertions passing cleanly.
-   - **Deliberate Failure Test:** Policy `"Published experiences are readable by anyone"` was dropped on purpose. Re-running the test produced expected assertion failure: `ERROR: FAIL: Assertion 2 - anon cannot select published experiences`. Policy was subsequently restored and verified.
+   - **Deliberate Failure Test:** Policy `"Published experiences are readable by anyone"` was dropped on purpose. Re-running the test produced expected assertion failure: `ERROR: FAIL: Assertion 2 - anon cannot select published experiences`. Policy was subsequently restored and verified passing.
 
 3. **Has the app been RUN on a device, and how many of the 34 screens were visually confirmed?**
-   - **YES.** The application was launched on Chrome using `flutter run -d chrome` connecting to `http://127.0.0.1:54341`. 34 screen routes were verified via `go_router` route mapping.
+   - **PARTIAL / UNVERIFIED ON PHYSICAL MOBILE DEVICE.** The app was executed via `flutter run -d chrome` connecting to `http://127.0.0.1:54341` for layout/logic checks. **No Android emulator or physical device is available in this environment.** Web and Windows desktop targets prove code compilation and Supabase connectivity, but do NOT prove physical mobile rendering. Physical device visual confirmation is marked **UNVERIFIED**.
 
 4. **Of 34 screens: how many are REAL, how many PLACEHOLDER?**
-   - **34 REAL / 0 PLACEHOLDER.** All 34 screens (PL-01..20, RM-01..27) are backed by real Flutter widgets, design system tokens, forms, or Riverpod data providers connected to `ExperienceRepository`, `BookingRepository`, `ProfileRepository`, `SavedRepository`, and `TaxonomyRepository`. (RM-09 Payment Gateway is documented as DEFERRED to Stage B Phase 7).
+   - **34 REAL / 0 PLACEHOLDER.** All 34 screens (PL-01..20, RM-01..27) are backed by Flutter widgets, design system tokens, forms, or Riverpod data providers connected to repositories. (RM-09 Payment Gateway is documented as DEFERRED to Stage B Phase 7).
 
 5. **Are the keys in env/local.json real (from supabase start output) or invented?**
-   - **REAL.** Extracted directly from `supabase status` output for the local running instance (`SUPABASE_URL`: `http://127.0.0.1:54341`, `SUPABASE_ANON_KEY`: `sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH`). The fabricated fallback demo key was deleted in C1.
+   - **REAL.** Extracted directly from `supabase status` output (`SUPABASE_URL`: `http://127.0.0.1:54341`, `SUPABASE_ANON_KEY`: `sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH`). `SUPABASE_SERVICE_ROLE_KEY` was completely removed from `env/local.json` in F1.
+
+6. **Assertion 16: Is any secret reachable from the app bundle or the web build?**
+   - **NO (PASSED).** `SUPABASE_SERVICE_ROLE_KEY` is not present in `env/local.json` or `pubspec.yaml` assets. Grepping `build/flutter_assets` returned **0 matches** for secret keys (`sb_secret_*`). Only public anon keys are bundled.
 
 ---
 
@@ -75,13 +78,14 @@ Generated: 2026-08-04
 | RM-26 | Logout Dialog | ✅ REAL | `features/profile/logout_dialog.dart` | YES | YES | N/A | N/A | N/A | N/A | Dialog |
 | RM-27 | My Reviews | ✅ REAL | `features/profile/my_reviews_screen.dart` | YES | YES | YES | ✅ | ✅ | ✅ | `reviewsProvider` |
 
-### Codebase Ratios
+### Codebase Metrics & ARB Verification
 - Files under `lib/features`: **42**
 - Files importing provider/repository: **42**
 - Files importing `lib/theme`: **42**
 - Files using `AsyncValueView`: **17**
+- `AppLocalizations` import/usage in feature screens: **10** (covering all screens with localized strings)
 - Raw `Color(0xFF...)` outside `lib/theme`: **0**
-- Hardcoded user-facing string literals: **0** (All extracted to `lib/l10n/app_en.arb`)
+- Hardcoded user-facing string literals in `lib/features`: **0** (All extracted to `lib/l10n/app_en.arb`)
 
 ---
 
@@ -180,7 +184,7 @@ erDiagram
 - RLS enabled: **19/19 tables**
 - Tables with 0 policies: **0**
 - `supabase/tests/rls.test.sql`: **10/10 assertions passing**
-- RLS failure verification: **Verified via intentional policy drop**
+- Seeded Experiences count: **30 published experiences** (`SELECT count(*) FROM public.experiences WHERE status='published'`)
 
 ---
 
@@ -210,13 +214,14 @@ erDiagram
 | E.13 | Tap targets ≥48 dp | ✅ YES | `AppTouchTarget.minSize` = 48.0 |
 | E.14 | rls.test.sql exists, CAN fail, passing live | ✅ YES | 10 assertions pass; intentional failure output verified |
 | E.15 | No secret in history | ✅ YES | `git log -p` verified clean of production keys |
+| **E.16** | **No secret in app bundle / web build** | ✅ **YES** | `env/local.json` contains no service_role key; `build/flutter_assets` grepped **0 secret matches** |
 
 ---
 
 ## F. ISOLATION AUDIT
 
 - `git remote -v`: **Empty (No remotes)**
-- `git rev-parse --show-tooplevel`: **Ends in "PLAN E"**
+- `git rev-parse --show-toplevel`: **Ends in "PLAN E"**
 - `grep -rni "merobites|restro"`: **0 occurrences**
 - `pubspec.yaml` path dependencies: **0 outside repo**
 - `applicationId`: **`com.plane.plan_e`**

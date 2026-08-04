@@ -1,4 +1,5 @@
 {
+  "_comment": "WARNING: Never include SUPABASE_SERVICE_ROLE_KEY or any administrative secret in this file. Client app assets are public.",
   "SUPABASE_URL": "https://your-project-ref.supabase.co",
   "SUPABASE_ANON_KEY": "your-anon-key-here"
 }

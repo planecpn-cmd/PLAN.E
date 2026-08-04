@@ -46,6 +46,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profile => 'Profile';
 
   @override
+  String get recommendedForYou => 'Recommended For You';
+
+  @override
+  String get trendingNow => 'Trending Now';
+
+  @override
+  String get authenticHomestays => 'Authentic Homestays';
+
+  @override
+  String get communityLedTours => 'Community-Led Tours';
+
+  @override
+  String get seeAll => 'See All';
+
+  @override
   String get searchHint => 'Search by keyword, location, trek...';
 
   @override
@@ -103,6 +118,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get phoneNumber => 'Phone Number';
 
   @override
+  String get adults => 'Adults';
+
+  @override
+  String get children => 'Children';
+
+  @override
   String get proceedToPayment => 'Proceed to Payment';
 
   @override
@@ -110,6 +131,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bookingConfirmation => 'Booking Confirmation';
+
+  @override
+  String get bookingRef => 'Booking Ref';
 
   @override
   String get myPlans => 'My Plans';
@@ -128,6 +152,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cancelled => 'Cancelled';
+
+  @override
+  String get noUpcomingPlans => 'No Upcoming Plans';
+
+  @override
+  String get noDraftPlans => 'No Draft Plans';
+
+  @override
+  String get noCompletedTrips => 'No Completed Trips';
+
+  @override
+  String get noCancelledTrips => 'No Cancelled Trips';
 
   @override
   String get becomeAHost => 'Become a Host';
@@ -169,6 +205,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get resetPassword => 'Reset Password';
 
   @override
+  String get email => 'Email Address';
+
+  @override
+  String get password => 'Password';
+
+  @override
+  String get createAccount => 'Create Account';
+
+  @override
+  String get alreadyHaveAccount => 'Already have an account? Login';
+
+  @override
+  String get dontHaveAccount => 'Don\'t have an account? Sign Up';
+
+  @override
   String get editProfile => 'Edit Profile';
 
   @override
@@ -187,6 +238,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings => 'Settings';
 
   @override
+  String get myReviews => 'My Reviews';
+
+  @override
   String get logout => 'Logout';
 
   @override
@@ -200,4 +254,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get confirm => 'Confirm';
+
+  @override
+  String get authRequiredTitle => 'Authentication Required';
+
+  @override
+  String get authRequiredMessage =>
+      'Please sign in or create an account to perform this action.';
+
+  @override
+  String get overview => 'Overview';
+
+  @override
+  String get itinerary => 'Itinerary';
+
+  @override
+  String get included => 'What is Included';
+
+  @override
+  String get bringList => 'What to Bring';
+
+  @override
+  String get meetingPoint => 'Meeting Point';
+
+  @override
+  String get reviews => 'Reviews';
+
+  @override
+  String get organizer => 'Organizer';
+
+  @override
+  String get joinExperience => 'Join Experience';
+
+  @override
+  String get spotsLeft => 'spots left';
+
+  @override
+  String get perPerson => 'per person';
 }

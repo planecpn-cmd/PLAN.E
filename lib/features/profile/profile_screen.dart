@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../models/profile.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
@@ -16,6 +17,7 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final profileAsync = ref.watch(profileProvider);
     final savedAsync = ref.watch(savedExperiencesProvider);
     final bookingsAsync = ref.watch(bookingsProvider('all'));
@@ -24,7 +26,7 @@ class ProfileScreen extends ConsumerWidget {
       backgroundColor: AppColors.ivory,
       appBar: AppBar(
         title: Text(
-          'Profile',
+          l10n.profile,
           style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
         ),
         backgroundColor: AppColors.ivory,
@@ -196,49 +198,49 @@ class ProfileScreen extends ConsumerWidget {
                     children: [
                       _SettingsTile(
                         icon: Icons.person_outline,
-                        title: 'Edit Profile',
+                        title: l10n.editProfile,
                         subtitle: 'Name, phone, bio & photo',
                         onTap: () => context.push('/profile/edit'),
                       ),
                       const Divider(height: 1, color: AppColors.borderSubtle),
                       _SettingsTile(
                         icon: Icons.account_balance_wallet_outlined,
-                        title: 'Payment Methods',
+                        title: l10n.paymentMethods,
                         subtitle: 'Khalti, eSewa & cards',
                         onTap: () => context.push('/profile/payment-methods'),
                       ),
                       const Divider(height: 1, color: AppColors.borderSubtle),
                       _SettingsTile(
                         icon: Icons.notifications_none_outlined,
-                        title: 'Notifications',
+                        title: l10n.notifications,
                         subtitle: 'Trip alerts & recommendations',
                         onTap: () => context.push('/profile/notifications'),
                       ),
                       const Divider(height: 1, color: AppColors.borderSubtle),
                       _SettingsTile(
                         icon: Icons.language_outlined,
-                        title: 'Language & Region',
+                        title: l10n.languageAndRegion,
                         subtitle: 'English (NPR - Rs)',
                         onTap: () => context.push('/profile/language'),
                       ),
                       const Divider(height: 1, color: AppColors.borderSubtle),
                       _SettingsTile(
                         icon: Icons.rate_review_outlined,
-                        title: 'My Reviews',
+                        title: l10n.myReviews,
                         subtitle: 'Past ratings & feedback',
                         onTap: () => context.push('/profile/my-reviews'),
                       ),
                       const Divider(height: 1, color: AppColors.borderSubtle),
                       _SettingsTile(
                         icon: Icons.help_outline,
-                        title: 'Help & Support',
+                        title: l10n.helpAndSupport,
                         subtitle: 'FAQs, contact & policies',
                         onTap: () => context.push('/profile/help'),
                       ),
                       const Divider(height: 1, color: AppColors.borderSubtle),
                       _SettingsTile(
                         icon: Icons.tune_outlined,
-                        title: 'More Settings',
+                        title: l10n.settings,
                         subtitle: 'Cache, privacy & app info',
                         onTap: () => context.push('/profile/settings'),
                       ),
@@ -249,7 +251,7 @@ class ProfileScreen extends ConsumerWidget {
 
                 // Logout Action Button
                 AppButton.secondary(
-                  label: 'Log Out',
+                  label: l10n.logout,
                   icon: Icons.logout,
                   isFullWidth: true,
                   onPressed: () {

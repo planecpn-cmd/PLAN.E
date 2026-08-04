@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../models/category.dart';
 import '../../models/region.dart';
 import '../../providers/app_providers.dart';
@@ -15,6 +16,7 @@ class ExploreScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final categoriesAsync = ref.watch(categoriesProvider);
     final regionsAsync = ref.watch(regionsProvider);
 
@@ -25,7 +27,7 @@ class ExploreScreen extends ConsumerWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Text(
-          'Explore Nepal',
+          l10n.explore,
           style: AppTypography.headingMedium.copyWith(color: AppColors.forest),
         ),
         actions: [
@@ -94,8 +96,8 @@ class ExploreScreen extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.xxl24),
 
                 // Section 1: Regions
-                const SectionHeader(
-                  title: 'Regions of Nepal',
+                SectionHeader(
+                  title: l10n.regions,
                   subtitle: 'From Annapurna circuits to Everest highlands',
                 ),
                 const SizedBox(height: AppSpacing.md12),
@@ -127,8 +129,8 @@ class ExploreScreen extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.xxl24),
 
                 // Section 2: Categories Grid
-                const SectionHeader(
-                  title: 'Categories',
+                SectionHeader(
+                  title: l10n.categories,
                   subtitle: 'Find journeys tailored to your adventure style',
                 ),
                 const SizedBox(height: AppSpacing.md12),

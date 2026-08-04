@@ -166,6 +166,36 @@ abstract class AppLocalizations {
   /// **'Profile'**
   String get profile;
 
+  /// No description provided for @recommendedForYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended For You'**
+  String get recommendedForYou;
+
+  /// No description provided for @trendingNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Trending Now'**
+  String get trendingNow;
+
+  /// No description provided for @authenticHomestays.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentic Homestays'**
+  String get authenticHomestays;
+
+  /// No description provided for @communityLedTours.
+  ///
+  /// In en, this message translates to:
+  /// **'Community-Led Tours'**
+  String get communityLedTours;
+
+  /// No description provided for @seeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See All'**
+  String get seeAll;
+
   /// No description provided for @searchHint.
   ///
   /// In en, this message translates to:
@@ -280,6 +310,18 @@ abstract class AppLocalizations {
   /// **'Phone Number'**
   String get phoneNumber;
 
+  /// No description provided for @adults.
+  ///
+  /// In en, this message translates to:
+  /// **'Adults'**
+  String get adults;
+
+  /// No description provided for @children.
+  ///
+  /// In en, this message translates to:
+  /// **'Children'**
+  String get children;
+
   /// No description provided for @proceedToPayment.
   ///
   /// In en, this message translates to:
@@ -297,6 +339,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Booking Confirmation'**
   String get bookingConfirmation;
+
+  /// No description provided for @bookingRef.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking Ref'**
+  String get bookingRef;
 
   /// No description provided for @myPlans.
   ///
@@ -333,6 +381,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cancelled'**
   String get cancelled;
+
+  /// No description provided for @noUpcomingPlans.
+  ///
+  /// In en, this message translates to:
+  /// **'No Upcoming Plans'**
+  String get noUpcomingPlans;
+
+  /// No description provided for @noDraftPlans.
+  ///
+  /// In en, this message translates to:
+  /// **'No Draft Plans'**
+  String get noDraftPlans;
+
+  /// No description provided for @noCompletedTrips.
+  ///
+  /// In en, this message translates to:
+  /// **'No Completed Trips'**
+  String get noCompletedTrips;
+
+  /// No description provided for @noCancelledTrips.
+  ///
+  /// In en, this message translates to:
+  /// **'No Cancelled Trips'**
+  String get noCancelledTrips;
 
   /// No description provided for @becomeAHost.
   ///
@@ -412,6 +484,36 @@ abstract class AppLocalizations {
   /// **'Reset Password'**
   String get resetPassword;
 
+  /// No description provided for @email.
+  ///
+  /// In en, this message translates to:
+  /// **'Email Address'**
+  String get email;
+
+  /// No description provided for @password.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get password;
+
+  /// No description provided for @createAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Account'**
+  String get createAccount;
+
+  /// No description provided for @alreadyHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account? Login'**
+  String get alreadyHaveAccount;
+
+  /// No description provided for @dontHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account? Sign Up'**
+  String get dontHaveAccount;
+
   /// No description provided for @editProfile.
   ///
   /// In en, this message translates to:
@@ -448,6 +550,12 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settings;
 
+  /// No description provided for @myReviews.
+  ///
+  /// In en, this message translates to:
+  /// **'My Reviews'**
+  String get myReviews;
+
   /// No description provided for @logout.
   ///
   /// In en, this message translates to:
@@ -477,6 +585,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confirm'**
   String get confirm;
+
+  /// No description provided for @authRequiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication Required'**
+  String get authRequiredTitle;
+
+  /// No description provided for @authRequiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in or create an account to perform this action.'**
+  String get authRequiredMessage;
+
+  /// No description provided for @overview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get overview;
+
+  /// No description provided for @itinerary.
+  ///
+  /// In en, this message translates to:
+  /// **'Itinerary'**
+  String get itinerary;
+
+  /// No description provided for @included.
+  ///
+  /// In en, this message translates to:
+  /// **'What is Included'**
+  String get included;
+
+  /// No description provided for @bringList.
+  ///
+  /// In en, this message translates to:
+  /// **'What to Bring'**
+  String get bringList;
+
+  /// No description provided for @meetingPoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Meeting Point'**
+  String get meetingPoint;
+
+  /// No description provided for @reviews.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviews'**
+  String get reviews;
+
+  /// No description provided for @organizer.
+  ///
+  /// In en, this message translates to:
+  /// **'Organizer'**
+  String get organizer;
+
+  /// No description provided for @joinExperience.
+  ///
+  /// In en, this message translates to:
+  /// **'Join Experience'**
+  String get joinExperience;
+
+  /// No description provided for @spotsLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'spots left'**
+  String get spotsLeft;
+
+  /// No description provided for @perPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'per person'**
+  String get perPerson;
 }
 
 class _AppLocalizationsDelegate

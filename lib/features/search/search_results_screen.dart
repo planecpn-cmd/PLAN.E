@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/experience.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
@@ -100,6 +101,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final experiencesAsync = ref.watch(experiencesProvider(_filterMap));
     final recentSearchesAsync = ref.watch(recentSearchesProvider);
 
@@ -121,7 +123,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
           constraints: AppTouchTarget.minConstraints,
         ),
         title: Text(
-          'Search Experiences',
+          l10n.searchResults,
           style: AppTypography.headingMedium.copyWith(color: AppColors.forest),
         ),
         actions: [

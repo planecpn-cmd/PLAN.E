@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/booking.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
@@ -24,11 +25,10 @@ class PlansScreen extends ConsumerStatefulWidget {
 class _PlansScreenState extends ConsumerState<PlansScreen> {
   int _selectedTabIndex = 0;
 
-  final List<String> _tabs = ['Upcoming', 'Drafts'];
-
   @override
   Widget build(BuildContext context) {
-    // Upcoming plans query 'confirmed', Draft plans query 'pending'
+    final l10n = AppLocalizations.of(context)!;
+    final List<String> tabs = [l10n.upcoming, l10n.drafts];
     final String statusQuery = _selectedTabIndex == 0 ? 'confirmed' : 'pending';
     final bookingsAsync = ref.watch(bookingsProvider(statusQuery));
 
@@ -36,7 +36,7 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
       backgroundColor: AppColors.ivory,
       appBar: AppBar(
         title: Text(
-          'My Plans',
+          l10n.myPlans,
           style: AppTypography.headingLarge.copyWith(color: AppColors.ink),
         ),
         backgroundColor: AppColors.ivory,
@@ -49,7 +49,7 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
             Padding(
               padding: AppSpacing.screenPadding,
               child: AppTabs(
-                tabs: _tabs,
+                tabs: tabs,
                 selectedIndex: _selectedTabIndex,
                 onTabSelected: (index) {
                   setState(() {

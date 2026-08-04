@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/experience.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
@@ -14,6 +15,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final homeRailsAsync = ref.watch(homeRailsProvider);
 
     return Scaffold(
@@ -147,7 +149,7 @@ class HomeScreen extends ConsumerWidget {
                                   const SizedBox(width: AppSpacing.md12),
                                   Expanded(
                                     child: Text(
-                                      'Search treks, regions, homestays...',
+                                      l10n.searchHint,
                                       style: AppTypography.bodyMedium.copyWith(
                                         color: AppColors.disabledText,
                                       ),
@@ -191,9 +193,9 @@ class HomeScreen extends ConsumerWidget {
                         // Rail 1: Recommended
                         if (railsMap['recommended']?.isNotEmpty ?? false) ...[
                           ContentRail(
-                            title: 'Recommended for You',
+                            title: l10n.recommendedForYou,
                             subtitle: 'Handpicked experiences based on popular journeys',
-                            actionLabel: 'See All',
+                            actionLabel: l10n.seeAll,
                             onActionTap: () => context.push('/collection/recommended'),
                             items: railsMap['recommended']!
                                 .map((exp) => _buildExperienceCard(context, exp))
@@ -205,9 +207,9 @@ class HomeScreen extends ConsumerWidget {
                         // Rail 2: Trending
                         if (railsMap['trending']?.isNotEmpty ?? false) ...[
                           ContentRail(
-                            title: 'Trending Experiences',
+                            title: l10n.trendingNow,
                             subtitle: 'Most booked trips this season in Nepal',
-                            actionLabel: 'See All',
+                            actionLabel: l10n.seeAll,
                             onActionTap: () => context.push('/collection/trending'),
                             items: railsMap['trending']!
                                 .map((exp) => _buildExperienceCard(context, exp))
@@ -219,9 +221,9 @@ class HomeScreen extends ConsumerWidget {
                         // Rail 3: Homestays
                         if (railsMap['homestays']?.isNotEmpty ?? false) ...[
                           ContentRail(
-                            title: 'Local Homestays',
+                            title: l10n.authenticHomestays,
                             subtitle: 'Immerse in local village hospitality',
-                            actionLabel: 'See All',
+                            actionLabel: l10n.seeAll,
                             onActionTap: () => context.push('/collection/homestays'),
                             items: railsMap['homestays']!
                                 .map((exp) => _buildExperienceCard(context, exp))
@@ -233,9 +235,9 @@ class HomeScreen extends ConsumerWidget {
                         // Rail 4: Community
                         if (railsMap['community']?.isNotEmpty ?? false) ...[
                           ContentRail(
-                            title: 'Community-Led Tours',
+                            title: l10n.communityLedTours,
                             subtitle: 'Direct impact travel supporting local communities',
-                            actionLabel: 'See All',
+                            actionLabel: l10n.seeAll,
                             onActionTap: () => context.push('/collection/community'),
                             items: railsMap['community']!
                                 .map((exp) => _buildExperienceCard(context, exp))

@@ -4,25 +4,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/experience.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/widgets.dart';
-import 'saved_strings.dart';
 
 class SavedScreen extends ConsumerWidget {
   const SavedScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final client = ref.watch(supabaseClientProvider);
     final user = client.auth.currentUser;
 
     if (user == null) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text(
-            SavedStrings.pageTitle,
+          title: Text(
+            l10n.savedExperiences,
             style: AppTypography.headingMedium,
           ),
           backgroundColor: AppColors.white,
@@ -30,8 +31,8 @@ class SavedScreen extends ConsumerWidget {
         ),
         body: EmptyStateView(
           icon: Icons.bookmark_border_rounded,
-          title: SavedStrings.loginRequired,
-          actionLabel: SavedStrings.loginButton,
+          title: l10n.noSavedExperiences,
+          actionLabel: l10n.login,
           onActionPressed: () => context.push('/auth/login'),
         ),
       );
@@ -42,8 +43,8 @@ class SavedScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
-        title: const Text(
-          SavedStrings.pageTitle,
+        title: Text(
+          l10n.savedExperiences,
           style: AppTypography.headingMedium,
         ),
         backgroundColor: AppColors.white,
@@ -56,9 +57,9 @@ class SavedScreen extends ConsumerWidget {
         isEmpty: (data) => data.isEmpty,
         emptyView: EmptyStateView(
           icon: Icons.bookmark_border_rounded,
-          title: SavedStrings.emptyTitle,
-          description: SavedStrings.emptyDescription,
-          actionLabel: SavedStrings.exploreButton,
+          title: l10n.noSavedExperiences,
+          description: 'Save your favorite Nepal experiences to view them anytime offline.',
+          actionLabel: 'Explore Experiences',
           onActionPressed: () => context.go('/explore'),
         ),
         data: (experiences) {

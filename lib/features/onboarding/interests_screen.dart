@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/category.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
@@ -12,14 +13,9 @@ import '../../widgets/filter_chip_pill.dart';
 class InterestsScreen extends ConsumerWidget {
   const InterestsScreen({super.key});
 
-  static const String _screenTitle = 'Select Your Interests';
-  static const String _screenSubtitle =
-      'Choose at least 3 categories to help us personalize your Nepal experience.';
-  static const String _continueText = 'Continue';
-  static const String _skipText = 'Skip for Now';
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final categoriesAsync = ref.watch(categoriesProvider);
     final guestState = ref.watch(guestProvider);
     final selectedIds = guestState.selectedInterests;
@@ -31,7 +27,7 @@ class InterestsScreen extends ConsumerWidget {
         backgroundColor: AppColors.ivory,
         elevation: 0,
         title: Text(
-          'PL-05 Interests',
+          l10n.selectInterests,
           style: AppTypography.headingMedium.copyWith(color: AppColors.forest),
         ),
         actions: [
@@ -43,7 +39,7 @@ class InterestsScreen extends ConsumerWidget {
             child: TextButton(
               onPressed: () => context.go('/home'),
               child: Text(
-                _skipText,
+                'Skip',
                 style: AppTypography.bodyMedium.copyWith(
                   color: AppColors.gold,
                   fontWeight: FontWeight.w600,
@@ -61,12 +57,12 @@ class InterestsScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _screenTitle,
+                l10n.selectInterests,
                 style: AppTypography.headingLarge.copyWith(color: AppColors.deep),
               ),
               const SizedBox(height: AppSpacing.sm8),
               Text(
-                _screenSubtitle,
+                l10n.selectMin3,
                 style: AppTypography.bodyMedium.copyWith(color: AppColors.ink),
               ),
               const SizedBox(height: AppSpacing.md12),
@@ -128,7 +124,7 @@ class InterestsScreen extends ConsumerWidget {
 
               // Action button - enabled when min 3 selected
               AppButton(
-                label: _continueText,
+                label: l10n.continueText,
                 onPressed: canContinue
                     ? () {
                         context.go('/home');

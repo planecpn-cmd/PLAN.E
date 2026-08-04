@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/format.dart';
+import '../../l10n/app_localizations.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/app_button.dart';
@@ -88,6 +89,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final authState = ref.watch(authNotifierProvider);
     final deferredAction = ref.watch(deferredActionProvider);
 
@@ -97,7 +99,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         backgroundColor: AppColors.ivory,
         elevation: 0,
         title: Text(
-          'RM-01 Sign Up',
+          l10n.signUp,
           style: AppTypography.headingMedium.copyWith(color: AppColors.forest),
         ),
       ),

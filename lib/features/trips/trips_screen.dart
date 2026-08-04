@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/booking.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
@@ -23,10 +24,10 @@ class TripsScreen extends ConsumerStatefulWidget {
 class _TripsScreenState extends ConsumerState<TripsScreen> {
   int _selectedTabIndex = 0;
 
-  final List<String> _tabs = ['Completed', 'Cancelled'];
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final List<String> tabs = [l10n.completed, l10n.cancelled];
     final String statusQuery = _selectedTabIndex == 0 ? 'completed' : 'cancelled';
     final bookingsAsync = ref.watch(bookingsProvider(statusQuery));
 
@@ -34,7 +35,7 @@ class _TripsScreenState extends ConsumerState<TripsScreen> {
       backgroundColor: AppColors.ivory,
       appBar: AppBar(
         title: Text(
-          'My Trips',
+          l10n.myTrips,
           style: AppTypography.headingLarge.copyWith(color: AppColors.ink),
         ),
         backgroundColor: AppColors.ivory,
@@ -47,7 +48,7 @@ class _TripsScreenState extends ConsumerState<TripsScreen> {
             Padding(
               padding: AppSpacing.screenPadding,
               child: AppTabs(
-                tabs: _tabs,
+                tabs: tabs,
                 selectedIndex: _selectedTabIndex,
                 onTabSelected: (index) {
                   setState(() {
