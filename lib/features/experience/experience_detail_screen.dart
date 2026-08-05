@@ -22,10 +22,12 @@ class ExperienceDetailScreen extends ConsumerStatefulWidget {
   const ExperienceDetailScreen({super.key, required this.id});
 
   @override
-  ConsumerState<ExperienceDetailScreen> createState() => _ExperienceDetailScreenState();
+  ConsumerState<ExperienceDetailScreen> createState() =>
+      _ExperienceDetailScreenState();
 }
 
-class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen> {
+class _ExperienceDetailScreenState
+    extends ConsumerState<ExperienceDetailScreen> {
   bool _isDescriptionExpanded = false;
   ExperienceDeparture? _selectedDeparture;
   bool _optimisticIsSaved = false;
@@ -64,10 +66,12 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
           ? SafeArea(
               top: false,
               child: Container(
-                padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
                 decoration: BoxDecoration(
                   color: AppColors.white,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.black.withValues(alpha: .09),
@@ -89,26 +93,30 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
                                   experienceAsync.asData!.value!.pricePaisa,
                             ),
                             style: const TextStyle(
-                              fontSize: 18,
+                              fontSize: 14,
                               fontWeight: FontWeight.w800,
                               color: AppColors.forest,
                             ),
                           ),
                           const Text(
                             ExperienceStrings.perPersonUnit,
-                            style: TextStyle(fontSize: 11, color: AppColors.disabledText),
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: AppColors.disabledText,
+                            ),
                           ),
                         ],
                       ),
                     ),
                     SizedBox(
-                      width: 180,
+                      width: 160,
                       child: AppButton(
                         label: ExperienceStrings.joinButtonLabel.toUpperCase(),
                         onPressed: () {
                           context.push('/booking/${widget.id}');
                         },
-                        minHeight: 48,
+                        minHeight: 42,
+                        fontSize: 13,
                       ),
                     ),
                   ],
@@ -119,9 +127,17 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
     );
   }
 
-  Widget _buildDetailContent(BuildContext context, Experience experience, bool isSaved) {
-    final departuresAsync = ref.watch(experienceDeparturesProvider(experience.id));
-    final itineraryAsync = ref.watch(experienceItineraryProvider(experience.id));
+  Widget _buildDetailContent(
+    BuildContext context,
+    Experience experience,
+    bool isSaved,
+  ) {
+    final departuresAsync = ref.watch(
+      experienceDeparturesProvider(experience.id),
+    );
+    final itineraryAsync = ref.watch(
+      experienceItineraryProvider(experience.id),
+    );
     final reviewsAsync = ref.watch(experienceReviewsProvider(experience.id));
     final hostAsync = experience.hostId != null
         ? ref.watch(hostProfileProvider(experience.hostId!))
@@ -199,7 +215,11 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
     );
   }
 
-  Widget _buildCoverSection(BuildContext context, Experience experience, bool isSaved) {
+  Widget _buildCoverSection(
+    BuildContext context,
+    Experience experience,
+    bool isSaved,
+  ) {
     return Stack(
       children: [
         PlanEPhoto(
@@ -233,7 +253,8 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
                 _buildCircleIconButton(
                   icon: isSaved ? Icons.favorite : Icons.favorite_border,
                   iconColor: isSaved ? AppColors.error : AppColors.ink,
-                  onPressed: () => _toggleOptimisticSave(experience.id, isSaved),
+                  onPressed: () =>
+                      _toggleOptimisticSave(experience.id, isSaved),
                 ),
               ],
             ),
@@ -263,14 +284,23 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
     );
   }
 
-  Future<void> _toggleOptimisticSave(String experienceId, bool currentlySaved) async {
+  Future<void> _toggleOptimisticSave(
+    String experienceId,
+    bool currentlySaved,
+  ) async {
     final client = ref.read(supabaseClientProvider);
     final user = client.auth.currentUser;
 
     if (user == null) {
-      ref.read(deferredActionProvider.notifier).setPending(
-        DeferredAction(screenId: 'PL-09', entityId: experienceId, action: 'save'),
-      );
+      ref
+          .read(deferredActionProvider.notifier)
+          .setPending(
+            DeferredAction(
+              screenId: 'PL-09',
+              entityId: experienceId,
+              action: 'save',
+            ),
+          );
       AppToast.show(
         context,
         message: ExperienceStrings.loginRequiredToSave,
@@ -326,7 +356,11 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
             SizedBox(width: 8),
             Text(
               ExperienceStrings.instantConfirmation,
-              style: TextStyle(color: AppColors.forest, fontSize: 12, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                color: AppColors.forest,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
         ),
@@ -342,7 +376,9 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: isLowSpot ? AppColors.warningContainer : AppColors.successContainer,
+      color: isLowSpot
+          ? AppColors.warningContainer
+          : AppColors.successContainer,
       child: Row(
         children: [
           Icon(
@@ -368,7 +404,10 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
     );
   }
 
-  Widget _buildTitleLocationRatingDateSection(Experience experience, List<ExperienceDeparture> departures) {
+  Widget _buildTitleLocationRatingDateSection(
+    Experience experience,
+    List<ExperienceDeparture> departures,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -385,7 +424,11 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
               const SizedBox(width: 6),
               Text(
                 experience.difficulty.name.toUpperCase(),
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.forest),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.forest,
+                ),
               ),
             ],
           ),
@@ -403,7 +446,11 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
         const SizedBox(height: 6),
         Row(
           children: [
-            const Icon(Icons.location_on_outlined, size: 18, color: AppColors.forest),
+            const Icon(
+              Icons.location_on_outlined,
+              size: 18,
+              color: AppColors.forest,
+            ),
             const SizedBox(width: 4),
             Expanded(
               child: Text(
@@ -431,19 +478,47 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
   Widget _buildQuickStatsSection(Experience experience) {
     return Row(
       children: [
-        Expanded(child: _InfoTile(icon: Icons.schedule, value: AppFormatters.formatDuration(experience.durationHours), label: 'Duration')),
+        Expanded(
+          child: _InfoTile(
+            icon: Icons.schedule,
+            value: AppFormatters.formatDuration(experience.durationHours),
+            label: 'Duration',
+          ),
+        ),
         const SizedBox(width: 8),
-        Expanded(child: _InfoTile(icon: Icons.signal_cellular_alt, value: experience.difficulty.name.toUpperCase(), label: 'Difficulty')),
+        Expanded(
+          child: _InfoTile(
+            icon: Icons.signal_cellular_alt,
+            value: experience.difficulty.name.toUpperCase(),
+            label: 'Difficulty',
+          ),
+        ),
         const SizedBox(width: 8),
-        Expanded(child: _InfoTile(icon: Icons.groups_outlined, value: '${experience.groupSizeMin}-${experience.groupSizeMax}', label: 'Group size')),
+        Expanded(
+          child: _InfoTile(
+            icon: Icons.groups_outlined,
+            value: '${experience.groupSizeMin}-${experience.groupSizeMax}',
+            label: 'Group size',
+          ),
+        ),
         const SizedBox(width: 8),
-        Expanded(child: _InfoTile(icon: Icons.filter_hdr, value: '${experience.maxAltitudeM ?? 2000} m', label: 'Altitude')),
+        Expanded(
+          child: _InfoTile(
+            icon: Icons.filter_hdr,
+            value: '${experience.maxAltitudeM ?? 2000} m',
+            label: 'Altitude',
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildOverviewSection(Experience experience, List<ItineraryItem> itinerary) {
-    final String descriptionText = experience.description ?? experience.summary ?? '';
+  Widget _buildOverviewSection(
+    Experience experience,
+    List<ItineraryItem> itinerary,
+  ) {
+    final String descriptionText =
+        experience.description ?? experience.summary ?? '';
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -456,17 +531,30 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
         children: [
           const Row(
             children: [
-              Icon(Icons.calendar_today_outlined, size: 20, color: AppColors.forest),
+              Icon(
+                Icons.calendar_today_outlined,
+                size: 20,
+                color: AppColors.forest,
+              ),
               SizedBox(width: 8),
-              Text('Trip Overview', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                'Trip Overview',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ],
           ),
           const SizedBox(height: 10),
           Text(
             descriptionText,
-            style: const TextStyle(fontSize: 13.5, height: 1.4, color: AppColors.ink),
+            style: const TextStyle(
+              fontSize: 13.5,
+              height: 1.4,
+              color: AppColors.ink,
+            ),
             maxLines: _isDescriptionExpanded ? null : 4,
-            overflow: _isDescriptionExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+            overflow: _isDescriptionExpanded
+                ? TextOverflow.visible
+                : TextOverflow.ellipsis,
           ),
           if (descriptionText.length > 180) ...[
             const SizedBox(height: 4),
@@ -477,8 +565,14 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
                 });
               },
               child: Text(
-                _isDescriptionExpanded ? ExperienceStrings.showLess : ExperienceStrings.readMore,
-                style: const TextStyle(color: AppColors.forest, fontWeight: FontWeight.bold, fontSize: 13),
+                _isDescriptionExpanded
+                    ? ExperienceStrings.showLess
+                    : ExperienceStrings.readMore,
+                style: const TextStyle(
+                  color: AppColors.forest,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
               ),
             ),
           ],
@@ -502,7 +596,10 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
             children: [
               Icon(Icons.sell_outlined, color: AppColors.forest),
               SizedBox(width: 8),
-              Text('Price', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                'Price',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -511,10 +608,17 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
             children: [
               Text(
                 AppFormatters.formatNpr(experience.pricePaisa),
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.forest),
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.forest,
+                ),
               ),
               const SizedBox(width: 6),
-              const Text('/ person', style: TextStyle(fontSize: 12, color: AppColors.disabledText)),
+              const Text(
+                '/ person',
+                style: TextStyle(fontSize: 12, color: AppColors.disabledText),
+              ),
             ],
           ),
         ],
@@ -541,20 +645,31 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
             children: [
               Icon(Icons.card_giftcard, size: 20, color: AppColors.forest),
               SizedBox(width: 8),
-              Text("What's Included", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                "What's Included",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ],
           ),
           const SizedBox(height: 10),
-          ...includedItems.map((item) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: [
-                    const Icon(Icons.check_circle_outline, color: AppColors.success, size: 18),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text(item, style: const TextStyle(fontSize: 13))),
-                  ],
-                ),
-              )),
+          ...includedItems.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.check_circle_outline,
+                    color: AppColors.success,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(item, style: const TextStyle(fontSize: 13)),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -579,26 +694,40 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
             children: [
               Icon(Icons.backpack_outlined, size: 20, color: AppColors.forest),
               SizedBox(width: 8),
-              Text('What to Bring', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                'What to Bring',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ],
           ),
           const SizedBox(height: 10),
-          ...bringItems.map((item) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: [
-                    const Icon(Icons.check_box_outlined, color: AppColors.forest, size: 18),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text(item, style: const TextStyle(fontSize: 13))),
-                  ],
-                ),
-              )),
+          ...bringItems.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.check_box_outlined,
+                    color: AppColors.forest,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(item, style: const TextStyle(fontSize: 13)),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildMeetingPointMapSection(BuildContext context, Experience experience) {
+  Widget _buildMeetingPointMapSection(
+    BuildContext context,
+    Experience experience,
+  ) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -613,12 +742,17 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
             children: [
               Icon(Icons.location_on, color: AppColors.forest),
               SizedBox(width: 8),
-              Text('Meeting Point', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                'Meeting Point',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
-            experience.meetingPoint ?? experience.locationName ?? 'Kathmandu, Nepal',
+            experience.meetingPoint ??
+                experience.locationName ??
+                'Kathmandu, Nepal',
             style: const TextStyle(fontSize: 13, color: AppColors.ink),
           ),
           const SizedBox(height: 10),
@@ -648,9 +782,15 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
         children: [
           Icon(Icons.group, size: 20, color: AppColors.forest),
           SizedBox(width: 8),
-          Text("Who's Joining", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            "Who's Joining",
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+          ),
           Spacer(),
-          Text('Small Group Tour', style: TextStyle(fontSize: 12, color: AppColors.disabledText)),
+          Text(
+            'Small Group Tour',
+            style: TextStyle(fontSize: 12, color: AppColors.disabledText),
+          ),
         ],
       ),
     );
@@ -678,24 +818,31 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
             children: [
               Icon(Icons.info_outline, size: 20, color: AppColors.forest),
               SizedBox(width: 8),
-              Text('Things to Know', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                'Things to Know',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ],
           ),
           const SizedBox(height: 10),
-          ...items.map((item) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: [
-                    const CircleAvatar(
-                      radius: 8,
-                      backgroundColor: AppColors.sage,
-                      child: Icon(Icons.check, size: 10, color: AppColors.forest),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text(item, style: const TextStyle(fontSize: 12))),
-                  ],
-                ),
-              )),
+          ...items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  const CircleAvatar(
+                    radius: 8,
+                    backgroundColor: AppColors.sage,
+                    child: Icon(Icons.check, size: 10, color: AppColors.forest),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(item, style: const TextStyle(fontSize: 12)),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -718,37 +865,59 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
               const SizedBox(width: 8),
               Text(
                 'Reviews (${experience.ratingCount})',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 10),
           if (reviews.isNotEmpty)
-            ...reviews.take(2).map((rev) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          RatingStars(rating: rev.rating.toDouble(), starSize: 14),
-                          const SizedBox(width: 8),
-                          Text(
-                            AppFormatters.formatTripDate(rev.createdAt, pattern: 'MMM d, yyyy'),
-                            style: const TextStyle(fontSize: 11, color: AppColors.disabledText),
-                          ),
-                        ],
-                      ),
-                      if (rev.body != null && rev.body!.isNotEmpty)
-                        Text(
-                          rev.body!,
-                          style: const TextStyle(fontSize: 12, color: AppColors.ink),
+            ...reviews
+                .take(2)
+                .map(
+                  (rev) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            RatingStars(
+                              rating: rev.rating.toDouble(),
+                              starSize: 14,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              AppFormatters.formatTripDate(
+                                rev.createdAt,
+                                pattern: 'MMM d, yyyy',
+                              ),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.disabledText,
+                              ),
+                            ),
+                          ],
                         ),
-                    ],
+                        if (rev.body != null && rev.body!.isNotEmpty)
+                          Text(
+                            rev.body!,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ))
+                )
           else
-            const Text('No reviews yet. Be the first to join!', style: TextStyle(fontSize: 12, color: AppColors.disabledText)),
+            const Text(
+              'No reviews yet. Be the first to join!',
+              style: TextStyle(fontSize: 12, color: AppColors.disabledText),
+            ),
         ],
       ),
     );
@@ -767,7 +936,11 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
           const CircleAvatar(
             radius: 24,
             backgroundColor: AppColors.sage,
-            child: Icon(Icons.landscape_outlined, size: 24, color: AppColors.forest),
+            child: Icon(
+              Icons.landscape_outlined,
+              size: 24,
+              color: AppColors.forest,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -776,7 +949,10 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
               children: [
                 Text(
                   hostProfile?.fullName ?? 'PLAN E Local Host',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const Text(
                   'Verified Himalayan Guide & Local Partner',
@@ -792,7 +968,11 @@ class _ExperienceDetailScreenState extends ConsumerState<ExperienceDetailScreen>
 }
 
 class _InfoTile extends StatelessWidget {
-  const _InfoTile({required this.icon, required this.value, required this.label});
+  const _InfoTile({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
 
   final IconData icon;
   final String value;
@@ -813,8 +993,16 @@ class _InfoTile extends StatelessWidget {
         children: [
           Icon(icon, size: 22, color: AppColors.forest),
           const SizedBox(height: 4),
-          Text(value, textAlign: TextAlign.center, maxLines: 1, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-          Text(label, style: const TextStyle(fontSize: 10, color: AppColors.disabledText)),
+          Text(
+            value,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+          ),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 10, color: AppColors.disabledText),
+          ),
         ],
       ),
     );

@@ -11,6 +11,7 @@ class AppButton extends StatelessWidget {
   final IconData? icon;
   final bool isFullWidth;
   final double minHeight;
+  final double? fontSize;
 
   const AppButton({
     super.key,
@@ -21,6 +22,7 @@ class AppButton extends StatelessWidget {
     this.icon,
     this.isFullWidth = false,
     this.minHeight = AppTouchTarget.minSize,
+    this.fontSize,
   });
 
   const AppButton.secondary({
@@ -31,6 +33,7 @@ class AppButton extends StatelessWidget {
     this.icon,
     this.isFullWidth = false,
     this.minHeight = AppTouchTarget.minSize,
+    this.fontSize,
   }) : variant = AppButtonVariant.secondary;
 
   const AppButton.text({
@@ -41,11 +44,13 @@ class AppButton extends StatelessWidget {
     this.icon,
     this.isFullWidth = false,
     this.minHeight = AppTouchTarget.minSize,
+    this.fontSize,
   }) : variant = AppButtonVariant.text;
 
   @override
   Widget build(BuildContext context) {
-    final bool isDisabled = variant == AppButtonVariant.disabled || onPressed == null || isLoading;
+    final bool isDisabled =
+        variant == AppButtonVariant.disabled || onPressed == null || isLoading;
 
     final Widget content = isLoading
         ? SizedBox(
@@ -54,7 +59,9 @@ class AppButton extends StatelessWidget {
             child: CircularProgressIndicator(
               strokeWidth: 2.5,
               valueColor: AlwaysStoppedAnimation<Color>(
-                variant == AppButtonVariant.primary ? AppColors.ivory : AppColors.forest,
+                variant == AppButtonVariant.primary
+                    ? AppColors.ivory
+                    : AppColors.forest,
               ),
             ),
           )
@@ -66,11 +73,16 @@ class AppButton extends StatelessWidget {
                 Icon(icon, size: 20.0),
                 const SizedBox(width: AppSpacing.sm8),
               ],
-              Text(
-                label,
-                style: AppTypography.bodyLarge.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: _getTextColor(isDisabled),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.bodyLarge.copyWith(
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.w600,
+                    color: _getTextColor(isDisabled),
+                  ),
                 ),
               ),
             ],
@@ -92,7 +104,10 @@ class AppButton extends StatelessWidget {
             foregroundColor: AppColors.ivory,
             disabledBackgroundColor: AppColors.disabledBackground,
             disabledForegroundColor: AppColors.disabledText,
-            minimumSize: Size(isFullWidth ? double.infinity : AppTouchTarget.minSize, minHeight),
+            minimumSize: Size(
+              isFullWidth ? double.infinity : AppTouchTarget.minSize,
+              minHeight,
+            ),
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.xxl24,
               vertical: AppSpacing.md12,
@@ -112,7 +127,10 @@ class AppButton extends StatelessWidget {
             foregroundColor: AppColors.forest,
             disabledForegroundColor: AppColors.disabledText,
             backgroundColor: AppColors.white,
-            minimumSize: Size(isFullWidth ? double.infinity : AppTouchTarget.minSize, minHeight),
+            minimumSize: Size(
+              isFullWidth ? double.infinity : AppTouchTarget.minSize,
+              minHeight,
+            ),
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.xxl24,
               vertical: AppSpacing.md12,
@@ -135,7 +153,10 @@ class AppButton extends StatelessWidget {
           style: TextButton.styleFrom(
             foregroundColor: AppColors.forest,
             disabledForegroundColor: AppColors.disabledText,
-            minimumSize: Size(isFullWidth ? double.infinity : AppTouchTarget.minSize, minHeight),
+            minimumSize: Size(
+              isFullWidth ? double.infinity : AppTouchTarget.minSize,
+              minHeight,
+            ),
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.lg16,
               vertical: AppSpacing.sm8,
@@ -154,7 +175,10 @@ class AppButton extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.disabledBackground,
             foregroundColor: AppColors.disabledText,
-            minimumSize: Size(isFullWidth ? double.infinity : AppTouchTarget.minSize, minHeight),
+            minimumSize: Size(
+              isFullWidth ? double.infinity : AppTouchTarget.minSize,
+              minHeight,
+            ),
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.xxl24,
               vertical: AppSpacing.md12,
@@ -170,7 +194,9 @@ class AppButton extends StatelessWidget {
 
     return ConstrainedBox(
       constraints: constraints,
-      child: isFullWidth ? SizedBox(width: double.infinity, child: buttonWidget) : buttonWidget,
+      child: isFullWidth
+          ? SizedBox(width: double.infinity, child: buttonWidget)
+          : buttonWidget,
     );
   }
 

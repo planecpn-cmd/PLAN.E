@@ -25,6 +25,12 @@ class CollectionScreen extends ConsumerWidget {
         return 'Local Homestays';
       case 'community':
         return 'Community-Led Tours';
+      case 'adventure-together':
+        return 'Adventure Together';
+      case 'mind-soul':
+        return 'Mind & Soul';
+      case 'give-back':
+        return 'Give Back';
       default:
         if (slug.isNotEmpty) {
           return '${slug[0].toUpperCase()}${slug.substring(1)} Collection';
@@ -43,6 +49,12 @@ class CollectionScreen extends ConsumerWidget {
         return 'Authentic village homestays and community warm welcomes';
       case 'community':
         return 'Sustainable tours directly benefiting local Nepalese guides';
+      case 'adventure-together':
+        return 'Experiences made for couples, friends, families, and groups';
+      case 'mind-soul':
+        return 'Wellness, yoga, meditation, nature, and restorative escapes';
+      case 'give-back':
+        return 'Community service, conservation, and positive local impact';
       default:
         return 'Explore our curated list of authentic experiences';
     }
@@ -52,7 +64,15 @@ class CollectionScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     // If slug is one of the rail types, we can use homeRailsProvider or experiencesProvider
-    final isRailType = ['recommended', 'trending', 'homestays', 'community'].contains(slug.toLowerCase());
+    final isRailType = [
+      'recommended',
+      'trending',
+      'homestays',
+      'community',
+      'adventure-together',
+      'mind-soul',
+      'give-back',
+    ].contains(slug.toLowerCase());
 
     if (isRailType) {
       final homeRailsAsync = ref.watch(homeRailsProvider);
@@ -75,14 +95,17 @@ class CollectionScreen extends ConsumerWidget {
           ),
           title: Text(
             _collectionTitle,
-            style: AppTypography.headingMedium.copyWith(color: AppColors.forest),
+            style: AppTypography.headingMedium.copyWith(
+              color: AppColors.forest,
+            ),
           ),
         ),
         body: SafeArea(
           child: AsyncValueView<Map<String, List<Experience>>>(
             value: homeRailsAsync,
             onRetry: () => ref.refresh(homeRailsProvider),
-            isEmpty: (railsMap) => (railsMap[slug.toLowerCase()]?.isEmpty ?? true),
+            isEmpty: (railsMap) =>
+                (railsMap[slug.toLowerCase()]?.isEmpty ?? true),
             emptyView: EmptyStateView(
               title: l10n.noExperiencesFound,
               description: 'There are currently no items in this collection.',
@@ -98,9 +121,7 @@ class CollectionScreen extends ConsumerWidget {
       );
     } else {
       // Fallback filter map for general category / region / tag slug
-      final filterMap = <String, String?>{
-        'category_id': slug,
-      };
+      final filterMap = <String, String?>{'category_id': slug};
       final experiencesAsync = ref.watch(experiencesProvider(filterMap));
 
       return Scaffold(
@@ -122,7 +143,9 @@ class CollectionScreen extends ConsumerWidget {
           ),
           title: Text(
             _collectionTitle,
-            style: AppTypography.headingMedium.copyWith(color: AppColors.forest),
+            style: AppTypography.headingMedium.copyWith(
+              color: AppColors.forest,
+            ),
           ),
         ),
         body: SafeArea(
@@ -147,7 +170,8 @@ class CollectionScreen extends ConsumerWidget {
     return ListView.separated(
       padding: AppSpacing.screenPadding,
       itemCount: experiences.length + 1,
-      separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.lg16),
+      separatorBuilder: (context, index) =>
+          const SizedBox(height: AppSpacing.lg16),
       itemBuilder: (context, index) {
         if (index == 0) {
           return Padding(
@@ -157,7 +181,9 @@ class CollectionScreen extends ConsumerWidget {
               children: [
                 Text(
                   _collectionSubtitle,
-                  style: AppTypography.bodyMedium.copyWith(color: AppColors.disabledText),
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.disabledText,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.xs4),
                 Text(
@@ -188,5 +214,3 @@ class CollectionScreen extends ConsumerWidget {
     );
   }
 }
-
-

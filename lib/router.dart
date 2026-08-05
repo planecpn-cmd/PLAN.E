@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
+import 'theme/tokens.dart';
 import 'features/onboarding/splash_screen.dart';
 import 'features/onboarding/onboarding_slide_screen.dart';
 import 'features/onboarding/interests_screen.dart';
@@ -50,16 +50,14 @@ import 'features/host/application_submitted_screen.dart';
 import 'features/dev/routes_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
-final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> _shellNavigatorKey =
+    GlobalKey<NavigatorState>();
 
 final GoRouter router = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/',
   routes: [
-    GoRoute(
-      path: '/',
-      builder: (context, state) => const SplashScreen(),
-    ),
+    GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
     GoRoute(
       path: '/dev/routes',
       builder: (context, state) => const DevRoutesScreen(),
@@ -104,25 +102,75 @@ final GoRouter router = GoRouter(
       navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) {
         return Scaffold(
+          extendBody: true,
           body: child,
-          bottomNavigationBar: BottomNavigationBar(
-            currentIndex: _calculateSelectedIndex(state.uri.path),
-            onTap: (index) => _onItemTapped(index, context),
-            items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-              BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Explore'),
-              BottomNavigationBarItem(icon: Icon(Icons.event_note), label: 'Plans'),
-              BottomNavigationBarItem(icon: Icon(Icons.card_travel), label: 'Trips'),
-              BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-            ],
+          bottomNavigationBar: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+              child: Container(
+                height: 58,
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: AppColors.borderSubtle, width: 1.0),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x18000000),
+                      blurRadius: 16,
+                      spreadRadius: 0,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(30),
+                  child: BottomNavigationBar(
+                    currentIndex: _calculateSelectedIndex(state.uri.path),
+                    onTap: (index) => _onItemTapped(index, context),
+                    elevation: 0,
+                    backgroundColor: AppColors.white,
+                    selectedItemColor: AppColors.forest,
+                    unselectedItemColor: AppColors.ink.withValues(alpha: 0.45),
+                    type: BottomNavigationBarType.fixed,
+                    showSelectedLabels: false,
+                    showUnselectedLabels: false,
+                    iconSize: 26,
+                    items: const [
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.home_outlined),
+                        activeIcon: Icon(Icons.home),
+                        label: '',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.explore_outlined),
+                        activeIcon: Icon(Icons.explore),
+                        label: '',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.event_note_outlined),
+                        activeIcon: Icon(Icons.event_note),
+                        label: '',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.card_travel_outlined),
+                        activeIcon: Icon(Icons.card_travel),
+                        label: '',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.person_outline),
+                        activeIcon: Icon(Icons.person),
+                        label: '',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         );
       },
       routes: [
-        GoRoute(
-          path: '/home',
-          builder: (context, state) => const HomeScreen(),
-        ),
+        GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
         GoRoute(
           path: '/explore',
           builder: (context, state) => const ExploreScreen(),
@@ -143,55 +191,64 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: '/search',
-      builder: (context, state) => const SearchResultsScreen(),
+      builder: (context, state) => SearchResultsScreen(
+        initialQuery: state.uri.queryParameters['query'],
+        initialCategoryId: state.uri.queryParameters['category_id'],
+        initialRegionId: state.uri.queryParameters['region_id'],
+        initialDifficulty: state.uri.queryParameters['difficulty'],
+        initialSortBy: state.uri.queryParameters['sort_by'],
+      ),
     ),
     GoRoute(
       path: '/collection/:slug',
-      builder: (context, state) => CollectionScreen(slug: state.pathParameters['slug'] ?? ''),
+      builder: (context, state) =>
+          CollectionScreen(slug: state.pathParameters['slug'] ?? ''),
     ),
-    GoRoute(
-      path: '/filter',
-      builder: (context, state) => const FilterSheet(),
-    ),
+    GoRoute(path: '/filter', builder: (context, state) => const FilterSheet()),
     GoRoute(
       path: '/experience/:id',
-      builder: (context, state) => ExperienceDetailScreen(id: state.pathParameters['id'] ?? ''),
+      builder: (context, state) =>
+          ExperienceDetailScreen(id: state.pathParameters['id'] ?? ''),
     ),
-    GoRoute(
-      path: '/map',
-      builder: (context, state) => const MapScreen(),
-    ),
+    GoRoute(path: '/map', builder: (context, state) => const MapScreen()),
     GoRoute(
       path: '/booking/:id',
-      builder: (context, state) => BookingScreen(experienceId: state.pathParameters['id'] ?? ''),
+      builder: (context, state) =>
+          BookingScreen(experienceId: state.pathParameters['id'] ?? ''),
     ),
     GoRoute(
       path: '/booking/confirmation/:bookingId',
-      builder: (context, state) => ConfirmationScreen(bookingId: state.pathParameters['bookingId'] ?? ''),
+      builder: (context, state) => ConfirmationScreen(
+        bookingId: state.pathParameters['bookingId'] ?? '',
+      ),
     ),
-    GoRoute(
-      path: '/saved',
-      builder: (context, state) => const SavedScreen(),
-    ),
+    GoRoute(path: '/saved', builder: (context, state) => const SavedScreen()),
     GoRoute(
       path: '/itinerary/:bookingId',
-      builder: (context, state) => ItineraryScreen(bookingId: state.pathParameters['bookingId'] ?? ''),
+      builder: (context, state) =>
+          ItineraryScreen(bookingId: state.pathParameters['bookingId'] ?? ''),
     ),
     GoRoute(
       path: '/chat/:bookingId',
-      builder: (context, state) => TripChatScreen(bookingId: state.pathParameters['bookingId'] ?? ''),
+      builder: (context, state) =>
+          TripChatScreen(bookingId: state.pathParameters['bookingId'] ?? ''),
     ),
     GoRoute(
       path: '/gear/:bookingId',
-      builder: (context, state) => GearChecklistScreen(bookingId: state.pathParameters['bookingId'] ?? ''),
+      builder: (context, state) => GearChecklistScreen(
+        bookingId: state.pathParameters['bookingId'] ?? '',
+      ),
     ),
     GoRoute(
       path: '/budget/:bookingId',
-      builder: (context, state) => BudgetTrackerScreen(bookingId: state.pathParameters['bookingId'] ?? ''),
+      builder: (context, state) => BudgetTrackerScreen(
+        bookingId: state.pathParameters['bookingId'] ?? '',
+      ),
     ),
     GoRoute(
       path: '/review/:bookingId',
-      builder: (context, state) => LeaveReviewScreen(bookingId: state.pathParameters['bookingId'] ?? ''),
+      builder: (context, state) =>
+          LeaveReviewScreen(bookingId: state.pathParameters['bookingId'] ?? ''),
     ),
     GoRoute(
       path: '/review/submitted',

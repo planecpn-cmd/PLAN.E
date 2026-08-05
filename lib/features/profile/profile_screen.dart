@@ -37,7 +37,7 @@ class ProfileScreen extends ConsumerWidget {
               final UserRole role = profile?.role ?? UserRole.traveler;
 
               return SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 26),
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 100),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

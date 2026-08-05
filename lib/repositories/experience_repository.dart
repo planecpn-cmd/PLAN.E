@@ -36,7 +36,8 @@ class ExperienceRepository {
 
       if (response.status == 200 && response.data != null) {
         final data = response.data as Map<String, dynamic>;
-        final List<dynamic> experiencesJson = data['experiences'] as List<dynamic>? ?? [];
+        final List<dynamic> experiencesJson =
+            data['experiences'] as List<dynamic>? ?? [];
         return experiencesJson
             .map((json) => Experience.fromJson(json as Map<String, dynamic>))
             .toList();
@@ -46,7 +47,10 @@ class ExperienceRepository {
     }
 
     // 2. Fallback to direct PostgREST query if Edge Function is offline/unreachable
-    dynamic query = _client.from('experiences').select().eq('status', 'published');
+    dynamic query = _client
+        .from('experiences')
+        .select()
+        .eq('status', 'published');
 
     if (categoryId != null && categoryId.isNotEmpty) {
       query = query.eq('category_id', categoryId);
@@ -64,7 +68,12 @@ class ExperienceRepository {
       query = query.lte('price_paisa', maxPricePaisa);
     }
     if (searchQuery != null && searchQuery.trim().isNotEmpty) {
-      query = query.textSearch('search_tsv', searchQuery.trim());
+      query = query.textSearch(
+        'search_tsv',
+        searchQuery.trim(),
+        config: 'english',
+        type: TextSearchType.websearch,
+      );
     }
 
     if (sortBy == 'price_asc') {
@@ -81,7 +90,9 @@ class ExperienceRepository {
 
     final response = await query.range(offset, offset + limit - 1);
     final List<dynamic> data = response as List<dynamic>;
-    return data.map((json) => Experience.fromJson(json as Map<String, dynamic>)).toList();
+    return data
+        .map((json) => Experience.fromJson(json as Map<String, dynamic>))
+        .toList();
   }
 
   Future<Experience?> getExperienceById(String id) async {
@@ -96,14 +107,119 @@ class ExperienceRepository {
   }
 
   Future<List<Experience>> getHomeRailExperiences(String railType) async {
+    final rails = await getHomeRails();
+    return rails[railType] ?? const [];
+  }
+
+  Future<Map<String, List<Experience>>> getHomeRails() async {
+    final categoriesResponse = await _client
+        .from('categories')
+        .select('id, slug');
+    final categorySlugs = <String, String>{
+      for (final category in categoriesResponse as List<dynamic>)
+        (category as Map<String, dynamic>)['id'] as String:
+            category['slug'] as String,
+    };
+
     final response = await _client
         .from('experiences')
         .select()
         .eq('status', 'published')
         .order('rating_avg', ascending: false)
-        .limit(10);
+        .limit(50);
 
     final List<dynamic> data = response as List<dynamic>;
-    return data.map((json) => Experience.fromJson(json as Map<String, dynamic>)).toList();
+    final experiences = data
+        .map((json) => Experience.fromJson(json as Map<String, dynamic>))
+        .toList();
+
+    String categoryOf(Experience experience) =>
+        categorySlugs[experience.categoryId] ?? '';
+
+    String searchableText(Experience experience) => [
+      experience.title,
+      experience.summary ?? '',
+      experience.description ?? '',
+      ...experience.thingsToKnow,
+    ].join(' ').toLowerCase();
+
+    bool containsAny(Experience experience, List<String> terms) {
+      final text = searchableText(experience);
+      return terms.any(text.contains);
+    }
+
+    List<Experience> take(Iterable<Experience> source) =>
+        source.take(10).toList(growable: false);
+
+    final trending = [...experiences]
+      ..sort((a, b) => b.ratingCount.compareTo(a.ratingCount));
+
+    return {
+      'recommended': take(experiences),
+      'trending': take(trending),
+      'homestays': take(
+        experiences.where((experience) => categoryOf(experience) == 'homestay'),
+      ),
+      'community': take(
+        experiences.where(
+          (experience) => containsAny(experience, const [
+            'community',
+            'local women',
+            'local family',
+            'cooperative',
+          ]),
+        ),
+      ),
+      'adventure-together': take(
+        experiences.where(
+          (experience) => containsAny(experience, const [
+            'family',
+            'group',
+            'tandem',
+            'rafting',
+            'camping',
+            'safari',
+            'day out',
+            'festival',
+            'homestay',
+          ]),
+        ),
+      ),
+      'mind-soul': take(
+        experiences.where(
+          (experience) =>
+              categoryOf(experience) == 'wellness' ||
+              containsAny(experience, const [
+                'yoga',
+                'meditation',
+                'spiritual',
+                'wellness',
+                'relax',
+                'healing',
+                'peace',
+                'quiet',
+                'monastery',
+                'forest',
+              ]),
+        ),
+      ),
+      'give-back': take(
+        experiences.where(
+          (experience) =>
+              categoryOf(experience) == 'volunteering' ||
+              containsAny(experience, const [
+                'volunteer',
+                'community',
+                'conservation',
+                'environment',
+                'sustainable',
+                'empower',
+                'cooperative',
+                'organic farm',
+                'social impact',
+              ]),
+        ),
+      ),
+    };
   }
 }

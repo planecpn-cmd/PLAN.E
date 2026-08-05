@@ -151,6 +151,17 @@ abstract class AppTheme {
           borderRadius: AppRadii.borderPill,
         ),
       ),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: AppColors.white,
+        selectedItemColor: AppColors.forest,
+        unselectedItemColor: AppColors.ink.withValues(alpha: 0.5),
+        selectedIconTheme: const IconThemeData(color: AppColors.forest, size: 24),
+        unselectedIconTheme: IconThemeData(color: AppColors.ink.withValues(alpha: 0.5), size: 24),
+        selectedLabelStyle: AppTypography.caption.copyWith(fontWeight: FontWeight.w700, color: AppColors.forest),
+        unselectedLabelStyle: AppTypography.caption.copyWith(fontWeight: FontWeight.w500, color: AppColors.ink.withValues(alpha: 0.5)),
+        type: BottomNavigationBarType.fixed,
+        elevation: 8,
+      ),
     );
   }
 }

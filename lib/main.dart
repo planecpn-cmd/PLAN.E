@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/supabase_client.dart';
 import 'l10n/app_localizations.dart';
 import 'theme/app_theme.dart';
 import 'router.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AppSupabaseClient.initialize();
   runApp(
     const ProviderScope(
       child: PlanEApp(),

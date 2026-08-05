@@ -31,7 +31,7 @@ class HomeScreen extends ConsumerWidget {
             },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -46,15 +46,23 @@ class HomeScreen extends ConsumerWidget {
                             PlanELogo(fontSize: 26, centered: false),
                             SizedBox(height: 4),
                             Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.location_on, size: 16, color: AppColors.forest),
+                                Icon(
+                                  Icons.location_on,
+                                  size: 16,
+                                  color: AppColors.forest,
+                                ),
                                 SizedBox(width: 4),
-                                Text(
-                                  'Kathmandu, Nepal',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: AppColors.ink,
-                                    fontWeight: FontWeight.w500,
+                                Flexible(
+                                  child: Text(
+                                    'Kathmandu, Nepal',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppColors.ink,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -63,17 +71,25 @@ class HomeScreen extends ConsumerWidget {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.forest,
                           borderRadius: BorderRadius.circular(28),
                         ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             const CircleAvatar(
                               radius: 12,
                               backgroundColor: AppColors.white,
-                              child: Icon(Icons.local_activity, size: 14, color: AppColors.gold),
+                              child: Icon(
+                                Icons.local_activity,
+                                size: 14,
+                                color: AppColors.gold,
+                              ),
                             ),
                             const SizedBox(width: 8),
                             Text(
@@ -95,7 +111,8 @@ class HomeScreen extends ConsumerWidget {
                   SizedBox(
                     height: 240,
                     child: PlanEPhoto(
-                      imageUrl: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80',
+                      imageUrl:
+                          'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80',
                       radius: 36,
                       overlay: Container(
                         padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
@@ -113,7 +130,10 @@ class HomeScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.gold,
                                 borderRadius: BorderRadius.circular(12),
@@ -140,8 +160,9 @@ class HomeScreen extends ConsumerWidget {
                               ),
                             ),
                             const Spacer(),
-                            SizedBox(
-                              width: 140,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
                               child: AppButton(
                                 label: 'Search Treks',
                                 onPressed: () => context.push('/search'),
@@ -159,12 +180,14 @@ class HomeScreen extends ConsumerWidget {
                   AsyncValueView<Map<String, List<Experience>>>(
                     value: homeRailsAsync,
                     onRetry: () => ref.refresh(homeRailsProvider),
-                    isEmpty: (data) => data.values.every((list) => list.isEmpty),
+                    isEmpty: (data) =>
+                        data.values.every((list) => list.isEmpty),
                     emptyView: const Padding(
                       padding: EdgeInsets.all(24),
                       child: EmptyStateView(
                         title: 'No Experiences Available',
-                        description: 'Check back soon for new curated Nepal adventures.',
+                        description:
+                            'Check back soon for new curated Nepal adventures.',
                       ),
                     ),
                     data: (railsMap) {
@@ -173,11 +196,15 @@ class HomeScreen extends ConsumerWidget {
                           if (railsMap['recommended']?.isNotEmpty ?? false) ...[
                             ContentRail(
                               title: l10n.recommendedForYou,
-                              subtitle: 'Handpicked experiences based on popular journeys',
+                              subtitle:
+                                  'Handpicked experiences based on popular journeys',
                               actionLabel: l10n.seeAll,
-                              onActionTap: () => context.push('/collection/recommended'),
+                              onActionTap: () =>
+                                  context.push('/collection/recommended'),
                               items: railsMap['recommended']!
-                                  .map((exp) => _buildExperienceCard(context, exp))
+                                  .map(
+                                    (exp) => _buildExperienceCard(context, exp),
+                                  )
                                   .toList(),
                             ),
                             const SizedBox(height: 24),
@@ -185,11 +212,15 @@ class HomeScreen extends ConsumerWidget {
                           if (railsMap['trending']?.isNotEmpty ?? false) ...[
                             ContentRail(
                               title: l10n.trendingNow,
-                              subtitle: 'Most booked trips this season in Nepal',
+                              subtitle:
+                                  'Most booked trips this season in Nepal',
                               actionLabel: l10n.seeAll,
-                              onActionTap: () => context.push('/collection/trending'),
+                              onActionTap: () =>
+                                  context.push('/collection/trending'),
                               items: railsMap['trending']!
-                                  .map((exp) => _buildExperienceCard(context, exp))
+                                  .map(
+                                    (exp) => _buildExperienceCard(context, exp),
+                                  )
                                   .toList(),
                             ),
                             const SizedBox(height: 24),
@@ -199,9 +230,12 @@ class HomeScreen extends ConsumerWidget {
                               title: l10n.authenticHomestays,
                               subtitle: 'Immerse in local village hospitality',
                               actionLabel: l10n.seeAll,
-                              onActionTap: () => context.push('/collection/homestays'),
+                              onActionTap: () =>
+                                  context.push('/collection/homestays'),
                               items: railsMap['homestays']!
-                                  .map((exp) => _buildExperienceCard(context, exp))
+                                  .map(
+                                    (exp) => _buildExperienceCard(context, exp),
+                                  )
                                   .toList(),
                             ),
                             const SizedBox(height: 24),
@@ -209,11 +243,65 @@ class HomeScreen extends ConsumerWidget {
                           if (railsMap['community']?.isNotEmpty ?? false) ...[
                             ContentRail(
                               title: l10n.communityLedTours,
-                              subtitle: 'Direct impact travel supporting local communities',
+                              subtitle:
+                                  'Direct impact travel supporting local communities',
                               actionLabel: l10n.seeAll,
-                              onActionTap: () => context.push('/collection/community'),
+                              onActionTap: () =>
+                                  context.push('/collection/community'),
                               items: railsMap['community']!
-                                  .map((exp) => _buildExperienceCard(context, exp))
+                                  .map(
+                                    (exp) => _buildExperienceCard(context, exp),
+                                  )
+                                  .toList(),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+                          if (railsMap['adventure-together']?.isNotEmpty ??
+                              false) ...[
+                            ContentRail(
+                              title: 'Adventure Together',
+                              subtitle:
+                                  'Made for couples, friends, families, and groups',
+                              actionLabel: l10n.seeAll,
+                              onActionTap: () => context.push(
+                                '/collection/adventure-together',
+                              ),
+                              items: railsMap['adventure-together']!
+                                  .map(
+                                    (exp) => _buildExperienceCard(context, exp),
+                                  )
+                                  .toList(),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+                          if (railsMap['mind-soul']?.isNotEmpty ?? false) ...[
+                            ContentRail(
+                              title: 'Mind & Soul',
+                              subtitle:
+                                  'Wellness, reflection, nature, and deep relaxation',
+                              actionLabel: l10n.seeAll,
+                              onActionTap: () =>
+                                  context.push('/collection/mind-soul'),
+                              items: railsMap['mind-soul']!
+                                  .map(
+                                    (exp) => _buildExperienceCard(context, exp),
+                                  )
+                                  .toList(),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+                          if (railsMap['give-back']?.isNotEmpty ?? false) ...[
+                            ContentRail(
+                              title: 'Give Back',
+                              subtitle:
+                                  'Community, conservation, and positive local impact',
+                              actionLabel: l10n.seeAll,
+                              onActionTap: () =>
+                                  context.push('/collection/give-back'),
+                              items: railsMap['give-back']!
+                                  .map(
+                                    (exp) => _buildExperienceCard(context, exp),
+                                  )
                                   .toList(),
                             ),
                             const SizedBox(height: 24),

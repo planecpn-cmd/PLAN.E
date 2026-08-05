@@ -285,7 +285,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                             children: [
                               Text(
                                 experience.title,
-                                style: AppTypography.headingMedium.copyWith(fontWeight: FontWeight.bold),
+                                style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.bold),
                               ),
                               if (experience.locationName != null) ...[
                                 const SizedBox(height: AppSpacing.xs4),
@@ -303,7 +303,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                               const SizedBox(height: AppSpacing.md12),
                               Text(
                                 'Price per adult: ${AppFormatters.formatNpr(experience.pricePaisa)}',
-                                style: AppTypography.bodyMedium.copyWith(
+                                style: AppTypography.caption.copyWith(
                                   color: AppColors.forest,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -316,8 +316,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                         // Departure Date Selection
                         Text(
                           'Select Departure Date',
-                          style: AppTypography.headingMedium.copyWith(
-                            fontSize: 18,
+                          style: AppTypography.bodyMedium.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -349,7 +348,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                                         children: [
                                           Text(
                                             '${AppFormatters.formatTripDate(dep.startDate, pattern: 'd MMM yyyy')} - ${AppFormatters.formatTripDate(dep.endDate, pattern: 'd MMM yyyy')}',
-                                            style: AppTypography.bodyLarge.copyWith(
+                                            style: AppTypography.bodyMedium.copyWith(
                                               fontWeight: FontWeight.bold,
                                               color: AppColors.ink,
                                             ),
@@ -367,7 +366,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                                     ),
                                     Text(
                                       AppFormatters.formatNpr(adultPricePaisa),
-                                      style: AppTypography.bodyLarge.copyWith(
+                                      style: AppTypography.bodyMedium.copyWith(
                                         fontWeight: FontWeight.bold,
                                         color: AppColors.forest,
                                       ),
@@ -383,8 +382,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                         // Guest Selection Section
                         Text(
                           'Number of Guests',
-                          style: AppTypography.headingMedium.copyWith(
-                            fontSize: 18,
+                          style: AppTypography.bodyMedium.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -426,8 +424,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                         // Contact Information Form
                         Text(
                           'Primary Contact Info',
-                          style: AppTypography.headingMedium.copyWith(
-                            fontSize: 18,
+                          style: AppTypography.bodyMedium.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -481,8 +478,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                         // TEMP: client pricing, server re-price lands in Phase 7
                         Text(
                           'Price Breakdown',
-                          style: AppTypography.headingMedium.copyWith(
-                            fontSize: 18,
+                          style: AppTypography.bodyMedium.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -548,11 +544,11 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                                 children: [
                                   Text(
                                     'Total Payable',
-                                    style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+                                    style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.bold),
                                   ),
                                   Text(
                                     AppFormatters.formatNpr(totalPaisa),
-                                    style: AppTypography.headingMedium.copyWith(
+                                    style: AppTypography.bodyLarge.copyWith(
                                       color: AppColors.forest,
                                       fontWeight: FontWeight.bold,
                                     ),

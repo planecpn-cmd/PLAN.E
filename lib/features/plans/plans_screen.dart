@@ -81,7 +81,7 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
                     onRetry: () => ref.invalidate(bookingsProvider(statusQuery)),
                     data: (bookings) {
                       return ListView.separated(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
                         itemCount: bookings.length + 1,
                         separatorBuilder: (context, index) =>
                             const SizedBox(height: 14),
