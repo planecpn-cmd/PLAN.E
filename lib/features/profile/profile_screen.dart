@@ -269,6 +269,7 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
+                    const OrnamentDivider(),
                   ],
                 ),
               );

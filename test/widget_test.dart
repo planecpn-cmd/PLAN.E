@@ -9,7 +9,9 @@ void main() {
         child: PlanEApp(),
       ),
     );
-    // The splash screen renders the 'NEPAL' brand text on launch.
-    expect(find.text('NEPAL'), findsOneWidget);
+    // The splash screen wordmark animates letter-by-letter (and morphs the
+    // 'A' into a mountain icon), so it's exposed as a single a11y label
+    // rather than a literal 'NEPAL' Text widget.
+    expect(find.bySemanticsLabel('NEPAL'), findsOneWidget);
   });
 }

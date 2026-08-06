@@ -44,23 +44,26 @@ class _ExperienceDetailScreenState
 
     return Scaffold(
       backgroundColor: AppColors.ivory,
-      body: AsyncValueView<Experience?>(
-        value: experienceAsync,
-        onRetry: () => ref.refresh(experienceDetailProvider(widget.id)),
-        isEmpty: (data) => data == null,
-        emptyView: const ErrorStateView(
-          title: 'Experience Not Found',
-          message: 'The requested experience could not be loaded.',
+      body: PlanEBackground(
+        safeArea: false,
+        child: AsyncValueView<Experience?>(
+          value: experienceAsync,
+          onRetry: () => ref.refresh(experienceDetailProvider(widget.id)),
+          isEmpty: (data) => data == null,
+          emptyView: const ErrorStateView(
+            title: 'Experience Not Found',
+            message: 'The requested experience could not be loaded.',
+          ),
+          data: (experience) {
+            if (experience == null) {
+              return const ErrorStateView(
+                title: 'Experience Not Found',
+                message: 'The requested experience could not be loaded.',
+              );
+            }
+            return _buildDetailContent(context, experience, isSaved);
+          },
         ),
-        data: (experience) {
-          if (experience == null) {
-            return const ErrorStateView(
-              title: 'Experience Not Found',
-              message: 'The requested experience could not be loaded.',
-            );
-          }
-          return _buildDetailContent(context, experience, isSaved);
-        },
       ),
       bottomNavigationBar: experienceAsync.asData?.value != null
           ? SafeArea(

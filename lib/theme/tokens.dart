@@ -29,6 +29,7 @@ abstract class AppColors {
   static const Color disabledBackground = Color(0xFFE0E0E0);
   static const Color disabledText = Color(0xFF8D9993);
   static const Color overlay = Color(0x66000000);
+  static const Color shadow = Color(0x18000000);
   static const Color cardBackground = Color(0xFFFFFFFF);
   static const Color cardBackgroundAlt = Color(0xFFFAF8F5);
   static const Color skeletonBase = Color(0xFFE3E8E4);

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'core/onboarding_preferences.dart';
 import 'theme/tokens.dart';
 import 'features/onboarding/splash_screen.dart';
+import 'features/onboarding/welcome_screen.dart';
 import 'features/onboarding/onboarding_slide_screen.dart';
 import 'features/onboarding/interests_screen.dart';
 
@@ -69,6 +70,10 @@ final GoRouter router = GoRouter(
   },
   routes: [
     GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
+    GoRoute(
+      path: '/welcome',
+      builder: (context, state) => const WelcomeScreen(),
+    ),
     GoRoute(
       path: '/dev/routes',
       builder: (context, state) => const DevRoutesScreen(),

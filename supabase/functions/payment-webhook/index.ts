@@ -21,15 +21,28 @@ serve(async (req) => {
       idempotency_key,
       booking_id,
       provider = "khalti",
-      provider_ref,
-      status = "paid",
-      raw_response = {},
+      pidx,
+      transaction_uuid,
       participants = [],
     } = body;
 
     if (!idempotency_key && !booking_id) {
       return new Response(
         JSON.stringify({ error: "Either idempotency_key or booking_id is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const normalizedProvider = provider === "esewa" ? "esewa" : "khalti";
+    if (normalizedProvider === "khalti" && !pidx) {
+      return new Response(
+        JSON.stringify({ error: "pidx is required to verify a Khalti payment" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (normalizedProvider === "esewa" && !transaction_uuid) {
+      return new Response(
+        JSON.stringify({ error: "transaction_uuid is required to verify an eSewa payment" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -79,7 +92,53 @@ serve(async (req) => {
       );
     }
 
-    const isPaymentSuccess = status === "paid" || status === "success" || status === "COMPLETED";
+    // 3b. Verify the payment directly with the gateway using our server-side
+    // secret. Never trust a client-supplied "paid" status — that lets anyone
+    // confirm a free booking by calling this endpoint directly.
+    let isPaymentSuccess = false;
+    let txRef = "";
+    let gatewayResponse: Record<string, unknown> = {};
+
+    if (normalizedProvider === "khalti") {
+      const khaltiSecret = Deno.env.get("KHALTI_SECRET_KEY");
+      if (!khaltiSecret) {
+        return new Response(
+          JSON.stringify({ error: "Khalti is not configured on the server" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const lookupRes = await fetch("https://khalti.com/api/v2/epayment/lookup/", {
+        method: "POST",
+        headers: {
+          Authorization: `Key ${khaltiSecret}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ pidx }),
+      });
+      const lookupData = await lookupRes.json();
+      gatewayResponse = lookupData;
+
+      isPaymentSuccess =
+        lookupRes.ok &&
+        lookupData.status === "Completed" &&
+        Number(lookupData.total_amount) === Number(payment.amount_paisa);
+      txRef = lookupData.transaction_id || pidx;
+    } else {
+      const productCode = Deno.env.get("ESEWA_MERCHANT_CODE") ?? "EPAYTEST";
+      const totalAmount = (payment.amount_paisa / 100).toFixed(2);
+      const statusUrl = new URL("https://rc.esewa.com.np/api/epay/transaction/status/");
+      statusUrl.searchParams.set("product_code", productCode);
+      statusUrl.searchParams.set("total_amount", totalAmount);
+      statusUrl.searchParams.set("transaction_uuid", transaction_uuid);
+
+      const statusRes = await fetch(statusUrl.toString());
+      const statusData = await statusRes.json();
+      gatewayResponse = statusData;
+
+      isPaymentSuccess = statusRes.ok && statusData.status === "COMPLETE";
+      txRef = statusData.ref_id || transaction_uuid;
+    }
 
     if (!isPaymentSuccess) {
       // Mark payment as failed
@@ -87,7 +146,7 @@ serve(async (req) => {
         .from("payments")
         .update({
           status: "failed",
-          raw_response: raw_response,
+          raw_response: { ...payment.raw_response, ...gatewayResponse },
           updated_at: new Date().toISOString(),
         })
         .eq("id", payment.id);
@@ -98,16 +157,14 @@ serve(async (req) => {
       );
     }
 
-    const txRef = provider_ref || `TXN-${idempotency_key || booking.id}`;
-
     // 4. Update Payments -> 'paid'
     const { error: updatePaymentError } = await supabaseClient
       .from("payments")
       .update({
         status: "paid",
-        provider: provider === "esewa" ? "esewa" : "khalti",
+        provider: normalizedProvider,
         provider_ref: txRef,
-        raw_response: raw_response,
+        raw_response: { ...payment.raw_response, ...gatewayResponse },
         paid_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })

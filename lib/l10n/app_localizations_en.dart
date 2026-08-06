@@ -12,7 +12,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'PLAN E';
 
   @override
-  String get tagline => 'Authentic Nepal Experiences';
+  String get tagline => 'Plan Your Experience';
+
+  @override
+  String get splashFooter => 'powered by CodePeak Nepal';
 
   @override
   String get getStarted => 'Get Started';
@@ -24,19 +27,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectInterests => 'Select Interests';
 
   @override
-  String get selectMin3 => 'Select at least 3 interests to personalize your experience';
+  String get selectMin3 =>
+      'Select at least 3 interests to personalize your experience';
 
   @override
   String get continueText => 'Continue';
 
   @override
-  String get myReviews => 'My Reviews';
-
-  @override
   String get comingSoonTitle => 'Feature Coming Soon';
 
   @override
-  String get comingSoonDesc => 'This feature is planned for Stage B development. Stay tuned for future updates!';
+  String get comingSoonDesc =>
+      'This feature is planned for Stage B development. Stay tuned for future updates!';
 
   @override
   String get close => 'Close';
@@ -117,7 +119,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noSavedExperiences => 'No Saved Experiences Yet';
 
   @override
-  String get noSavedExperiencesSub => 'Tap the heart icon on any experience to save it for later.';
+  String get noSavedExperiencesSub =>
+      'Tap the heart icon on any experience to save it for later.';
 
   @override
   String get bookingForm => 'Booking Form';
@@ -261,6 +264,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings => 'Settings';
 
   @override
+  String get myReviews => 'My Reviews';
+
+  @override
   String get logout => 'Logout';
 
   @override
@@ -279,7 +285,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authRequiredTitle => 'Authentication Required';
 
   @override
-  String get authRequiredMessage => 'Please sign in or create an account to perform this action.';
+  String get authRequiredMessage =>
+      'Please sign in or create an account to perform this action.';
 
   @override
   String get overview => 'Overview';
@@ -330,7 +337,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcomeBack => 'Welcome Back';
 
   @override
-  String get loginSubtitle => 'Log in to manage your bookings and saved Nepal itineraries.';
+  String get loginSubtitle =>
+      'Log in to manage your bookings and saved Nepal itineraries.';
 
   @override
   String get emailOrPhoneLabel => 'Email or Phone Number';
@@ -342,7 +350,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get resetLinkSent => 'Password reset instructions sent!';
 
   @override
-  String get forgotPasswordSubtitle => 'Enter your email or phone to receive a password reset link.';
+  String get forgotPasswordSubtitle =>
+      'Enter your email or phone to receive a password reset link.';
 
   @override
   String get sendResetLink => 'Send Reset Link';
@@ -351,13 +360,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get resetResultTitle => 'Password Reset Email Sent';
 
   @override
-  String get resetResultSubtitle => 'Please check your inbox and follow the instructions to reset your password.';
+  String get resetResultSubtitle =>
+      'Please check your inbox and follow the instructions to reset your password.';
 
   @override
   String get signInToContinue => 'Sign In to Continue';
 
   @override
-  String get signUpSubtitle => 'Join PLAN E to book authentic experiences across Nepal.';
+  String get signUpSubtitle =>
+      'Join PLAN E to book authentic experiences across Nepal.';
 
   @override
   String get confirmPasswordLabel => 'Confirm Password';
@@ -366,19 +377,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingSlide1Title => 'Discover Local Culture';
 
   @override
-  String get onboardingSlide1Desc => 'Authentic Nepal experiences hosted by passionate locals';
+  String get onboardingSlide1Desc =>
+      'Authentic Nepal experiences hosted by passionate locals';
 
   @override
   String get onboardingSlide2Title => 'Trek Off the Beaten Path';
 
   @override
-  String get onboardingSlide2Desc => 'Explore hidden trails, sacred mountain valleys, and ancient villages';
+  String get onboardingSlide2Desc =>
+      'Explore hidden trails, sacred mountain valleys, and ancient villages';
 
   @override
   String get onboardingSlide3Title => 'Support Local Communities';
 
   @override
-  String get onboardingSlide3Desc => 'Every booking directly empowers rural families and artisans';
+  String get onboardingSlide3Desc =>
+      'Every booking directly empowers rural families and artisans';
 
   @override
   String get skipText => 'Skip';
@@ -390,10 +404,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeHeroTitle => 'Discover Authentic Nepal';
 
   @override
-  String get homeHeroSubtitle => 'Connect with local hosts, homestays & mountain guides';
+  String get homeHeroSubtitle =>
+      'Connect with local hosts, homestays & mountain guides';
 
   @override
-  String get railRecommendedSub => 'Handpicked experiences based on popular journeys';
+  String get railRecommendedSub =>
+      'Handpicked experiences based on popular journeys';
 
   @override
   String get railTrendingSub => 'Most booked trips this season in Nepal';
@@ -402,19 +418,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get railHomestaysSub => 'Immerse in local village hospitality';
 
   @override
-  String get railCommunitySub => 'Direct impact travel supporting local communities';
+  String get railCommunitySub =>
+      'Direct impact travel supporting local communities';
 
   @override
   String get regionsSubtitle => 'From Annapurna circuits to Everest highlands';
 
   @override
-  String get categoriesSubtitle => 'Find journeys tailored to your adventure style';
+  String get categoriesSubtitle =>
+      'Find journeys tailored to your adventure style';
 
   @override
   String get addressCopied => 'Meeting point address copied to clipboard';
 
   @override
-  String get noSearchResultsSub => 'No results match your search or filter settings.';
+  String get noSearchResultsSub =>
+      'No results match your search or filter settings.';
 
   @override
   String get allLevels => 'All Levels';
@@ -435,19 +454,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get collectionDefaultTitle => 'Experience Collection';
 
   @override
-  String get collectionRecommendedSub => 'Handpicked journeys customized for travelers in Nepal';
+  String get collectionRecommendedSub =>
+      'Handpicked journeys customized for travelers in Nepal';
 
   @override
-  String get collectionTrendingSub => 'Most booked and highest rated experiences this month';
+  String get collectionTrendingSub =>
+      'Most booked and highest rated experiences this month';
 
   @override
-  String get collectionHomestaysSub => 'Authentic village homestays and community warm welcomes';
+  String get collectionHomestaysSub =>
+      'Authentic village homestays and community warm welcomes';
 
   @override
-  String get collectionCommunitySub => 'Sustainable tours directly benefiting local Nepalese guides';
+  String get collectionCommunitySub =>
+      'Sustainable tours directly benefiting local Nepalese guides';
 
   @override
-  String get collectionDefaultSub => 'Explore our curated list of authentic experiences';
+  String get collectionDefaultSub =>
+      'Explore our curated list of authentic experiences';
 
   @override
   String get returnHome => 'Return Home';
@@ -483,7 +507,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get experienceNotFoundTitle => 'Experience Not Found';
 
   @override
-  String get experienceNotFoundMessage => 'The requested experience could not be loaded.';
+  String get experienceNotFoundMessage =>
+      'The requested experience could not be loaded.';
 
   @override
   String get contactHostComingSoon => 'Host contact option coming soon';
@@ -516,7 +541,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get valEnterPhone => 'Please enter mobile number';
 
   @override
-  String get valValidNepaliPhone => 'Must be valid 10-digit Nepali mobile number (98XXXXXXXX)';
+  String get valValidNepaliPhone =>
+      'Must be valid 10-digit Nepali mobile number (98XXXXXXXX)';
 
   @override
   String get specialNotesLabel => 'Special Requirements / Notes (Optional)';
@@ -531,7 +557,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmDraftReservation => 'Confirm Draft Reservation';
 
   @override
-  String get paymentsComingSoonDesc => 'Online payment gateway integration (Khalti & eSewa) lands in Phase 7. You can place a draft reservation now.';
+  String get paymentsComingSoonDesc =>
+      'Online payment gateway integration (Khalti & eSewa) lands in Phase 7. You can place a draft reservation now.';
 
   @override
   String get bookingNotFound => 'Booking record not found.';
@@ -549,19 +576,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get removedFromSaved => 'Removed from saved experiences';
 
   @override
-  String get noUpcomingPlansSub => 'Your confirmed trips and upcoming adventures will appear here.';
+  String get noUpcomingPlansSub =>
+      'Your confirmed trips and upcoming adventures will appear here.';
 
   @override
-  String get noDraftPlansSub => 'Any incomplete bookings or saved drafts will appear here.';
+  String get noDraftPlansSub =>
+      'Any incomplete bookings or saved drafts will appear here.';
 
   @override
   String get draftDeletedSuccess => 'Draft deleted successfully';
 
   @override
-  String get noCompletedTripsSub => 'Trips you complete will be listed here with memories & review options.';
+  String get noCompletedTripsSub =>
+      'Trips you complete will be listed here with memories & review options.';
 
   @override
-  String get noCancelledTripsSub => 'Any cancelled trip reservations will be shown here.';
+  String get noCancelledTripsSub =>
+      'Any cancelled trip reservations will be shown here.';
 
   @override
   String get bookAgain => 'Book Again';
@@ -579,13 +610,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get itineraryNotAvailable => 'Itinerary Guide Not Available';
 
   @override
-  String get itineraryNotAvailableMessage => 'Experience data could not be loaded.';
+  String get itineraryNotAvailableMessage =>
+      'Experience data could not be loaded.';
 
   @override
   String get deleteDraftTitle => 'Delete Trip Draft';
 
   @override
-  String get deleteDraftConfirm => 'Are you sure you want to delete this trip draft? This action cannot be undone.';
+  String get deleteDraftConfirm =>
+      'Are you sure you want to delete this trip draft? This action cannot be undone.';
 
   @override
   String get rateYourExperience => 'Rate Your Experience';
@@ -624,7 +657,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get becomeLocalHostTitle => 'Become a Local Host';
 
   @override
-  String get becomeLocalHostSub => 'Share your culture, home, or guiding skills with global travelers';
+  String get becomeLocalHostSub =>
+      'Share your culture, home, or guiding skills with global travelers';
 
   @override
   String get startHostAppBtn => 'Start Host Application';
@@ -651,10 +685,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get savedPaymentGateways => 'Saved Payment Gateways';
 
   @override
-  String get paymentMethodsPageSub => 'Manage your digital wallets and cash options for booking experiences in Nepal.';
+  String get paymentMethodsPageSub =>
+      'Manage your digital wallets and cash options for booking experiences in Nepal.';
 
   @override
-  String get paymentGatewayModeActive => 'Payment gateway integration mode active';
+  String get paymentGatewayModeActive =>
+      'Payment gateway integration mode active';
 
   @override
   String get defaultTag => 'DEFAULT';
@@ -684,37 +720,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationPreferencesTitle => 'Notification Preferences';
 
   @override
-  String get notificationPreferencesSub => 'Configure how you want to be notified about trips, host messages, and special offers.';
+  String get notificationPreferencesSub =>
+      'Configure how you want to be notified about trips, host messages, and special offers.';
 
   @override
   String get notifTripStatusTitle => 'Trip Status & Reminders';
 
   @override
-  String get notifTripStatusSub => 'Real-time departure alerts, guide details, and schedule updates';
+  String get notifTripStatusSub =>
+      'Real-time departure alerts, guide details, and schedule updates';
 
   @override
   String get notifHostMessagesTitle => 'Host Messages';
 
   @override
-  String get notifHostMessagesSub => 'Instant chat messages and instructions from local hosts';
+  String get notifHostMessagesSub =>
+      'Instant chat messages and instructions from local hosts';
 
   @override
   String get notifWeatherAlertsTitle => 'Mountain Weather Alerts';
 
   @override
-  String get notifWeatherAlertsSub => 'Crucial trail weather and safety warnings for booked treks';
+  String get notifWeatherAlertsSub =>
+      'Crucial trail weather and safety warnings for booked treks';
 
   @override
   String get notifPromoOffersTitle => 'Promotional Offers';
 
   @override
-  String get notifPromoOffersSub => 'Seasonal discounts on homestays and featured treks';
+  String get notifPromoOffersSub =>
+      'Seasonal discounts on homestays and featured treks';
 
   @override
   String get notifSoundEnabledTitle => 'Sound Effects';
 
   @override
-  String get notifSoundEnabledSub => 'Play sound for incoming push notifications';
+  String get notifSoundEnabledSub =>
+      'Play sound for incoming push notifications';
 
   @override
   String get toastTripUpdatesSaved => 'Trip updates preference saved';
@@ -747,7 +789,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get needHelpTitle => 'Need help with your booking?';
 
   @override
-  String get needHelpSub => 'Our local support team in Kathmandu is available 24/7 to assist with your journey.';
+  String get needHelpSub =>
+      'Our local support team in Kathmandu is available 24/7 to assist with your journey.';
 
   @override
   String get callUs => 'Call Us';
@@ -780,7 +823,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get offlineMapsTitle => 'Offline Trail Maps';
 
   @override
-  String get offlineMapsSub => 'Download maps for offline navigation during treks';
+  String get offlineMapsSub =>
+      'Download maps for offline navigation during treks';
 
   @override
   String get clearCacheTitle => 'Clear Cache';
@@ -810,19 +854,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logOut => 'Log Out';
 
   @override
-  String get logoutConfirmation => 'Are you sure you want to log out of PLAN E?';
+  String get logoutConfirmation =>
+      'Are you sure you want to log out of PLAN E?';
 
   @override
-  String get noReviewsYetSub => 'You have not submitted any experience reviews yet.';
+  String get noReviewsYetSub =>
+      'You have not submitted any experience reviews yet.';
 
   @override
-  String get review1Title => 'Panauti Authentic Newari Homestay & Cooking Class';
+  String get review1Title =>
+      'Panauti Authentic Newari Homestay & Cooking Class';
 
   @override
   String get review1Location => 'Panauti, Kavre';
 
   @override
-  String get review1Comment => 'Unforgettable hospitality from Sunita and her family! The Yomari making experience was the highlight of our Nepal trip.';
+  String get review1Comment =>
+      'Unforgettable hospitality from Sunita and her family! The Yomari making experience was the highlight of our Nepal trip.';
 
   @override
   String get review2Title => 'Patan Heritage Alley & Pottery Workshop';
@@ -831,13 +879,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get review2Location => 'Patan, Lalitpur';
 
   @override
-  String get review2Comment => 'Master potter Dil Bahadur taught us traditional clay techniques. Great cultural insight away from tourist crowds.';
+  String get review2Comment =>
+      'Master potter Dil Bahadur taught us traditional clay techniques. Great cultural insight away from tourist crowds.';
 
   @override
   String get becomeHostHeaderTitle => 'Become a Local Host';
 
   @override
-  String get becomeHostHeaderSub => 'Share your culture, home, or guiding skills with global travelers';
+  String get becomeHostHeaderSub =>
+      'Share your culture, home, or guiding skills with global travelers';
 
   @override
   String get exploreExperiences => 'Explore Experiences';

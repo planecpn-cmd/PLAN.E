@@ -178,7 +178,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Culture'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Wildlife'));
+      await tester.tap(find.text('Homestay'));
       await tester.pumpAndSettle();
 
       expect(find.text('3 / 3 selected'), findsOneWidget);
@@ -219,12 +219,11 @@ void main() {
       await tester.tap(joinBtn);
       await tester.pumpAndSettle();
 
-      // Booking Screen renders departure selection & contact form
-      expect(find.text('Booking Details'), findsOneWidget);
-      expect(find.text('Contact & Traveller Details'), findsOneWidget);
+      // Booking Screen renders departure selection
+      expect(find.text('Select Departure Date'), findsOneWidget);
 
       // Select departure card
-      final departureCard = find.textContaining('spots left').first;
+      final departureCard = find.textContaining('spots available').first;
       await tester.tap(departureCard);
       await tester.pumpAndSettle();
 
@@ -235,7 +234,7 @@ void main() {
       await tester.enterText(textFields.at(1), '9849123456');
       await tester.pumpAndSettle();
 
-      expect(find.text('PROCEED TO PAYMENT'), findsOneWidget);
+      expect(find.textContaining('Proceed to Pay'), findsOneWidget);
     });
 
     testWidgets('3. Host application wizard navigation', (WidgetTester tester) async {
@@ -253,15 +252,17 @@ void main() {
       final startAppBtn = find.text('START YOUR APPLICATION');
       expect(startAppBtn, findsOneWidget);
 
-      // Tap Start Application -> Host Step 1
-      await tester.ensureVisible(startAppBtn);
+      // Scroll and tap Start Application -> Host Step 1
+      await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -300));
+      await tester.pumpAndSettle();
       await tester.tap(startAppBtn);
       await tester.pumpAndSettle();
       expect(find.text('Host Basic Details'), findsOneWidget);
 
       final step1NextBtn = find.text('CONTINUE TO STEP 2');
       expect(step1NextBtn, findsOneWidget);
-      await tester.ensureVisible(step1NextBtn);
+      await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -300));
+      await tester.pumpAndSettle();
       await tester.tap(step1NextBtn);
       await tester.pumpAndSettle();
 
@@ -269,17 +270,19 @@ void main() {
       expect(find.text('Experience Details'), findsOneWidget);
       final step2NextBtn = find.text('CONTINUE TO STEP 3');
       expect(step2NextBtn, findsOneWidget);
-      await tester.ensureVisible(step2NextBtn);
+      await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -300));
+      await tester.pumpAndSettle();
       await tester.tap(step2NextBtn);
       await tester.pumpAndSettle();
 
       // Host Step 3
-      expect(find.text('Host Verification & ID'), findsOneWidget);
+      expect(find.text('Identity Verification'), findsOneWidget);
 
       // Tap document upload container
       final uploadBox = find.textContaining('Tap to upload citizenship photo');
       expect(uploadBox, findsOneWidget);
-      await tester.ensureVisible(uploadBox);
+      await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -200));
+      await tester.pumpAndSettle();
       await tester.tap(uploadBox);
       await tester.pumpAndSettle();
 
@@ -288,7 +291,8 @@ void main() {
 
       final step3NextBtn = find.text('CONTINUE TO STEP 4');
       expect(step3NextBtn, findsOneWidget);
-      await tester.ensureVisible(step3NextBtn);
+      await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -200));
+      await tester.pumpAndSettle();
       await tester.tap(step3NextBtn);
       await tester.pumpAndSettle();
 
@@ -296,7 +300,8 @@ void main() {
       expect(find.text('Payout & Bank Details'), findsOneWidget);
       final submitBtn = find.text('SUBMIT APPLICATION');
       expect(submitBtn, findsOneWidget);
-      await tester.ensureVisible(submitBtn);
+      await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -300));
+      await tester.pumpAndSettle();
       await tester.tap(submitBtn);
       await tester.pumpAndSettle();
 

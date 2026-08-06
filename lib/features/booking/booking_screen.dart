@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
+import '../../core/supabase_client.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/booking_intent.dart';
 import '../../models/experience.dart';
@@ -19,6 +20,7 @@ import '../../widgets/price_bottom_bar.dart';
 import '../../widgets/progress_steps.dart';
 import '../../widgets/offline_banner.dart';
 import 'booking_providers.dart';
+import 'payment_webview_screen.dart';
 
 class BookingScreen extends ConsumerStatefulWidget {
   final String experienceId;
@@ -359,26 +361,50 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                       final navigator = Navigator.of(bottomSheetContext);
                       final messenger = ScaffoldMessenger.of(context);
                       final router = GoRouter.of(context);
-
+                      final pageNavigator = Navigator.of(context);
                       final repo = ref.read(bookingFeatureRepositoryProvider);
-                      final String providerTxRef = 'TXN-${currentGateway.toUpperCase()}-${DateTime.now().millisecondsSinceEpoch}';
 
-                      final bool confirmed = await repo.confirmPayment(
-                        bookingId: intent.bookingId,
-                        idempotencyKey: intent.idempotencyKey,
-                        provider: currentGateway,
-                        providerRef: providerTxRef,
-                      );
+                      try {
+                        final paymentUrl = await repo.initiatePayment(
+                          bookingId: intent.bookingId,
+                          provider: currentGateway,
+                        );
 
-                      if (modalCtx.mounted) {
-                        navigator.pop();
-                      }
+                        if (modalCtx.mounted) navigator.pop();
 
-                      if (confirmed) {
-                        router.go('/booking/confirmation/${intent.bookingId}');
-                      } else {
+                        final returnUri = await pageNavigator.push<Uri>(
+                          MaterialPageRoute(
+                            builder: (_) => PaymentWebviewScreen(
+                              paymentUrl: paymentUrl,
+                              returnUrlPrefix: '${AppSupabaseClient.baseUrl}/functions/v1/payment-return',
+                            ),
+                          ),
+                        );
+
+                        if (returnUri == null) {
+                          // User closed the checkout without completing payment.
+                          return;
+                        }
+
+                        final bool confirmed = await repo.verifyPayment(
+                          bookingId: intent.bookingId,
+                          idempotencyKey: intent.idempotencyKey,
+                          provider: currentGateway,
+                          pidx: returnUri.queryParameters['pidx'],
+                          transactionUuid: returnUri.queryParameters['transaction_uuid'],
+                        );
+
+                        if (confirmed) {
+                          router.go('/booking/confirmation/${intent.bookingId}');
+                        } else {
+                          messenger.showSnackBar(
+                            const SnackBar(content: Text('Payment verification failed. Please try again.')),
+                          );
+                        }
+                      } catch (e) {
+                        if (modalCtx.mounted) setModalState(() => isProcessing = false);
                         messenger.showSnackBar(
-                          const SnackBar(content: Text('Payment verification failed. Please try again.')),
+                          SnackBar(content: Text('Payment failed: $e')),
                         );
                       }
                     },

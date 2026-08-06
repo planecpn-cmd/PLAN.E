@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
+import '../../core/native_intents.dart';
 import '../../models/experience.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
@@ -344,10 +345,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       label: MapStrings.openExternalMaps,
                       icon: Icons.directions,
                       onPressed: () {
-                        AppStubSheet.show(
-                          context,
-                          title: MapStrings.openExternalMaps,
-                          featureName: 'Google Maps / Apple Maps Directions (Stage B)',
+                        NativeIntents.openDirections(
+                          lat: _centerLat ?? initialLat,
+                          lng: _centerLng ?? initialLng,
+                          label: meetingText,
                         );
                       },
                     ),

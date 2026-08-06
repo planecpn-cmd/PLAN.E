@@ -41,13 +41,17 @@ class RatingStars extends StatelessWidget {
       );
 
       if (isInteractive) {
-        return SizedBox(
-          width: AppTouchTarget.minSize,
-          height: AppTouchTarget.minSize,
-          child: IconButton(
-            onPressed: () => onRatingChanged!(starValue),
-            icon: starIcon,
-            padding: EdgeInsets.zero,
+        return Semantics(
+          button: true,
+          label: '$starValue stars',
+          child: SizedBox(
+            width: AppTouchTarget.minSize,
+            height: AppTouchTarget.minSize,
+            child: IconButton(
+              onPressed: () => onRatingChanged!(starValue),
+              icon: starIcon,
+              padding: EdgeInsets.zero,
+            ),
           ),
         );
       }
@@ -58,29 +62,32 @@ class RatingStars extends StatelessWidget {
       );
     });
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Row(mainAxisSize: MainAxisSize.min, children: stars),
-        if (showLabel) ...[
-          const SizedBox(width: AppSpacing.xs4),
-          Text(
-            rating.toStringAsFixed(1),
-            style: AppTypography.caption.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppColors.ink,
-            ),
-          ),
-          if (reviewCount != null) ...[
+    return Semantics(
+      label: 'Rating ${rating.toStringAsFixed(1)} out of $maxStars${reviewCount != null ? ", $reviewCount reviews" : ""}',
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Row(mainAxisSize: MainAxisSize.min, children: stars),
+          if (showLabel) ...[
             const SizedBox(width: AppSpacing.xs4),
             Text(
-              '($reviewCount)',
-              style: AppTypography.caption.copyWith(color: AppColors.disabledText),
+              rating.toStringAsFixed(1),
+              style: AppTypography.caption.copyWith(
+                fontWeight: FontWeight.bold,
+                color: AppColors.ink,
+              ),
             ),
+            if (reviewCount != null) ...[
+              const SizedBox(width: AppSpacing.xs4),
+              Text(
+                '($reviewCount)',
+                style: AppTypography.caption.copyWith(color: AppColors.disabledText),
+              ),
+            ],
           ],
         ],
-      ],
+      ),
     );
   }
 }

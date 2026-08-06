@@ -37,7 +37,7 @@ void main() {
   group('Phase 11 - Full Localization (Nepali ARB & AppLocalizationsNe)', () {
     test('AppLocalizationsNe provides complete Nepali translations', () {
       final l10nNe = lookupAppLocalizations(const Locale('ne'));
-      expect(l10nNe.tagline, equals('प्रामाणिक नेपाल अनुभवहरू'));
+      expect(l10nNe.tagline, equals('आफ्नो अनुभव योजना बनाउनुहोस्'));
       expect(l10nNe.getStarted, equals('सुरु गर्नुहोस्'));
       expect(l10nNe.home, equals('गृह'));
       expect(l10nNe.explore, equals('खोज्नुहोस्'));

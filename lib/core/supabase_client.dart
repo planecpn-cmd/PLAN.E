@@ -4,6 +4,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AppSupabaseClient {
   static bool _initialized = false;
+  static String _url = '';
+
+  /// Project base URL (e.g. `https://project-ref.supabase.co`), used to build
+  /// Edge Function URLs that need to be opened outside `functions.invoke`
+  /// (payment gateway checkout/return links).
+  static String get baseUrl => _url;
 
   static Future<void> initialize() async {
     if (_initialized) return;
@@ -44,6 +50,7 @@ class AppSupabaseClient {
         authFlowType: AuthFlowType.pkce,
       ),
     );
+    _url = url;
     if (url.startsWith('http://127.0.0.1') &&
         Supabase.instance.client.auth.currentUser == null &&
         demoEmail.isNotEmpty &&

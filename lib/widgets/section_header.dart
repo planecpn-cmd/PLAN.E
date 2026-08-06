@@ -41,21 +41,25 @@ class SectionHeader extends StatelessWidget {
           ),
         ),
         if (actionLabel != null && onActionTap != null)
-          ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: AppTouchTarget.minSize),
-            child: TextButton(
-              onPressed: onActionTap,
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md12,
-                  vertical: AppSpacing.sm8,
+          Semantics(
+            button: true,
+            label: actionLabel!,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: AppTouchTarget.minSize),
+              child: TextButton(
+                onPressed: onActionTap,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md12,
+                    vertical: AppSpacing.sm8,
+                  ),
                 ),
-              ),
-              child: Text(
-                actionLabel!,
-                style: AppTypography.bodyMedium.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.forest,
+                child: Text(
+                  actionLabel!,
+                  style: AppTypography.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.forest,
+                  ),
                 ),
               ),
             ),

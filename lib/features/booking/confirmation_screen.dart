@@ -217,13 +217,13 @@ class ConfirmationScreen extends ConsumerWidget {
                         _NextStepTile(
                           icon: Icons.backpack_outlined,
                           text: '2. Prepare gear checklist',
-                          onTap: () => context.go('/itinerary/${booking.id}'),
+                          onTap: () => context.go('/gear/${booking.id}'),
                         ),
                         const Divider(height: 1),
                         _NextStepTile(
                           icon: Icons.chat_bubble_outline,
                           text: '3. Message your host',
-                          onTap: () => context.go('/itinerary/${booking.id}'),
+                          onTap: () => context.go('/chat/${booking.id}'),
                         ),
                       ],
                     ),

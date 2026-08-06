@@ -36,31 +36,34 @@ class PriceBottomBar extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text(
-                        priceText,
-                        style: AppTypography.headingMedium.copyWith(
-                          color: AppColors.forest,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      if (unitText.isNotEmpty) ...[
-                        const SizedBox(width: AppSpacing.xs4),
+              child: Semantics(
+                label: 'Price $priceText $unitText',
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
                         Text(
-                          unitText,
-                          style: AppTypography.caption.copyWith(color: AppColors.disabledText),
+                          priceText,
+                          style: AppTypography.headingMedium.copyWith(
+                            color: AppColors.forest,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
+                        if (unitText.isNotEmpty) ...[
+                          const SizedBox(width: AppSpacing.xs4),
+                          Text(
+                            unitText,
+                            style: AppTypography.caption.copyWith(color: AppColors.disabledText),
+                          ),
+                        ],
                       ],
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(width: AppSpacing.lg16),

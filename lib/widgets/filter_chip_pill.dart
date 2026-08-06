@@ -17,7 +17,11 @@ class FilterChipPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: label,
+      child: ConstrainedBox(
       constraints: const BoxConstraints(minHeight: AppTouchTarget.minSize),
       child: Material(
         color: AppColors.transparent,
@@ -68,6 +72,7 @@ class FilterChipPill extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }

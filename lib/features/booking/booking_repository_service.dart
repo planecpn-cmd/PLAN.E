@@ -97,12 +97,34 @@ class BookingFeatureRepository {
     }
   }
 
-  /// Confirm payment via webhook processing
-  Future<bool> confirmPayment({
+  /// Ask the server to open a real payment session with the gateway and
+  /// return the checkout URL to load in a WebView.
+  Future<String> initiatePayment({
+    required String bookingId,
+    required String provider,
+  }) async {
+    final response = await _client.functions.invoke(
+      'initiate-payment',
+      body: {'booking_id': bookingId, 'provider': provider},
+    );
+
+    if (response.status == 200 && response.data != null) {
+      final data = Map<String, dynamic>.from(response.data as Map);
+      final url = data['payment_url'] as String?;
+      if (url != null) return url;
+    }
+    final errorMsg = response.data is Map ? (response.data['error'] ?? 'Failed to start payment') : 'Failed to start payment';
+    throw Exception(errorMsg.toString());
+  }
+
+  /// Verify payment with the gateway server-side (never trusts client-claimed
+  /// success) and confirm the booking if verification passes.
+  Future<bool> verifyPayment({
     required String bookingId,
     required String idempotencyKey,
     required String provider,
-    required String providerRef,
+    String? pidx,
+    String? transactionUuid,
   }) async {
     try {
       final response = await _client.functions.invoke(
@@ -111,14 +133,8 @@ class BookingFeatureRepository {
           'booking_id': bookingId,
           'idempotency_key': idempotencyKey,
           'provider': provider,
-          'provider_ref': providerRef,
-          'status': 'paid',
-          'raw_response': {
-            'gateway': provider,
-            'status': 'SUCCESS',
-            'tx_ref': providerRef,
-            'timestamp': DateTime.now().toIso8601String(),
-          },
+          if (pidx != null) 'pidx': pidx,
+          if (transactionUuid != null) 'transaction_uuid': transactionUuid,
         },
       );
 

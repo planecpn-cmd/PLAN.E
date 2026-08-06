@@ -13,9 +13,12 @@ class ProgressSteps extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md12),
-      child: Column(
+    final String currentStepLabel = currentStep < steps.length ? steps[currentStep] : '';
+    return Semantics(
+      label: 'Step ${currentStep + 1} of ${steps.length}: $currentStepLabel',
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md12),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
@@ -105,6 +108,7 @@ class ProgressSteps extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

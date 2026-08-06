@@ -42,41 +42,54 @@ class CounterField extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               // Decrement Button (>= 48x48 dp touch target)
-              SizedBox(
-                width: AppTouchTarget.minSize,
-                height: AppTouchTarget.minSize,
-                child: IconButton(
-                  onPressed: canDecrement ? () => onChanged(value - 1) : null,
-                  icon: const Icon(Icons.remove, size: 20),
-                  color: AppColors.forest,
-                  disabledColor: AppColors.disabledText,
-                  padding: EdgeInsets.zero,
+              Semantics(
+                button: true,
+                enabled: canDecrement,
+                label: 'Decrease ${label ?? "value"}',
+                child: SizedBox(
+                  width: AppTouchTarget.minSize,
+                  height: AppTouchTarget.minSize,
+                  child: IconButton(
+                    onPressed: canDecrement ? () => onChanged(value - 1) : null,
+                    icon: const Icon(Icons.remove, size: 20),
+                    color: AppColors.forest,
+                    disabledColor: AppColors.disabledText,
+                    padding: EdgeInsets.zero,
+                  ),
                 ),
               ),
 
               // Value Display
-              Container(
-                constraints: const BoxConstraints(minWidth: 36.0),
-                alignment: Alignment.center,
-                child: Text(
-                  '$value',
-                  style: AppTypography.bodyLarge.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.ink,
+              Semantics(
+                label: '${label ?? "value"} count is $value',
+                child: Container(
+                  constraints: const BoxConstraints(minWidth: 36.0),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '$value',
+                    style: AppTypography.bodyLarge.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.ink,
+                    ),
                   ),
                 ),
               ),
 
               // Increment Button (>= 48x48 dp touch target)
-              SizedBox(
-                width: AppTouchTarget.minSize,
-                height: AppTouchTarget.minSize,
-                child: IconButton(
-                  onPressed: canIncrement ? () => onChanged(value + 1) : null,
-                  icon: const Icon(Icons.add, size: 20),
-                  color: AppColors.forest,
-                  disabledColor: AppColors.disabledText,
-                  padding: EdgeInsets.zero,
+              Semantics(
+                button: true,
+                enabled: canIncrement,
+                label: 'Increase ${label ?? "value"}',
+                child: SizedBox(
+                  width: AppTouchTarget.minSize,
+                  height: AppTouchTarget.minSize,
+                  child: IconButton(
+                    onPressed: canIncrement ? () => onChanged(value + 1) : null,
+                    icon: const Icon(Icons.add, size: 20),
+                    color: AppColors.forest,
+                    disabledColor: AppColors.disabledText,
+                    padding: EdgeInsets.zero,
+                  ),
                 ),
               ),
             ],

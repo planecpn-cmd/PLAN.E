@@ -2,8 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/native_intents.dart';
 import '../../theme/theme.dart';
 import '../../widgets/widgets.dart';
+
+const String _kSupportPhone = '+97714000000';
+const String _kSupportEmail = 'support@plane.np';
 
 class HelpSupportScreen extends ConsumerWidget {
   const HelpSupportScreen({super.key});
@@ -65,13 +69,7 @@ class HelpSupportScreen extends ConsumerWidget {
                         child: AppButton(
                           label: 'Call Us',
                           icon: Icons.phone,
-                          onPressed: () {
-                            AppStubSheet.show(
-                              context,
-                              title: 'Call Support',
-                              featureName: 'Nepal Toll-Free Helpline (+977 1 4000000) (Stage B)',
-                            );
-                          },
+                          onPressed: () => NativeIntents.call(_kSupportPhone),
                         ),
                       ),
                       const SizedBox(width: AppSpacing.md12),
@@ -165,13 +163,10 @@ class HelpSupportScreen extends ConsumerWidget {
                   ),
                   IconButton(
                     icon: const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.forest),
-                    onPressed: () {
-                      AppStubSheet.show(
-                        context,
-                        title: 'Email Support',
-                        featureName: 'Direct Ticket Submission to support@plane.np (Stage B)',
-                      );
-                    },
+                    onPressed: () => NativeIntents.emailSupport(
+                      to: _kSupportEmail,
+                      subject: 'PLAN E Support Request',
+                    ),
                   ),
                 ],
               ),

@@ -196,10 +196,9 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
                   icon: Icons.add,
                   isFullWidth: true,
                   onPressed: () {
-                    AppStubSheet.show(
+                    AppToast.show(
                       context,
-                      title: l10n.addPaymentGatewayBtn,
-                      featureName: 'eSewa & Khalti Wallet Integration (Stage B)',
+                      message: 'Khalti, eSewa, and Cash on Arrival are already available above.',
                     );
                   },
                 ),

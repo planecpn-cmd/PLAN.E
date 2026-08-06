@@ -1,7 +1,8 @@
 {
   "@@locale": "ne",
   "appTitle": "प्लाएन ई",
-  "tagline": "प्रामाणिक नेपाल अनुभवहरू",
+  "tagline": "आफ्नो अनुभव योजना बनाउनुहोस्",
+  "splashFooter": "powered by CodePeak Nepal",
   "getStarted": "सुरु गर्नुहोस्",
   "exploreAsGuest": "अतिथि रूपमा खोज्नुहोस्",
   "selectInterests": "रुचिहरू छनोट गर्नुहोस्",

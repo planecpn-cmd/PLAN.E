@@ -109,7 +109,7 @@
   - *Status:* **DONE** (Committed: `feat(phases-6-12)`)
 
 - [x] **Phase 11** — Localization, accessibility, resilience
-  - `app_ne.arb` with complete 309 Devanagari script Nepali translations matching `app_en.arb`
+  - `app_ne.arb` with complete 286 Devanagari script Nepali translations matching `app_en.arb`
   - Bikram Sambat (BS) date helper `AppFormatters.toBikramSambat()`
   - `Semantics` tags on core feature screens & buttons
   - Non-intrusive `OfflineBanner` widget & `isOfflineProvider`
@@ -120,3 +120,11 @@
   - Android Gradle build configuration & product flavors (`com.plane.plan_e`)
   - `dart analyze --fatal-infos`: 0 issues; `flutter test`: 43/43 tests green
   - *Status:* **DONE** (Committed: `feat(phases-6-12)`)
+
+- [x] **Phase 13** — RM-09 real payment gateway + Stage B stub cleanup (2026-08-06)
+  - `initiate-payment` Edge Function: real Khalti ePayment `initiate`/`lookup` calls (live keys, secret stored server-side via `supabase secrets`, never in client/repo); `esewa-redirect` builds a signed HMAC-SHA256 eSewa ePay v2 form (sandbox `EPAYTEST` merchant — swap `ESEWA_MERCHANT_CODE`/`ESEWA_SECRET_KEY` secrets for a live eSewa merchant account when available)
+  - `payment-webhook` no longer trusts a client-supplied `status: paid` — it re-verifies with the gateway (Khalti lookup / eSewa status check) before confirming a booking. Closes a self-reported-payment hole.
+  - `PaymentWebviewScreen` (`webview_flutter`) loads the gateway checkout and intercepts the `payment-return` marker URL to extract `pidx`/`transaction_uuid`
+  - Native intents (`url_launcher`): map screen "Open in Maps" (`geo:`/Google Maps fallback), Help & Support "Call Us" (`tel:`) and "Email Support" (`mailto:`)
+  - Remaining Stage B stub, by design (no backend/provider chosen yet): Help & Support "Live Chat" — needs a live-chat provider (Intercom/Tawk.to/Twilio) decision before wiring
+  - *Status:* **DONE**
