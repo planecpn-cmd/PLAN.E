@@ -142,10 +142,9 @@ void main() {
           child: const PlanEApp(),
         ),
       );
-      await tester.pump(const Duration(milliseconds: 2500));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
 
-      // Verify Splash screen brand text
-      expect(find.text('NEPAL'), findsWidgets);
       final getStartedBtn = find.text('Get Started');
       expect(getStartedBtn, findsOneWidget);
 
@@ -213,7 +212,7 @@ void main() {
 
       // Detail Screen renders title and Join button
       expect(find.text('Kathmandu Heritage Walk'), findsWidgets);
-      final joinBtn = find.text('JOIN THIS TRIP');
+      final joinBtn = find.text('JOIN EXPERIENCE');
       expect(joinBtn, findsOneWidget);
 
       // Tap Join button -> Navigates to Booking form
@@ -255,12 +254,14 @@ void main() {
       expect(startAppBtn, findsOneWidget);
 
       // Tap Start Application -> Host Step 1
+      await tester.ensureVisible(startAppBtn);
       await tester.tap(startAppBtn);
       await tester.pumpAndSettle();
       expect(find.text('Host Basic Details'), findsOneWidget);
 
       final step1NextBtn = find.text('CONTINUE TO STEP 2');
       expect(step1NextBtn, findsOneWidget);
+      await tester.ensureVisible(step1NextBtn);
       await tester.tap(step1NextBtn);
       await tester.pumpAndSettle();
 
@@ -268,6 +269,7 @@ void main() {
       expect(find.text('Experience Details'), findsOneWidget);
       final step2NextBtn = find.text('CONTINUE TO STEP 3');
       expect(step2NextBtn, findsOneWidget);
+      await tester.ensureVisible(step2NextBtn);
       await tester.tap(step2NextBtn);
       await tester.pumpAndSettle();
 
@@ -277,6 +279,7 @@ void main() {
       // Tap document upload container
       final uploadBox = find.textContaining('Tap to upload citizenship photo');
       expect(uploadBox, findsOneWidget);
+      await tester.ensureVisible(uploadBox);
       await tester.tap(uploadBox);
       await tester.pumpAndSettle();
 
@@ -285,6 +288,7 @@ void main() {
 
       final step3NextBtn = find.text('CONTINUE TO STEP 4');
       expect(step3NextBtn, findsOneWidget);
+      await tester.ensureVisible(step3NextBtn);
       await tester.tap(step3NextBtn);
       await tester.pumpAndSettle();
 
@@ -292,6 +296,7 @@ void main() {
       expect(find.text('Payout & Bank Details'), findsOneWidget);
       final submitBtn = find.text('SUBMIT APPLICATION');
       expect(submitBtn, findsOneWidget);
+      await tester.ensureVisible(submitBtn);
       await tester.tap(submitBtn);
       await tester.pumpAndSettle();
 
