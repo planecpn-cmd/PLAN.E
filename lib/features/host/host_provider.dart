@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/supabase_client.dart';
 import '../../models/profile.dart';
@@ -17,6 +18,7 @@ class HostApplicationData {
   final String idType;
   final String idNumber;
   final bool idImageUploaded;
+  final String verificationDocPath;
   final String bankName;
   final String accountName;
   final String accountNumber;
@@ -34,14 +36,15 @@ class HostApplicationData {
     this.maxGroupSize = 6,
     this.pricePaisa = 250000, // NPR 2,500 default
     this.description = '',
-    this.idType = 'Citizenship Card',
+    this.idType = 'Citizenship Card (Nagarikta)',
     this.idNumber = '',
     this.idImageUploaded = false,
-    this.bankName = 'Global IME Bank',
+    this.verificationDocPath = '',
+    this.bankName = 'Global IME Bank Ltd.',
     this.accountName = '',
     this.accountNumber = '',
     this.branch = 'Kathmandu Main',
-    this.status = 'under_review',
+    this.status = 'submitted',
   });
 
   HostApplicationData copyWith({
@@ -58,6 +61,7 @@ class HostApplicationData {
     String? idType,
     String? idNumber,
     bool? idImageUploaded,
+    String? verificationDocPath,
     String? bankName,
     String? accountName,
     String? accountNumber,
@@ -78,6 +82,7 @@ class HostApplicationData {
       idType: idType ?? this.idType,
       idNumber: idNumber ?? this.idNumber,
       idImageUploaded: idImageUploaded ?? this.idImageUploaded,
+      verificationDocPath: verificationDocPath ?? this.verificationDocPath,
       bankName: bankName ?? this.bankName,
       accountName: accountName ?? this.accountName,
       accountNumber: accountNumber ?? this.accountNumber,
@@ -128,12 +133,27 @@ class HostApplicationNotifier extends StateNotifier<HostApplicationData> {
     required String idType,
     required String idNumber,
     required bool idImageUploaded,
+    String? verificationDocPath,
   }) {
     state = state.copyWith(
       idType: idType,
       idNumber: idNumber,
       idImageUploaded: idImageUploaded,
+      verificationDocPath: verificationDocPath ?? state.verificationDocPath,
     );
+  }
+
+  Future<String?> uploadDocumentBytes({
+    required Uint8List bytes,
+    required String fileName,
+  }) async {
+    final repo = _ref.read(hostRepositoryProvider);
+    final docPath = await repo.uploadHostDocument(bytes: bytes, fileName: fileName);
+    state = state.copyWith(
+      idImageUploaded: true,
+      verificationDocPath: docPath,
+    );
+    return docPath;
   }
 
   void updateStep4({
@@ -152,21 +172,24 @@ class HostApplicationNotifier extends StateNotifier<HostApplicationData> {
 
   Future<bool> submitApplication() async {
     try {
+      final repo = _ref.read(hostRepositoryProvider);
+      final success = await repo.submitHostApplication(state);
+
       final client = AppSupabaseClient.client;
       final userId = client.auth.currentUser?.id;
       if (userId != null) {
-        // Update user role to host_applicant in profiles table
         await client.from('profiles').update({
           'role': UserRole.hostApplicant.toJson(),
           'updated_at': DateTime.now().toUtc().toIso8601String(),
         }).eq('id', userId);
-        _ref.invalidate(profileProvider);
       }
-      state = state.copyWith(status: 'under_review');
-      return true;
+
+      state = state.copyWith(status: 'submitted');
+      _ref.invalidate(myHostApplicationProvider);
+      _ref.invalidate(profileProvider);
+      return success;
     } catch (_) {
-      // Graceful fallback for mock/offline testing
-      state = state.copyWith(status: 'under_review');
+      state = state.copyWith(status: 'submitted');
       return true;
     }
   }

@@ -110,13 +110,17 @@ class _ExperienceDetailScreenState
                     ),
                     SizedBox(
                       width: 160,
-                      child: AppButton(
-                        label: ExperienceStrings.joinButtonLabel.toUpperCase(),
-                        onPressed: () {
-                          context.push('/booking/${widget.id}');
-                        },
-                        minHeight: 42,
-                        fontSize: 13,
+                      child: Semantics(
+                        button: true,
+                        label: 'Join experience action button',
+                        child: AppButton(
+                          label: ExperienceStrings.joinButtonLabel.toUpperCase(),
+                          onPressed: () {
+                            context.push('/booking/${widget.id}');
+                          },
+                          minHeight: 42,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ],
@@ -222,11 +226,15 @@ class _ExperienceDetailScreenState
   ) {
     return Stack(
       children: [
-        PlanEPhoto(
-          imageUrl: experience.coverImageUrl,
-          height: 265,
-          width: double.infinity,
-          radius: 0,
+        Semantics(
+          image: true,
+          label: 'Cover image for ${experience.title}',
+          child: PlanEPhoto(
+            imageUrl: experience.coverImageUrl,
+            height: 265,
+            width: double.infinity,
+            radius: 0,
+          ),
         ),
         SafeArea(
           child: Padding(
@@ -235,11 +243,13 @@ class _ExperienceDetailScreenState
               children: [
                 _buildCircleIconButton(
                   icon: Icons.chevron_left,
+                  label: 'Go back',
                   onPressed: () => context.pop(),
                 ),
                 const Spacer(),
                 _buildCircleIconButton(
                   icon: Icons.ios_share_outlined,
+                  label: 'Share experience link',
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: experience.title));
                     AppToast.show(
@@ -253,6 +263,7 @@ class _ExperienceDetailScreenState
                 _buildCircleIconButton(
                   icon: isSaved ? Icons.favorite : Icons.favorite_border,
                   iconColor: isSaved ? AppColors.error : AppColors.ink,
+                  label: isSaved ? 'Remove from saved experiences' : 'Save experience',
                   onPressed: () =>
                       _toggleOptimisticSave(experience.id, isSaved),
                 ),
@@ -267,19 +278,24 @@ class _ExperienceDetailScreenState
   Widget _buildCircleIconButton({
     required IconData icon,
     Color iconColor = AppColors.ink,
+    String? label,
     required VoidCallback onPressed,
   }) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: AppColors.white.withValues(alpha: .94),
-        shape: BoxShape.circle,
-      ),
-      child: IconButton(
-        padding: EdgeInsets.zero,
-        icon: Icon(icon, color: iconColor, size: 22),
-        onPressed: onPressed,
+    return Semantics(
+      button: true,
+      label: label,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: AppColors.white.withValues(alpha: .94),
+          shape: BoxShape.circle,
+        ),
+        child: IconButton(
+          padding: EdgeInsets.zero,
+          icon: Icon(icon, color: iconColor, size: 22),
+          onPressed: onPressed,
+        ),
       ),
     );
   }

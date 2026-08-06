@@ -9,4 +9,15 @@ abstract class MapStrings {
   static const String openExternalMaps = 'Open in Maps';
   static const String mapShellTitle = 'Himalayan Topographic Map View';
   static const String coordinatesLabel = 'Coordinates';
+  static const String viewExperience = 'VIEW EXPERIENCE';
+  static const String recenterMap = 'Recenter Nepal';
+  static const String recenterKathmandu = 'Recenter Kathmandu';
+  static const String styleTopographic = 'Topographic';
+  static const String styleSatellite = 'Satellite';
+  static const String styleTerrain = 'Terrain';
+  static const String styleStandard = 'Standard';
+  static const String styleToggledPrefix = 'Map style set to';
+  static const String noExperiencesFound = 'No experiences available on map';
+  static const String selectedPinHeader = 'Selected Experience';
 }
+

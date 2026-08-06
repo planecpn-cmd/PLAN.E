@@ -139,7 +139,7 @@ class _TripsScreenState extends ConsumerState<TripsScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Completed Trip #${booking.bookingRef}',
+            booking.experience?.title ?? 'Completed Trip #${booking.bookingRef}',
             style: const TextStyle(
               fontFamily: 'serif',
               fontSize: 20,
@@ -180,11 +180,18 @@ class _TripsScreenState extends ConsumerState<TripsScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: AppButton(
-                  label: l10n.leaveReview,
-                  minHeight: 40,
-                  onPressed: () => context.push('/review/${booking.id}'),
-                ),
+                child: booking.hasReview
+                    ? const AppButton(
+                        label: 'Reviewed',
+                        variant: AppButtonVariant.disabled,
+                        minHeight: 40,
+                        onPressed: null,
+                      )
+                    : AppButton(
+                        label: l10n.leaveReview,
+                        minHeight: 40,
+                        onPressed: () => context.push('/review/${booking.id}'),
+                      ),
               ),
             ],
           ),
@@ -229,7 +236,7 @@ class _TripsScreenState extends ConsumerState<TripsScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Trip #${booking.bookingRef}',
+            booking.experience?.title ?? 'Trip #${booking.bookingRef}',
             style: const TextStyle(
               fontFamily: 'serif',
               fontSize: 20,

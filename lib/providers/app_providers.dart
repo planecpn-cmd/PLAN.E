@@ -1,16 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+export 'trip_tools_providers.dart';
 
 import '../core/supabase_client.dart';
 import '../models/booking.dart';
 import '../models/category.dart';
 import '../models/experience.dart';
+import '../models/host_application.dart';
 import '../models/profile.dart';
 import '../models/region.dart';
+import '../models/review.dart';
 import '../repositories/booking_repository.dart';
 import '../repositories/experience_repository.dart';
+import '../repositories/host_repository.dart';
 import '../repositories/profile_repository.dart';
 import '../repositories/recent_searches_repository.dart';
+import '../repositories/review_repository.dart';
 import '../repositories/saved_repository.dart';
 import '../repositories/taxonomy_repository.dart';
 
@@ -26,8 +31,16 @@ final bookingRepositoryProvider = Provider<BookingRepository>((ref) {
   return BookingRepository(ref.watch(supabaseClientProvider));
 });
 
+final reviewRepositoryProvider = Provider<ReviewRepository>((ref) {
+  return ReviewRepository(ref.watch(supabaseClientProvider));
+});
+
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
   return ProfileRepository(ref.watch(supabaseClientProvider));
+});
+
+final hostRepositoryProvider = Provider<HostRepository>((ref) {
+  return HostRepository(ref.watch(supabaseClientProvider));
 });
 
 final savedRepositoryProvider = Provider<SavedRepository>((ref) {
@@ -121,6 +134,16 @@ final profileProvider = FutureProvider<Profile?>((ref) async {
   return repo.getCurrentProfile();
 });
 
+final myHostApplicationProvider = FutureProvider<HostApplication?>((ref) async {
+  final repo = ref.watch(hostRepositoryProvider);
+  return repo.getHostApplication();
+});
+
+final userReviewsProvider = FutureProvider<List<Review>>((ref) async {
+  final repo = ref.watch(reviewRepositoryProvider);
+  return repo.getUserReviews();
+});
+
 // Guest & Deferred Action State
 class GuestState {
   final List<String> selectedInterests;
@@ -179,3 +202,21 @@ final deferredActionProvider =
     StateNotifierProvider<DeferredActionNotifier, DeferredAction?>((ref) {
       return DeferredActionNotifier();
     });
+
+class NetworkStateNotifier extends StateNotifier<bool> {
+  NetworkStateNotifier() : super(false);
+
+  void setOffline(bool isOffline) {
+    state = isOffline;
+  }
+
+  void toggle() {
+    state = !state;
+  }
+}
+
+final isOfflineProvider =
+    StateNotifierProvider<NetworkStateNotifier, bool>((ref) {
+      return NetworkStateNotifier();
+    });
+

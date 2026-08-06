@@ -73,4 +73,104 @@ class AppFormatters {
       return '$days ${days == 1 ? "day" : "days"} $remainingHours ${remainingHours == 1 ? "hr" : "hrs"}';
     }
   }
+
+  /// Month names in English and Nepali for Bikram Sambat.
+  static const List<String> _bsMonthsEn = [
+    'Baisakh', 'Jestha', 'Ashadh', 'Shrawan', 'Bhadra', 'Ashwin',
+    'Kartik', 'Mangsir', 'Poush', 'Magh', 'Falgun', 'Chaitra'
+  ];
+
+  static const List<String> _bsMonthsNe = [
+    'वैशाख', 'जेठ', 'असार', 'साउन', 'भदौ', 'असोज',
+    'कात्तिक', 'मंसिर', 'पुष', 'माघ', 'फागुन', 'चैत'
+  ];
+
+  /// Lookup map for BS Year starting Gregorian dates (Baisakh 1) and days in each month.
+  static const Map<int, Map<String, dynamic>> _bsData = {
+    2075: {'start': '2018-04-14', 'days': [31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30]},
+    2076: {'start': '2019-04-14', 'days': [31, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 30]},
+    2077: {'start': '2020-04-13', 'days': [31, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 31]},
+    2078: {'start': '2021-04-14', 'days': [31, 31, 31, 32, 31, 31, 30, 29, 30, 29, 30, 30]},
+    2079: {'start': '2022-04-14', 'days': [31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30]},
+    2080: {'start': '2023-04-14', 'days': [31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30]},
+    2081: {'start': '2024-04-13', 'days': [31, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 31]},
+    2082: {'start': '2025-04-14', 'days': [31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30]},
+    2083: {'start': '2026-04-14', 'days': [31, 31, 32, 32, 31, 30, 30, 29, 30, 29, 30, 30]},
+    2084: {'start': '2027-04-14', 'days': [31, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 30]},
+    2085: {'start': '2028-04-13', 'days': [31, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 31]},
+    2086: {'start': '2029-04-14', 'days': [31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30]},
+    2087: {'start': '2030-04-14', 'days': [31, 31, 32, 32, 31, 30, 30, 29, 30, 29, 30, 30]},
+    2088: {'start': '2031-04-14', 'days': [31, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 30]},
+    2089: {'start': '2032-04-13', 'days': [31, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 31]},
+    2090: {'start': '2033-04-14', 'days': [31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30]},
+  };
+
+  /// Convert standard digits to Nepali digits (0-9 -> ०-९).
+  static String toNepaliDigits(String input) {
+    const map = {
+      '0': '०', '1': '१', '2': '२', '3': '३', '4': '४',
+      '5': '५', '6': '६', '7': '७', '8': '८', '9': '९'
+    };
+    return input.split('').map((c) => map[c] ?? c).join('');
+  }
+
+  /// Convert DateTime to Bikram Sambat (BS) date display string.
+  /// Example: DateTime(2026, 8, 6) -> "21 Shrawan 2083 BS"
+  /// If nepaliScript is true -> "२१ साउन २०८३ बि.सं."
+  static String toBikramSambat(DateTime dateTime, {bool nepaliScript = false}) {
+    final DateTime ktm = toKathmandu(dateTime);
+    final DateTime ktmDateOnly = DateTime.utc(ktm.year, ktm.month, ktm.day);
+
+    int bsYear = ktm.year + 57;
+    if (!_bsData.containsKey(bsYear)) {
+      // Find matching BS year in table or fallback
+      for (final y in _bsData.keys.toList()..sort()) {
+        final start = DateTime.parse(_bsData[y]!['start'] as String);
+        if (ktmDateOnly.isBefore(start)) {
+          bsYear = y - 1;
+          break;
+        } else {
+          bsYear = y;
+        }
+      }
+    }
+
+    // Refine BS year by checking Baisakh 1
+    if (_bsData.containsKey(bsYear)) {
+      final baisakh1 = DateTime.parse(_bsData[bsYear]!['start'] as String);
+      if (ktmDateOnly.isBefore(baisakh1)) {
+        bsYear--;
+      }
+    }
+
+    if (_bsData.containsKey(bsYear)) {
+      final baisakh1 = DateTime.parse(_bsData[bsYear]!['start'] as String);
+      final daysList = List<int>.from(_bsData[bsYear]!['days'] as List);
+      int diffDays = ktmDateOnly.difference(baisakh1).inDays;
+
+      int bsMonthIdx = 0;
+      while (bsMonthIdx < 12 && diffDays >= daysList[bsMonthIdx]) {
+        diffDays -= daysList[bsMonthIdx];
+        bsMonthIdx++;
+      }
+
+      final int bsDay = diffDays + 1;
+      final String monthName = nepaliScript ? _bsMonthsNe[bsMonthIdx] : _bsMonthsEn[bsMonthIdx];
+
+      if (nepaliScript) {
+        return '${toNepaliDigits(bsDay.toString())} $monthName ${toNepaliDigits(bsYear.toString())} बि.सं.';
+      } else {
+        return '$bsDay $monthName $bsYear BS';
+      }
+    }
+
+    // Mathematical fallback for dates outside table
+    final int fallbackYear = ktm.month >= 4 && ktm.day >= 14 ? ktm.year + 57 : ktm.year + 56;
+    final int approxMonthIdx = ((ktm.month + 8) % 12);
+    final String monthName = nepaliScript ? _bsMonthsNe[approxMonthIdx] : _bsMonthsEn[approxMonthIdx];
+    if (nepaliScript) {
+      return '${toNepaliDigits(ktm.day.toString())} $monthName ${toNepaliDigits(fallbackYear.toString())} बि.सं.';
+    }
+    return '${ktm.day} $monthName $fallbackYear BS';
+  }
 }

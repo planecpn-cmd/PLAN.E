@@ -1,5 +1,4 @@
 // PL-10 Booking Form
-// TEMP: client pricing, server re-price lands in Phase 7
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
 import '../../l10n/app_localizations.dart';
+import '../../models/booking_intent.dart';
 import '../../models/experience.dart';
 import '../../models/experience_departure.dart';
 import '../../theme/theme.dart';
@@ -17,6 +17,7 @@ import '../../widgets/async_value_view.dart';
 import '../../widgets/counter_field.dart';
 import '../../widgets/price_bottom_bar.dart';
 import '../../widgets/progress_steps.dart';
+import '../../widgets/offline_banner.dart';
 import 'booking_providers.dart';
 
 class BookingScreen extends ConsumerStatefulWidget {
@@ -40,7 +41,8 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
   ExperienceDeparture? _selectedDeparture;
   int _adults = 1;
   int _children = 0;
-  bool _isCreatingBooking = false;
+  bool _isCreatingIntent = false;
+  final String _selectedGateway = 'khalti';
 
   @override
   void dispose() {
@@ -53,7 +55,6 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
   void _onDepartureSelected(ExperienceDeparture departure) {
     setState(() {
       _selectedDeparture = departure;
-      // Ensure guest counts stay within available spots
       if (_adults + _children > departure.spotsLeft) {
         _adults = 1;
         _children = 0;
@@ -61,7 +62,6 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
     });
   }
 
-  // TEMP: client pricing, server re-price lands in Phase 7
   int _calculateSubtotalPaisa(Experience experience) {
     if (_selectedDeparture == null) return 0;
     final int adultRatePaisa = _selectedDeparture!.priceOverridePaisa ?? experience.pricePaisa;
@@ -69,12 +69,11 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
     return (_adults * adultRatePaisa) + (_children * childRatePaisa);
   }
 
-  // TEMP: client pricing, server re-price lands in Phase 7
   int _calculateFeesPaisa(int subtotalPaisa) {
     return (subtotalPaisa * 0.05).round(); // 5% platform service fee
   }
 
-  void _handleProceedToPayment(Experience experience) {
+  Future<void> _handleProceedToPayment(Experience experience) async {
     if (_selectedDeparture == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context)!.selectDepartureDate)),
@@ -82,15 +81,42 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
       return;
     }
 
-    if (_formKey.currentState?.validate() ?? false) {
-      _showPaymentModalSheet(experience);
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+
+    setState(() => _isCreatingIntent = true);
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      final repo = ref.read(bookingFeatureRepositoryProvider);
+      final intent = await repo.createBookingIntent(
+        experienceId: experience.id,
+        departureId: _selectedDeparture!.id,
+        adults: _adults,
+        children: _children,
+        contactName: _nameController.text.trim(),
+        contactPhone: _phoneController.text.trim(),
+        paymentProvider: _selectedGateway,
+      );
+
+      if (mounted) {
+        setState(() => _isCreatingIntent = false);
+        _showPaymentIntentModalSheet(experience, intent);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isCreatingIntent = false);
+        messenger.showSnackBar(
+          SnackBar(content: Text('Booking intent failed: $e')),
+        );
+      }
     }
   }
 
-  void _showPaymentModalSheet(Experience experience) {
-    final subtotalPaisa = _calculateSubtotalPaisa(experience);
-    final feesPaisa = _calculateFeesPaisa(subtotalPaisa);
-    final totalPaisa = subtotalPaisa + feesPaisa;
+  void _showPaymentIntentModalSheet(Experience experience, BookingIntentResult intent) {
+    String currentGateway = _selectedGateway;
+    bool isProcessing = false;
 
     showModalBottomSheet(
       context: context,
@@ -128,13 +154,13 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                   Row(
                     children: [
                       const Icon(
-                        Icons.payments_outlined,
+                        Icons.verified_user_outlined,
                         color: AppColors.forest,
                         size: 28,
                       ),
                       const SizedBox(width: AppSpacing.sm8),
                       Text(
-                        'Payments Coming Soon',
+                        'Payment Intent Checkout',
                         style: AppTypography.headingMedium.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppColors.forest,
@@ -142,13 +168,14 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.sm8),
+                  const SizedBox(height: AppSpacing.xs4),
                   Text(
-                    'Online payment gateway integration (Khalti & eSewa) lands in Phase 7. You can place a draft reservation now.',
+                    'Server re-priced quote created. Complete payment to lock your spot.',
                     style: AppTypography.bodyMedium.copyWith(color: AppColors.ink),
                   ),
                   const SizedBox(height: AppSpacing.lg16),
 
+                  // Order Summary Card
                   AppCard(
                     backgroundColor: AppColors.cardBackgroundAlt,
                     padding: AppSpacing.paddingLg16,
@@ -170,16 +197,65 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                           'Guests: $_adults Adult${_adults > 1 ? "s" : ""}${_children > 0 ? ", $_children Child${_children > 1 ? "ren" : ""}" : ""}',
                           style: AppTypography.bodyMedium,
                         ),
-                        const Divider(height: 24, color: AppColors.borderSubtle),
+                        const Divider(height: 20, color: AppColors.borderSubtle),
+
+                        // Idempotency & Quote Expiration Metadata
+                        Container(
+                          padding: const EdgeInsets.all(AppSpacing.sm8),
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            borderRadius: BorderRadius.circular(AppRadii.sm8),
+                            border: Border.all(color: AppColors.borderSubtle),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.key_outlined, size: 14, color: AppColors.disabledText),
+                                  const SizedBox(width: AppSpacing.xs4),
+                                  Expanded(
+                                    child: Text(
+                                      'Idempotency Key: ${intent.idempotencyKey}',
+                                      style: AppTypography.caption.copyWith(
+                                        fontFamily: 'monospace',
+                                        fontSize: 11,
+                                        color: AppColors.ink,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: AppSpacing.xs4),
+                              Row(
+                                children: [
+                                  const Icon(Icons.timer_outlined, size: 14, color: AppColors.forest),
+                                  const SizedBox(width: AppSpacing.xs4),
+                                  Text(
+                                    'Quote valid for 15 mins (expires ${AppFormatters.formatTripDate(intent.quoteExpiresAt, pattern: 'HH:mm')})',
+                                    style: AppTypography.caption.copyWith(
+                                      color: AppColors.forest,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.md12),
+
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Total Amount:',
+                              'Total Amount (Server Quote):',
                               style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.bold),
                             ),
                             Text(
-                              AppFormatters.formatNpr(totalPaisa),
+                              AppFormatters.formatNpr(intent.totalPaisa),
                               style: AppTypography.headingMedium.copyWith(
                                 color: AppColors.forest,
                                 fontWeight: FontWeight.bold,
@@ -190,35 +266,121 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: AppSpacing.lg16),
+
+                  // Gateway Selection
+                  Text(
+                    'Select Payment Gateway',
+                    style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: AppSpacing.sm8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setModalState(() => currentGateway = 'khalti'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md12, horizontal: AppSpacing.sm8),
+                            decoration: BoxDecoration(
+                              color: currentGateway == 'khalti' ? AppColors.sage : AppColors.white,
+                              borderRadius: BorderRadius.circular(12.0),
+                              border: Border.all(
+                                color: currentGateway == 'khalti' ? AppColors.forest : AppColors.borderSubtle,
+                                width: 2,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  currentGateway == 'khalti' ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                                  color: currentGateway == 'khalti' ? AppColors.forest : AppColors.disabledText,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: AppSpacing.xs4),
+                                Text(
+                                  'Khalti SDK',
+                                  style: AppTypography.bodyMedium.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: currentGateway == 'khalti' ? AppColors.forest : AppColors.ink,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm8),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setModalState(() => currentGateway = 'esewa'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md12, horizontal: AppSpacing.sm8),
+                            decoration: BoxDecoration(
+                              color: currentGateway == 'esewa' ? AppColors.sage : AppColors.white,
+                              borderRadius: BorderRadius.circular(12.0),
+                              border: Border.all(
+                                color: currentGateway == 'esewa' ? AppColors.forest : AppColors.borderSubtle,
+                                width: 2,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  currentGateway == 'esewa' ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                                  color: currentGateway == 'esewa' ? AppColors.forest : AppColors.disabledText,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: AppSpacing.xs4),
+                                Text(
+                                  'eSewa Pay',
+                                  style: AppTypography.bodyMedium.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: currentGateway == 'esewa' ? AppColors.forest : AppColors.ink,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: AppSpacing.xxl24),
 
                   AppButton(
-                    label: 'Confirm Draft Reservation',
+                    label: 'Pay ${AppFormatters.formatNpr(intent.totalPaisa)} via ${currentGateway.toUpperCase()}',
                     isFullWidth: true,
-                    isLoading: _isCreatingBooking,
+                    isLoading: isProcessing,
                     onPressed: () async {
-                      setModalState(() => _isCreatingBooking = true);
-                      setState(() => _isCreatingBooking = true);
+                      setModalState(() => isProcessing = true);
 
                       final navigator = Navigator.of(bottomSheetContext);
+                      final messenger = ScaffoldMessenger.of(context);
                       final router = GoRouter.of(context);
 
                       final repo = ref.read(bookingFeatureRepositoryProvider);
-                      final booking = await repo.createBooking(
-                        experienceId: experience.id,
-                        departureId: _selectedDeparture!.id,
-                        adults: _adults,
-                        children: _children,
-                        contactName: _nameController.text.trim(),
-                        contactPhone: _phoneController.text.trim(),
-                        subtotalPaisa: subtotalPaisa,
-                        addonsPaisa: 0,
-                        feesPaisa: feesPaisa,
-                        totalPaisa: totalPaisa,
+                      final String providerTxRef = 'TXN-${currentGateway.toUpperCase()}-${DateTime.now().millisecondsSinceEpoch}';
+
+                      final bool confirmed = await repo.confirmPayment(
+                        bookingId: intent.bookingId,
+                        idempotencyKey: intent.idempotencyKey,
+                        provider: currentGateway,
+                        providerRef: providerTxRef,
                       );
 
-                      navigator.pop();
-                      router.go('/booking/confirmation/${booking.id}');
+                      if (modalCtx.mounted) {
+                        navigator.pop();
+                      }
+
+                      if (confirmed) {
+                        router.go('/booking/confirmation/${intent.bookingId}');
+                      } else {
+                        messenger.showSnackBar(
+                          const SnackBar(content: Text('Payment verification failed. Please try again.')),
+                        );
+                      }
                     },
                   ),
                   const SizedBox(height: AppSpacing.md12),
@@ -253,7 +415,6 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
           final experience = formData.experience;
           final departures = formData.departures;
 
-          // Default selected departure if null
           if (_selectedDeparture == null && departures.isNotEmpty) {
             _selectedDeparture = departures.first;
           }
@@ -266,6 +427,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
 
           return Column(
             children: [
+              const OfflineBanner(),
               const ProgressSteps(
                 currentStep: 0,
                 steps: ['Booking Details', 'Confirmation'],
@@ -474,8 +636,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                         ),
                         const SizedBox(height: AppSpacing.xl20),
 
-                        // Live Price Breakdown Section
-                        // TEMP: client pricing, server re-price lands in Phase 7
+                        // Estimated Price Breakdown Section
                         Text(
                           'Price Breakdown',
                           style: AppTypography.bodyMedium.copyWith(
@@ -543,7 +704,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    'Total Payable',
+                                    'Estimated Total',
                                     style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.bold),
                                   ),
                                   Text(
@@ -567,8 +728,8 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
               PriceBottomBar(
                 priceText: AppFormatters.formatNpr(totalPaisa),
                 unitText: 'total',
-                buttonLabel: 'Proceed to Pay',
-                onPressed: () => _handleProceedToPayment(experience),
+                buttonLabel: _isCreatingIntent ? 'Creating Quote...' : 'Proceed to Pay',
+                onPressed: _isCreatingIntent ? () {} : () => _handleProceedToPayment(experience),
               ),
             ],
           );

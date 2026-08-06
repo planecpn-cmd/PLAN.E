@@ -1,3 +1,6 @@
+import 'experience.dart';
+import 'review.dart';
+
 enum BookingStatus {
   pending,
   confirmed,
@@ -64,6 +67,8 @@ class Booking {
   final DateTime? completedAt;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final Experience? experience;
+  final Review? review;
 
   const Booking({
     required this.id,
@@ -87,9 +92,27 @@ class Booking {
     this.completedAt,
     required this.createdAt,
     required this.updatedAt,
+    this.experience,
+    this.review,
   });
 
+  bool get hasReview => review != null;
+
   factory Booking.fromJson(Map<String, dynamic> json) {
+    Experience? experience;
+    if (json['experiences'] != null && json['experiences'] is Map<String, dynamic>) {
+      experience = Experience.fromJson(json['experiences'] as Map<String, dynamic>);
+    }
+
+    Review? review;
+    if (json['reviews'] != null) {
+      if (json['reviews'] is List && (json['reviews'] as List).isNotEmpty) {
+        review = Review.fromJson((json['reviews'] as List).first as Map<String, dynamic>);
+      } else if (json['reviews'] is Map<String, dynamic>) {
+        review = Review.fromJson(json['reviews'] as Map<String, dynamic>);
+      }
+    }
+
     return Booking(
       id: json['id'] as String,
       bookingRef: json['booking_ref'] as String,
@@ -125,6 +148,8 @@ class Booking {
       updatedAt: json['updated_at'] != null
           ? DateTime.parse(json['updated_at'] as String)
           : DateTime.now(),
+      experience: experience,
+      review: review,
     );
   }
 
@@ -151,6 +176,8 @@ class Booking {
       'completed_at': completedAt?.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
+      if (experience != null) 'experiences': experience!.toJson(),
+      if (review != null) 'reviews': review!.toJson(),
     };
   }
 }

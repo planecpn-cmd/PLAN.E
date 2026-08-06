@@ -1,3 +1,5 @@
+import 'experience.dart';
+
 class Review {
   final String id;
   final String bookingId;
@@ -9,6 +11,7 @@ class Review {
   final List<String> photos;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final Experience? experience;
 
   const Review({
     required this.id,
@@ -21,9 +24,15 @@ class Review {
     this.photos = const [],
     required this.createdAt,
     required this.updatedAt,
+    this.experience,
   });
 
   factory Review.fromJson(Map<String, dynamic> json) {
+    Experience? experience;
+    if (json['experiences'] != null && json['experiences'] is Map<String, dynamic>) {
+      experience = Experience.fromJson(json['experiences'] as Map<String, dynamic>);
+    }
+
     return Review(
       id: json['id'] as String,
       bookingId: json['booking_id'] as String,
@@ -42,6 +51,7 @@ class Review {
       updatedAt: json['updated_at'] != null
           ? DateTime.parse(json['updated_at'] as String)
           : DateTime.now(),
+      experience: experience,
     );
   }
 
@@ -57,6 +67,7 @@ class Review {
       'photos': photos,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
+      if (experience != null) 'experiences': experience!.toJson(),
     };
   }
 
@@ -71,6 +82,7 @@ class Review {
     List<String>? photos,
     DateTime? createdAt,
     DateTime? updatedAt,
+    Experience? experience,
   }) {
     return Review(
       id: id ?? this.id,
@@ -83,6 +95,7 @@ class Review {
       photos: photos ?? this.photos,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      experience: experience ?? this.experience,
     );
   }
 }

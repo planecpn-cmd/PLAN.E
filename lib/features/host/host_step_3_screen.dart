@@ -1,4 +1,5 @@
 // RM-23 Host Step 3 Screen
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -19,6 +20,8 @@ class _HostStep3ScreenState extends ConsumerState<HostStep3Screen> {
   late TextEditingController _idNumberController;
   String _selectedIdType = 'Citizenship Card (Nagarikta)';
   bool _idImageUploaded = false;
+  bool _isUploading = false;
+  String? _uploadedPath;
 
   final List<String> _idTypes = const [
     'Citizenship Card (Nagarikta)',
@@ -35,6 +38,7 @@ class _HostStep3ScreenState extends ConsumerState<HostStep3Screen> {
       text: data.idNumber.isNotEmpty ? data.idNumber : '27-01-78-04829',
     );
     _idImageUploaded = data.idImageUploaded;
+    _uploadedPath = data.verificationDocPath.isNotEmpty ? data.verificationDocPath : null;
     if (_idTypes.contains(data.idType)) {
       _selectedIdType = data.idType;
     }
@@ -44,6 +48,38 @@ class _HostStep3ScreenState extends ConsumerState<HostStep3Screen> {
   void dispose() {
     _idNumberController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleDocumentUpload() async {
+    setState(() => _isUploading = true);
+    try {
+      final sampleBytes = Uint8List.fromList(List.generate(64, (i) => (i * 7) % 256));
+      final path = await ref.read(hostApplicationProvider.notifier).uploadDocumentBytes(
+            bytes: sampleBytes,
+            fileName: 'citizenship_id.png',
+          );
+      if (mounted) {
+        setState(() {
+          _idImageUploaded = true;
+          _uploadedPath = path;
+          _isUploading = false;
+        });
+        AppToast.show(
+          context,
+          message: 'Document uploaded to host-documents bucket',
+          variant: AppToastVariant.success,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isUploading = false);
+        AppToast.show(
+          context,
+          message: 'Upload failed: $e',
+          variant: AppToastVariant.error,
+        );
+      }
+    }
   }
 
   void _onNext() {
@@ -57,6 +93,7 @@ class _HostStep3ScreenState extends ConsumerState<HostStep3Screen> {
           idType: _selectedIdType,
           idNumber: _idNumberController.text.trim(),
           idImageUploaded: true,
+          verificationDocPath: _uploadedPath,
         );
 
     context.push('/host/step-4');
@@ -178,14 +215,7 @@ class _HostStep3ScreenState extends ConsumerState<HostStep3Screen> {
                       ),
                       const SizedBox(height: 6),
                       InkWell(
-                        onTap: () {
-                          setState(() => _idImageUploaded = true);
-                          AppToast.show(
-                            context,
-                            message: 'Document image uploaded successfully',
-                            variant: AppToastVariant.success,
-                          );
-                        },
+                        onTap: _isUploading ? null : _handleDocumentUpload,
                         child: Container(
                           width: double.infinity,
                           height: 110,
@@ -200,22 +230,26 @@ class _HostStep3ScreenState extends ConsumerState<HostStep3Screen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                _idImageUploaded ? Icons.check_circle : Icons.cloud_upload_outlined,
-                                size: 32,
-                                color: _idImageUploaded ? AppColors.success : AppColors.forest,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _idImageUploaded
-                                    ? 'Document Attached (Tap to change)'
-                                    : 'Tap to upload citizenship photo / PDF',
-                                style: TextStyle(
+                              if (_isUploading)
+                                const CircularProgressIndicator(color: AppColors.forest)
+                              else ...[
+                                Icon(
+                                  _idImageUploaded ? Icons.check_circle : Icons.cloud_upload_outlined,
+                                  size: 32,
                                   color: _idImageUploaded ? AppColors.success : AppColors.forest,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
                                 ),
-                              ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _idImageUploaded
+                                      ? 'Document Attached (Tap to replace in host-documents)'
+                                      : 'Tap to upload citizenship photo to host-documents',
+                                  style: TextStyle(
+                                    color: _idImageUploaded ? AppColors.success : AppColors.forest,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),

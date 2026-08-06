@@ -1,11 +1,17 @@
 // RM-11 Trip Chat
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../theme/theme.dart';
-import '../../widgets/app_button.dart';
-import '../../widgets/app_card.dart';
 
-class TripChatScreen extends StatelessWidget {
+import '../../core/format.dart';
+import '../../models/trip_message.dart';
+import '../../providers/trip_tools_providers.dart';
+import '../../theme/theme.dart';
+import '../../widgets/async_value_view.dart';
+import '../../widgets/empty_state_view.dart';
+import 'trip_tools_strings.dart';
+
+class TripChatScreen extends ConsumerStatefulWidget {
   final String bookingId;
 
   const TripChatScreen({
@@ -14,12 +20,53 @@ class TripChatScreen extends StatelessWidget {
   });
 
   @override
+  ConsumerState<TripChatScreen> createState() => _TripChatScreenState();
+}
+
+class _TripChatScreenState extends ConsumerState<TripChatScreen> {
+  final TextEditingController _messageController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _sendMessage() {
+    final text = _messageController.text;
+    if (text.trim().isEmpty) return;
+
+    _messageController.clear();
+    ref.read(tripChatProvider(widget.bookingId).notifier).sendMessage(text);
+
+    _scrollToBottom();
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final messagesAsync = ref.watch(tripChatProvider(widget.bookingId));
+    final chatRepo = ref.watch(tripChatRepositoryProvider);
+    final String? currentUserId = chatRepo.currentUserId;
+
     return Scaffold(
       backgroundColor: AppColors.ivory,
       appBar: AppBar(
         title: Text(
-          'Trip Group Chat',
+          TripToolsStrings.tripChatTitle,
           style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
         ),
         backgroundColor: AppColors.ivory,
@@ -30,82 +77,224 @@ class TripChatScreen extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: AppSpacing.screenPadding,
-          child: Column(
-            children: [
-              const SizedBox(height: AppSpacing.xl20),
-              AppCard(
-                child: Padding(
-                  padding: AppSpacing.paddingLg16,
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 72,
-                        height: 72,
-                        decoration: const BoxDecoration(
-                          color: AppColors.sage,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Center(
-                          child: Icon(
-                            Icons.forum_outlined,
-                            size: 36,
-                            color: AppColors.forest,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.lg16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md12,
-                          vertical: AppSpacing.xs4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.gold.withValues(alpha: 0.15),
-                          borderRadius: AppRadii.borderPill,
-                        ),
-                        child: Text(
-                          'COMING SOON',
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.gold,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.md12),
-                      Text(
-                        'Direct Guide & Group Chat',
-                        style: AppTypography.headingMedium.copyWith(
-                          color: AppColors.ink,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: AppSpacing.sm8),
-                      Text(
-                        'Connect directly with your verified local host, trekking guide, and fellow trail companions for trip #${bookingId.length > 8 ? bookingId.substring(0, 8) : bookingId}. Real-time messaging and offline sync are coming in an upcoming release!',
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.ink.withValues(alpha: 0.75),
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: AppSpacing.xxl24),
-                      AppButton(
-                        label: 'Back to Itinerary',
-                        variant: AppButtonVariant.primary,
-                        onPressed: () => context.pop(),
-                      ),
-                    ],
-                  ),
+        child: Column(
+          children: [
+            Expanded(
+              child: AsyncValueView<List<TripMessage>>(
+                value: messagesAsync,
+                isEmpty: (messages) => messages.isEmpty,
+                emptyView: const EmptyStateView(
+                  title: TripToolsStrings.chatEmptyTitle,
+                  description: TripToolsStrings.chatEmptyDesc,
+                  actionLabel: null,
+                ),
+                onRetry: () => ref.invalidate(tripChatProvider(widget.bookingId)),
+                data: (messages) {
+                  return ListView.builder(
+                    controller: _scrollController,
+                    padding: AppSpacing.screenPadding,
+                    itemCount: messages.length,
+                    itemBuilder: (context, index) {
+                      final message = messages[index];
+                      final bool isMe = message.senderId == currentUserId ||
+                          message.senderName == TripToolsStrings.meSenderLabel ||
+                          message.isPending ||
+                          message.isFailed;
+
+                      return _buildMessageBubble(
+                        context,
+                        message: message,
+                        isMe: isMe,
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+            _buildInputBar(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageBubble(
+    BuildContext context, {
+    required TripMessage message,
+    required bool isMe,
+  }) {
+    final String timeFormatted = AppFormatters.formatTripDate(
+      message.createdAt,
+      pattern: 'h:mm a',
+    );
+
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs4),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.78,
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md12,
+          vertical: AppSpacing.sm8,
+        ),
+        decoration: BoxDecoration(
+          color: isMe ? AppColors.forest : AppColors.cardBackground,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(AppRadii.md16),
+            topRight: const Radius.circular(AppRadii.md16),
+            bottomLeft: Radius.circular(isMe ? AppRadii.md16 : AppRadii.sm8),
+            bottomRight: Radius.circular(isMe ? AppRadii.sm8 : AppRadii.md16),
+          ),
+          border: isMe ? null : Border.all(color: AppColors.borderSubtle),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.black.withValues(alpha: 0.04),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment:
+              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            if (!isMe && message.senderName != null) ...[
+              Text(
+                message.senderName!,
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.gold,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
+              const SizedBox(height: AppSpacing.xs4),
             ],
-          ),
+            Text(
+              message.body,
+              style: AppTypography.bodyMedium.copyWith(
+                color: isMe ? AppColors.ivory : AppColors.ink,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs4),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  timeFormatted,
+                  style: AppTypography.caption.copyWith(
+                    color: isMe
+                        ? AppColors.ivory.withValues(alpha: 0.7)
+                        : AppColors.disabledText,
+                    fontSize: 10,
+                  ),
+                ),
+                if (message.isPending) ...[
+                  const SizedBox(width: AppSpacing.xs4),
+                  const SizedBox(
+                    width: 10,
+                    height: 10,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 1.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.ivory),
+                    ),
+                  ),
+                ],
+                if (message.isFailed) ...[
+                  const SizedBox(width: AppSpacing.xs4),
+                  GestureDetector(
+                    onTap: () {
+                      ref
+                          .read(tripChatProvider(widget.bookingId).notifier)
+                          .retryMessage(message);
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          size: 12,
+                          color: AppColors.errorContainer,
+                        ),
+                        const SizedBox(width: AppSpacing.xs4),
+                        Text(
+                          TripToolsStrings.retryAction,
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.errorContainer,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputBar(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg16,
+        vertical: AppSpacing.sm8,
+      ),
+      decoration: const BoxDecoration(
+        color: AppColors.cardBackground,
+        border: Border(
+          top: BorderSide(color: AppColors.borderSubtle),
+        ),
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _messageController,
+                style: AppTypography.bodyMedium.copyWith(color: AppColors.ink),
+                decoration: InputDecoration(
+                  hintText: TripToolsStrings.typeMessageHint,
+                  hintStyle: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.disabledText,
+                  ),
+                  filled: true,
+                  fillColor: AppColors.sage,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg16,
+                    vertical: AppSpacing.sm8,
+                  ),
+                  border: const OutlineInputBorder(
+                    borderRadius: AppRadii.borderPill,
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => _sendMessage(),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm8),
+            Container(
+              decoration: const BoxDecoration(
+                color: AppColors.forest,
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.send_rounded,
+                  color: AppColors.ivory,
+                  size: 20,
+                ),
+                onPressed: _sendMessage,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
-
-

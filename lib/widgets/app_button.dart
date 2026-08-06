@@ -192,11 +192,16 @@ class AppButton extends StatelessWidget {
         break;
     }
 
-    return ConstrainedBox(
-      constraints: constraints,
-      child: isFullWidth
-          ? SizedBox(width: double.infinity, child: buttonWidget)
-          : buttonWidget,
+    return Semantics(
+      button: true,
+      enabled: !isDisabled,
+      label: label,
+      child: ConstrainedBox(
+        constraints: constraints,
+        child: isFullWidth
+            ? SizedBox(width: double.infinity, child: buttonWidget)
+            : buttonWidget,
+      ),
     );
   }
 

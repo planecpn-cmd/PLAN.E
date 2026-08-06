@@ -53,34 +53,38 @@ class AppTextField extends StatelessWidget {
         ],
         ConstrainedBox(
           constraints: const BoxConstraints(minHeight: AppTouchTarget.minSize),
-          child: TextFormField(
-            controller: controller,
-            onChanged: onChanged,
-            validator: validator,
-            obscureText: obscureText,
-            keyboardType: keyboardType,
-            enabled: enabled,
-            maxLines: maxLines,
-            textInputAction: textInputAction,
-            onFieldSubmitted: onSubmitted,
-            style: AppTypography.bodyLarge.copyWith(
-              color: enabled ? AppColors.ink : AppColors.disabledText,
-            ),
-            decoration: InputDecoration(
-              hintText: hint,
-              errorText: errorText,
-              prefixIcon: prefixIcon != null
-                  ? Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm8),
-                      child: prefixIcon,
-                    )
-                  : null,
-              suffixIcon: suffixIcon != null
-                  ? Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm8),
-                      child: suffixIcon,
-                    )
-                  : null,
+          child: Semantics(
+            textField: true,
+            label: label ?? hint ?? 'Text field',
+            child: TextFormField(
+              controller: controller,
+              onChanged: onChanged,
+              validator: validator,
+              obscureText: obscureText,
+              keyboardType: keyboardType,
+              enabled: enabled,
+              maxLines: maxLines,
+              textInputAction: textInputAction,
+              onFieldSubmitted: onSubmitted,
+              style: AppTypography.bodyLarge.copyWith(
+                color: enabled ? AppColors.ink : AppColors.disabledText,
+              ),
+              decoration: InputDecoration(
+                hintText: hint,
+                errorText: errorText,
+                prefixIcon: prefixIcon != null
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm8),
+                        child: prefixIcon,
+                      )
+                    : null,
+                suffixIcon: suffixIcon != null
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm8),
+                        child: suffixIcon,
+                      )
+                    : null,
+              ),
             ),
           ),
         ),

@@ -246,13 +246,13 @@ final GoRouter router = GoRouter(
       ),
     ),
     GoRoute(
+      path: '/review/submitted',
+      builder: (context, state) => const ReviewSubmittedScreen(),
+    ),
+    GoRoute(
       path: '/review/:bookingId',
       builder: (context, state) =>
           LeaveReviewScreen(bookingId: state.pathParameters['bookingId'] ?? ''),
-    ),
-    GoRoute(
-      path: '/review/submitted',
-      builder: (context, state) => const ReviewSubmittedScreen(),
     ),
     GoRoute(
       path: '/profile/edit',

@@ -33,157 +33,170 @@ class ExperienceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: AppRadii.borderMd16,
-        border: Border.all(color: AppColors.borderSubtle, width: 1.0),
-      ),
-      child: Material(
-        color: AppColors.transparent,
-        borderRadius: AppRadii.borderMd16,
-        child: InkWell(
-          onTap: onTap,
+    return Semantics(
+      container: true,
+      button: true,
+      label: '$title experience in $location, price $priceText',
+      child: Container(
+        width: width,
+        decoration: BoxDecoration(
+          color: AppColors.white,
           borderRadius: AppRadii.borderMd16,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Image Header Stack
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(AppRadii.md16),
-                    ),
-                    child: Container(
-                      height: 140.0,
-                      width: double.infinity,
-                      color: AppColors.sage,
-                      child: imageUrl != null && imageUrl!.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: imageUrl!,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => Container(
-                                color: AppColors.skeletonBase,
-                                child: const Center(
-                                  child: SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.forest),
+          border: Border.all(color: AppColors.borderSubtle, width: 1.0),
+        ),
+        child: Material(
+          color: AppColors.transparent,
+          borderRadius: AppRadii.borderMd16,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: AppRadii.borderMd16,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Image Header Stack
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(AppRadii.md16),
+                      ),
+                      child: Semantics(
+                        image: true,
+                        label: '$title photo',
+                        child: Container(
+                          height: 140.0,
+                          width: double.infinity,
+                          color: AppColors.sage,
+                          child: imageUrl != null && imageUrl!.isNotEmpty
+                              ? CachedNetworkImage(
+                                  imageUrl: imageUrl!,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Container(
+                                    color: AppColors.skeletonBase,
+                                    child: const Center(
+                                      child: SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.forest),
+                                        ),
+                                      ),
                                     ),
                                   ),
+                                  errorWidget: (context, url, error) => const Center(
+                                    child: Icon(Icons.terrain, size: 40, color: AppColors.forest),
+                                  ),
+                                )
+                              : const Center(
+                                  child: Icon(Icons.landscape, size: 48, color: AppColors.forest),
                                 ),
-                              ),
-                              errorWidget: (context, url, error) => const Center(
-                                child: Icon(Icons.terrain, size: 40, color: AppColors.forest),
-                              ),
-                            )
-                          : const Center(
-                              child: Icon(Icons.landscape, size: 48, color: AppColors.forest),
-                            ),
+                        ),
+                      ),
                     ),
-                  ),
 
-                  // Category Badge
-                  if (categoryTag != null)
-                    Positioned(
-                      top: AppSpacing.sm8,
-                      left: AppSpacing.sm8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm8,
-                          vertical: AppSpacing.xs4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.deep.withValues(alpha: 0.85),
-                          borderRadius: AppRadii.borderSm8,
-                        ),
-                        child: Text(
-                          categoryTag!,
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.ivory,
-                            fontWeight: FontWeight.w600,
+                    // Category Badge
+                    if (categoryTag != null)
+                      Positioned(
+                        top: AppSpacing.sm8,
+                        left: AppSpacing.sm8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm8,
+                            vertical: AppSpacing.xs4,
                           ),
-                        ),
-                      ),
-                    ),
-
-                  // Bookmark Button (min touch target >= 48dp)
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: SizedBox(
-                      width: AppTouchTarget.minSize,
-                      height: AppTouchTarget.minSize,
-                      child: IconButton(
-                        onPressed: onBookmarkTap,
-                        icon: Icon(
-                          isSaved ? Icons.bookmark : Icons.bookmark_border,
-                          color: isSaved ? AppColors.gold : AppColors.deep,
-                          size: 22,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              // Content Details
-              Padding(
-                padding: AppSpacing.paddingMd12,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.bold),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: AppSpacing.xs4),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on_outlined, size: 14, color: AppColors.disabledText),
-                        const SizedBox(width: AppSpacing.xs4),
-                        Expanded(
+                          decoration: BoxDecoration(
+                            color: AppColors.deep.withValues(alpha: 0.85),
+                            borderRadius: AppRadii.borderSm8,
+                          ),
                           child: Text(
-                            location,
-                            style: AppTypography.caption.copyWith(color: AppColors.disabledText),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            categoryTag!,
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.ivory,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.sm8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Flexible(
-                          child: RatingStars(
-                            rating: rating,
-                            reviewCount: reviewCount,
-                            starSize: 14.0,
+                      ),
+
+                    // Bookmark Button (min touch target >= 48dp)
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: Semantics(
+                        button: true,
+                        label: isSaved ? 'Remove $title from saved' : 'Save $title',
+                        child: SizedBox(
+                          width: AppTouchTarget.minSize,
+                          height: AppTouchTarget.minSize,
+                          child: IconButton(
+                            onPressed: onBookmarkTap,
+                            icon: Icon(
+                              isSaved ? Icons.bookmark : Icons.bookmark_border,
+                              color: isSaved ? AppColors.gold : AppColors.deep,
+                              size: 22,
+                            ),
                           ),
                         ),
-                        const SizedBox(width: AppSpacing.xs4),
-                        Text(
-                          priceText,
-                          style: AppTypography.bodyMedium.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.forest,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
+
+                // Content Details
+                Padding(
+                  padding: AppSpacing.paddingMd12,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: AppSpacing.xs4),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on_outlined, size: 14, color: AppColors.disabledText),
+                          const SizedBox(width: AppSpacing.xs4),
+                          Expanded(
+                            child: Text(
+                              location,
+                              style: AppTypography.caption.copyWith(color: AppColors.disabledText),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.sm8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            child: RatingStars(
+                              rating: rating,
+                              reviewCount: reviewCount,
+                              starSize: 14.0,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.xs4),
+                          Text(
+                            priceText,
+                            style: AppTypography.bodyMedium.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.forest,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

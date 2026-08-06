@@ -31,6 +31,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get continueText => 'Continue';
 
   @override
+  String get myReviews => 'My Reviews';
+
+  @override
+  String get comingSoonTitle => 'Feature Coming Soon';
+
+  @override
+  String get comingSoonDesc =>
+      'This feature is planned for Stage B development. Stay tuned for future updates!';
+
+  @override
+  String get close => 'Close';
+
+  @override
   String get home => 'Home';
 
   @override
@@ -249,9 +262,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settings => 'Settings';
-
-  @override
-  String get myReviews => 'My Reviews';
 
   @override
   String get logout => 'Logout';
