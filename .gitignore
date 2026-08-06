@@ -9,6 +9,8 @@
 .history
 .svn/
 .swiftpm
+scratch/
+_incoming/
 
 # IntelliJ project files
 .idea/

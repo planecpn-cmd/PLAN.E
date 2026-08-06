@@ -260,10 +260,10 @@ class _MapScreenState extends State<MapScreen> {
                           label: MapStrings.openExternalMaps,
                           icon: Icons.directions,
                           onPressed: () {
-                            AppToast.show(
+                            AppStubSheet.show(
                               context,
-                              message: 'Opening external map navigation...',
-                              variant: AppToastVariant.info,
+                              title: MapStrings.openExternalMaps,
+                              featureName: 'Google Maps / Apple Maps Directions (Stage B)',
                             );
                           },
                         ),

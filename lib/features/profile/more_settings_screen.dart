@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../theme/theme.dart';
-import '../../widgets/app_card.dart';
-import '../../widgets/app_toast.dart';
+import '../../widgets/widgets.dart';
 
 class MoreSettingsScreen extends ConsumerStatefulWidget {
   const MoreSettingsScreen({super.key});
@@ -189,19 +188,27 @@ class _MoreSettingsScreenState extends ConsumerState<MoreSettingsScreen> {
                   _LinkTile(
                     title: 'Terms of Service',
                     icon: Icons.description_outlined,
-                    onTap: () => AppToast.show(context, message: 'Terms of Service'),
+                    onTap: () => AppStubSheet.show(
+                      context,
+                      title: 'Terms of Service',
+                      featureName: 'Legal & Service Agreements (Stage B)',
+                    ),
                   ),
                   const Divider(height: 1, color: AppColors.borderSubtle),
                   _LinkTile(
                     title: 'Privacy Policy',
                     icon: Icons.privacy_tip_outlined,
-                    onTap: () => AppToast.show(context, message: 'Privacy Policy'),
+                    onTap: () => AppStubSheet.show(
+                      context,
+                      title: 'Privacy Policy',
+                      featureName: 'Data Privacy & Security Policies (Stage B)',
+                    ),
                   ),
                   const Divider(height: 1, color: AppColors.borderSubtle),
                   _LinkTile(
                     title: 'Open Source Licenses',
                     icon: Icons.code_outlined,
-                    onTap: () => AppToast.show(context, message: 'Open Source Licenses'),
+                    onTap: () => showLicensePage(context: context),
                   ),
                 ],
               ),

@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../theme/theme.dart';
-import '../../widgets/app_button.dart';
-import '../../widgets/app_card.dart';
-import '../../widgets/app_toast.dart';
+import '../../widgets/widgets.dart';
 
 class HelpSupportScreen extends ConsumerWidget {
   const HelpSupportScreen({super.key});
@@ -68,7 +66,11 @@ class HelpSupportScreen extends ConsumerWidget {
                           label: 'Call Us',
                           icon: Icons.phone,
                           onPressed: () {
-                            AppToast.show(context, message: 'Dialing +977 1 4000000...');
+                            AppStubSheet.show(
+                              context,
+                              title: 'Call Support',
+                              featureName: 'Nepal Toll-Free Helpline (+977 1 4000000) (Stage B)',
+                            );
                           },
                         ),
                       ),
@@ -78,7 +80,11 @@ class HelpSupportScreen extends ConsumerWidget {
                           label: 'Live Chat',
                           icon: Icons.chat,
                           onPressed: () {
-                            AppToast.show(context, message: 'Starting support chat...');
+                            AppStubSheet.show(
+                              context,
+                              title: 'Live Support Chat',
+                              featureName: '24/7 Agent Messenger (Stage B)',
+                            );
                           },
                         ),
                       ),
@@ -160,7 +166,11 @@ class HelpSupportScreen extends ConsumerWidget {
                   IconButton(
                     icon: const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.forest),
                     onPressed: () {
-                      AppToast.show(context, message: 'Opening email client for support@plane.np');
+                      AppStubSheet.show(
+                        context,
+                        title: 'Email Support',
+                        featureName: 'Direct Ticket Submission to support@plane.np (Stage B)',
+                      );
                     },
                   ),
                 ],

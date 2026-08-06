@@ -5,11 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/profile.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
-import '../../widgets/app_button.dart';
-import '../../widgets/app_card.dart';
-import '../../widgets/app_text_field.dart';
-import '../../widgets/app_toast.dart';
-import '../../widgets/async_value_view.dart';
+import '../../widgets/widgets.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -149,7 +145,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           right: 0,
                           child: InkWell(
                             onTap: () {
-                              AppToast.show(context, message: 'Photo picker initialized');
+                              AppStubSheet.show(
+                                context,
+                                title: 'Avatar Photo Upload',
+                                featureName: 'Camera & Image Picker (Stage B)',
+                              );
                             },
                             child: Container(
                               padding: const EdgeInsets.all(AppSpacing.sm8),

@@ -4,10 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../theme/theme.dart';
-import '../../widgets/app_button.dart';
-import '../../widgets/app_card.dart';
-import '../../widgets/app_toast.dart';
-import '../../widgets/async_value_view.dart';
+import '../../widgets/widgets.dart';
 
 class PaymentMethodItem {
   final String id;
@@ -199,7 +196,11 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
                   icon: Icons.add,
                   isFullWidth: true,
                   onPressed: () {
-                    AppToast.show(context, message: l10n.paymentGatewayModeActive);
+                    AppStubSheet.show(
+                      context,
+                      title: l10n.addPaymentGatewayBtn,
+                      featureName: 'eSewa & Khalti Wallet Integration (Stage B)',
+                    );
                   },
                 ),
                 const SizedBox(height: AppSpacing.md12),

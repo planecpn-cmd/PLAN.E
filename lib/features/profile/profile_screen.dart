@@ -195,6 +195,12 @@ class ProfileScreen extends ConsumerWidget {
                           ),
                           const Divider(height: 1),
                           _ProfileRow(
+                            icon: Icons.rate_review_outlined,
+                            label: l10n.myReviews,
+                            onTap: () => context.push('/profile/my-reviews'),
+                          ),
+                          const Divider(height: 1),
+                          _ProfileRow(
                             icon: Icons.settings_outlined,
                             label: l10n.settings,
                             onTap: () => context.push('/profile/settings'),
