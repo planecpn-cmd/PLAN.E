@@ -36,9 +36,12 @@ class SearchResultsScreen extends ConsumerStatefulWidget {
 
 class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
   late TextEditingController _searchController;
+  late FocusNode _searchFocusNode;
   String? _selectedDifficulty;
   String? _categoryId;
   String? _regionId;
+  int? _minPricePaisa;
+  int? _maxPricePaisa;
   String? _sortBy = 'relevance';
   String _searchQuery = '';
   bool _showRecentSearches = false;
@@ -53,11 +56,23 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
     _categoryId = widget.initialCategoryId;
     _regionId = widget.initialRegionId;
     _sortBy = widget.initialSortBy ?? 'relevance';
+    _searchFocusNode = FocusNode();
+    _searchFocusNode.addListener(_onFocusChange);
+  }
+
+  void _onFocusChange() {
+    if (_searchFocusNode.hasFocus) {
+      setState(() {
+        _showRecentSearches = true;
+      });
+    }
   }
 
   @override
   void dispose() {
     _searchDebounce?.cancel();
+    _searchFocusNode.removeListener(_onFocusChange);
+    _searchFocusNode.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -70,6 +85,8 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
       if (_categoryId != null && _categoryId!.isNotEmpty)
         'category_id': _categoryId,
       if (_regionId != null && _regionId!.isNotEmpty) 'region_id': _regionId,
+      if (_minPricePaisa != null) 'min_price': _minPricePaisa.toString(),
+      if (_maxPricePaisa != null) 'max_price': _maxPricePaisa.toString(),
       if (_sortBy != null && _sortBy!.isNotEmpty) 'sort_by': _sortBy,
     };
   }
@@ -81,7 +98,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
       _searchQuery = trimmedQuery;
       _showRecentSearches = false;
     });
-    FocusScope.of(context).unfocus();
+    _searchFocusNode.unfocus();
     if (trimmedQuery.isNotEmpty) {
       ref.read(recentSearchesRepositoryProvider).addSearchQuery(trimmedQuery);
       ref.invalidate(recentSearchesProvider);
@@ -91,7 +108,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
   void _onSearchChanged(String value) {
     _searchDebounce?.cancel();
     setState(() {
-      _showRecentSearches = value.trim().isEmpty;
+      _showRecentSearches = _searchFocusNode.hasFocus || value.trim().isEmpty;
     });
     _searchDebounce = Timer(const Duration(milliseconds: 350), () {
       if (!mounted) return;
@@ -110,6 +127,8 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
         initialDifficulty: _selectedDifficulty,
         initialCategoryId: _categoryId,
         initialRegionId: _regionId,
+        initialMinPricePaisa: _minPricePaisa,
+        initialMaxPricePaisa: _maxPricePaisa,
         initialSortBy: _sortBy,
       ),
     );
@@ -119,9 +138,28 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
         _selectedDifficulty = result['difficulty'];
         _categoryId = result['category_id'];
         _regionId = result['region_id'];
+        _minPricePaisa =
+            result['min_price'] != null ? int.tryParse(result['min_price']!) : null;
+        _maxPricePaisa =
+            result['max_price'] != null ? int.tryParse(result['max_price']!) : null;
         _sortBy = result['sort_by'] ?? 'relevance';
       });
     }
+  }
+
+  void _clearAllFilters() {
+    setState(() {
+      _selectedDifficulty = null;
+      _categoryId = null;
+      _regionId = null;
+      _minPricePaisa = null;
+      _maxPricePaisa = null;
+      _sortBy = 'relevance';
+      _searchQuery = '';
+      _searchController.clear();
+      _showRecentSearches = false;
+    });
+    _searchFocusNode.unfocus();
   }
 
   @override
@@ -129,6 +167,14 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
     final l10n = AppLocalizations.of(context)!;
     final experiencesAsync = ref.watch(experiencesProvider(_filterMap));
     final recentSearchesAsync = ref.watch(recentSearchesProvider);
+
+    final bool hasActiveFilters = _categoryId != null ||
+        _regionId != null ||
+        _selectedDifficulty != null ||
+        _minPricePaisa != null ||
+        _maxPricePaisa != null ||
+        (_sortBy != null && _sortBy != 'relevance') ||
+        _searchQuery.isNotEmpty;
 
     return Scaffold(
       body: PlanEBackground(
@@ -158,7 +204,29 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                     ),
                     const Expanded(child: PlanELogo(fontSize: 24)),
                     IconButton(
-                      icon: const Icon(Icons.tune, color: AppColors.forest),
+                      icon: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          const Icon(Icons.tune, color: AppColors.forest),
+                          if (_categoryId != null ||
+                              _regionId != null ||
+                              _minPricePaisa != null ||
+                              _maxPricePaisa != null ||
+                              (_sortBy != null && _sortBy != 'relevance'))
+                            Positioned(
+                              top: -2,
+                              right: -2,
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.gold,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                       onPressed: _openFilterSheet,
                       tooltip: 'Filter',
                     ),
@@ -178,7 +246,12 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.white,
                     borderRadius: BorderRadius.circular(28),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(
+                      color: _searchFocusNode.hasFocus
+                          ? AppColors.forest
+                          : AppColors.border,
+                      width: _searchFocusNode.hasFocus ? 1.5 : 1.0,
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -191,6 +264,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                       Expanded(
                         child: TextField(
                           controller: _searchController,
+                          focusNode: _searchFocusNode,
                           style: const TextStyle(
                             fontSize: 14,
                             color: AppColors.ink,
@@ -204,13 +278,6 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                             border: InputBorder.none,
                           ),
                           textInputAction: TextInputAction.search,
-                          onTap: () {
-                            setState(() {
-                              _showRecentSearches = _searchController.text
-                                  .trim()
-                                  .isEmpty;
-                            });
-                          },
                           onSubmitted: _submitSearch,
                           onChanged: _onSearchChanged,
                         ),
@@ -235,7 +302,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                 ),
               ),
 
-              // Recent Searches if active
+              // Recent Searches view when focused or empty
               if (_showRecentSearches)
                 AsyncValueView<List<String>>(
                   value: recentSearchesAsync,
@@ -247,9 +314,9 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                     return Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
-                        vertical: 6,
+                        vertical: 8,
                       ),
-                      color: AppColors.sage.withValues(alpha: 0.3),
+                      color: AppColors.sage.withValues(alpha: 0.25),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -279,14 +346,14 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 6),
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Row(
                               children: recentList.map((term) {
                                 return Padding(
                                   padding: const EdgeInsets.only(right: 8),
-                                  child: ActionChip(
+                                  child: InputChip(
                                     label: Text(
                                       term,
                                       style: AppTypography.caption,
@@ -299,6 +366,17 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                                       _searchController.text = term;
                                       _submitSearch(term);
                                     },
+                                    onDeleted: () async {
+                                      await ref
+                                          .read(recentSearchesRepositoryProvider)
+                                          .removeSearchQuery(term);
+                                      ref.invalidate(recentSearchesProvider);
+                                    },
+                                    deleteIcon: const Icon(
+                                      Icons.close,
+                                      size: 14,
+                                      color: AppColors.disabledText,
+                                    ),
                                   ),
                                 );
                               }).toList(),
@@ -347,22 +425,9 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                         color: AppColors.ink,
                       ),
                     ),
-                    if (_categoryId != null ||
-                        _regionId != null ||
-                        _selectedDifficulty != null ||
-                        _searchQuery.isNotEmpty)
+                    if (hasActiveFilters)
                       GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedDifficulty = null;
-                            _categoryId = null;
-                            _regionId = null;
-                            _sortBy = 'relevance';
-                            _searchQuery = '';
-                            _searchController.clear();
-                            _showRecentSearches = false;
-                          });
-                        },
+                        onTap: _clearAllFilters,
                         child: Text(
                           'Clear All',
                           style: AppTypography.caption.copyWith(
@@ -389,17 +454,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                         ? 'No results for "$_searchQuery". Try searching for "Everest", "Annapurna", or "Pokhara".'
                         : 'No experiences match the selected criteria.',
                     actionLabel: l10n.resetSearch,
-                    onActionPressed: () {
-                      setState(() {
-                        _selectedDifficulty = null;
-                        _categoryId = null;
-                        _regionId = null;
-                        _sortBy = 'relevance';
-                        _searchQuery = '';
-                        _searchController.clear();
-                        _showRecentSearches = false;
-                      });
-                    },
+                    onActionPressed: _clearAllFilters,
                   ),
                   data: (experiences) {
                     return ListView.separated(

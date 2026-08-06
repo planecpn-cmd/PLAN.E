@@ -82,10 +82,16 @@ class ExperienceRepository {
       query = query.order('price_paisa', ascending: false);
     } else if (sortBy == 'rating') {
       query = query.order('rating_avg', ascending: false);
+    } else if (sortBy == 'duration' || sortBy == 'duration_asc') {
+      query = query.order('duration_hours', ascending: true);
+    } else if (sortBy == 'duration_desc') {
+      query = query.order('duration_hours', ascending: false);
     } else if (sortBy == 'popular') {
       query = query.order('rating_count', ascending: false);
-    } else {
+    } else if (sortBy == 'newest') {
       query = query.order('created_at', ascending: false);
+    } else {
+      query = query.order('rating_avg', ascending: false);
     }
 
     final response = await query.range(offset, offset + limit - 1);

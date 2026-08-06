@@ -13,6 +13,8 @@ class FilterSheet extends ConsumerStatefulWidget {
   final String? initialDifficulty;
   final String? initialCategoryId;
   final String? initialRegionId;
+  final int? initialMinPricePaisa;
+  final int? initialMaxPricePaisa;
   final String? initialSortBy;
 
   const FilterSheet({
@@ -20,6 +22,8 @@ class FilterSheet extends ConsumerStatefulWidget {
     this.initialDifficulty,
     this.initialCategoryId,
     this.initialRegionId,
+    this.initialMinPricePaisa,
+    this.initialMaxPricePaisa,
     this.initialSortBy,
   });
 
@@ -32,6 +36,8 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
   String? _selectedCategoryId;
   String? _selectedRegionId;
   String? _selectedSortBy;
+  late TextEditingController _minPriceController;
+  late TextEditingController _maxPriceController;
 
   @override
   void initState() {
@@ -40,6 +46,23 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     _selectedCategoryId = widget.initialCategoryId;
     _selectedRegionId = widget.initialRegionId;
     _selectedSortBy = widget.initialSortBy ?? 'relevance';
+    _minPriceController = TextEditingController(
+      text: widget.initialMinPricePaisa != null
+          ? (widget.initialMinPricePaisa! ~/ 100).toString()
+          : '',
+    );
+    _maxPriceController = TextEditingController(
+      text: widget.initialMaxPricePaisa != null
+          ? (widget.initialMaxPricePaisa! ~/ 100).toString()
+          : '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _minPriceController.dispose();
+    _maxPriceController.dispose();
+    super.dispose();
   }
 
   void _resetAll() {
@@ -48,14 +71,23 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
       _selectedCategoryId = null;
       _selectedRegionId = null;
       _selectedSortBy = 'relevance';
+      _minPriceController.clear();
+      _maxPriceController.clear();
     });
   }
 
   void _applyFilters() {
+    final minNpr = int.tryParse(_minPriceController.text.trim());
+    final maxNpr = int.tryParse(_maxPriceController.text.trim());
+    final minPaisa = minNpr != null ? minNpr * 100 : null;
+    final maxPaisa = maxNpr != null ? maxNpr * 100 : null;
+
     Navigator.of(context).pop<Map<String, String?>>({
       'difficulty': _selectedDifficulty,
       'category_id': _selectedCategoryId,
       'region_id': _selectedRegionId,
+      'min_price': minPaisa?.toString(),
+      'max_price': maxPaisa?.toString(),
       'sort_by': _selectedSortBy,
     });
   }
@@ -138,6 +170,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                   _buildSortChip('popular', 'Most Popular'),
                   _buildSortChip('price_asc', 'Price: Low to High'),
                   _buildSortChip('price_desc', 'Price: High to Low'),
+                  _buildSortChip('duration', 'Duration: Shortest'),
                   _buildSortChip('newest', 'Newest'),
                 ],
               ),
@@ -163,7 +196,59 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
 
               const SizedBox(height: AppSpacing.xxl24),
 
-              // 3. Categories Section
+              // 3. Price Range (NPR)
+              Text(
+                'Price Range (NPR)',
+                style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
+              ),
+              const SizedBox(height: AppSpacing.sm8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _minPriceController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(fontSize: 14, color: AppColors.ink),
+                      decoration: InputDecoration(
+                        labelText: 'Min Price (Rs.)',
+                        labelStyle: const TextStyle(color: AppColors.disabledText),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadii.md16),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md12),
+                  Expanded(
+                    child: TextField(
+                      controller: _maxPriceController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(fontSize: 14, color: AppColors.ink),
+                      decoration: InputDecoration(
+                        labelText: 'Max Price (Rs.)',
+                        labelStyle: const TextStyle(color: AppColors.disabledText),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadii.md16),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: AppSpacing.xxl24),
+
+              // 4. Categories Section
               Text(
                 l10n.category,
                 style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
@@ -200,7 +285,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
 
               const SizedBox(height: AppSpacing.xxl24),
 
-              // 4. Regions Section
+              // 5. Regions Section
               Text(
                 l10n.region,
                 style: AppTypography.headingMedium.copyWith(color: AppColors.ink),

@@ -54,5 +54,16 @@ void main() {
       searches = await repository.getRecentSearches();
       expect(searches, isEmpty);
     });
+
+    test('caps maximum items to 10', () async {
+      for (int i = 1; i <= 15; i++) {
+        await repository.addSearchQuery('Search $i');
+      }
+
+      final searches = await repository.getRecentSearches();
+      expect(searches.length, 10);
+      expect(searches.first, 'Search 15');
+      expect(searches.last, 'Search 6');
+    });
   });
 }

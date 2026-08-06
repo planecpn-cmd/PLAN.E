@@ -58,11 +58,13 @@ final experiencesProvider =
       final repo = ref.watch(experienceRepositoryProvider);
       int? minPricePaisa;
       int? maxPricePaisa;
-      if (filters['min_price'] != null) {
-        minPricePaisa = int.tryParse(filters['min_price']!);
+      final minStr = filters['min_price'] ?? filters['min_price_paisa'];
+      final maxStr = filters['max_price'] ?? filters['max_price_paisa'];
+      if (minStr != null && minStr.isNotEmpty) {
+        minPricePaisa = int.tryParse(minStr);
       }
-      if (filters['max_price'] != null) {
-        maxPricePaisa = int.tryParse(filters['max_price']!);
+      if (maxStr != null && maxStr.isNotEmpty) {
+        maxPricePaisa = int.tryParse(maxStr);
       }
 
       return repo.getExperiences(

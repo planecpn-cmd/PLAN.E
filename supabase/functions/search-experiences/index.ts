@@ -22,53 +22,51 @@ serve(async (req) => {
     } else {
       const url = new URL(req.url);
       body = {
-        query: url.searchParams.get("query"),
-        category_id: url.searchParams.get("category_id"),
-        region_id: url.searchParams.get("region_id"),
+        query: url.searchParams.get("query") ?? url.searchParams.get("q") ?? url.searchParams.get("search_query"),
+        category_id: url.searchParams.get("category_id") ?? url.searchParams.get("categoryId"),
+        region_id: url.searchParams.get("region_id") ?? url.searchParams.get("regionId"),
         difficulty: url.searchParams.get("difficulty"),
-        min_price: url.searchParams.get("min_price"),
-        max_price: url.searchParams.get("max_price"),
-        sort_by: url.searchParams.get("sort_by"),
+        min_price: url.searchParams.get("min_price") ?? url.searchParams.get("min_price_paisa") ?? url.searchParams.get("minPricePaisa"),
+        max_price: url.searchParams.get("max_price") ?? url.searchParams.get("max_price_paisa") ?? url.searchParams.get("maxPricePaisa"),
+        sort_by: url.searchParams.get("sort_by") ?? url.searchParams.get("sortBy"),
         page: url.searchParams.get("page") ? parseInt(url.searchParams.get("page")!) : 1,
         limit: url.searchParams.get("limit") ? parseInt(url.searchParams.get("limit")!) : 20,
       };
     }
 
-    const {
-      query = "",
-      category_id,
-      region_id,
-      difficulty,
-      min_price,
-      max_price,
-      sort_by = "relevance",
-      page = 1,
-      limit = 20,
-    } = body;
+    const query = body.query ?? body.search_query ?? body.q ?? "";
+    const category_id = body.category_id ?? body.categoryId;
+    const region_id = body.region_id ?? body.regionId;
+    const difficulty = body.difficulty;
+    const min_price = body.min_price ?? body.min_price_paisa ?? body.minPricePaisa;
+    const max_price = body.max_price ?? body.max_price_paisa ?? body.maxPricePaisa;
+    const sort_by = body.sort_by ?? body.sortBy ?? "relevance";
+    const page = body.page ?? 1;
+    const limit = body.limit ?? 20;
 
     let dbQuery = client
       .from("experiences")
       .select("*", { count: "exact" })
       .eq("status", "published");
 
-    if (category_id && category_id.trim() !== "") {
-      dbQuery = dbQuery.eq("category_id", category_id);
+    if (category_id && String(category_id).trim() !== "") {
+      dbQuery = dbQuery.eq("category_id", String(category_id).trim());
     }
-    if (region_id && region_id.trim() !== "") {
-      dbQuery = dbQuery.eq("region_id", region_id);
+    if (region_id && String(region_id).trim() !== "") {
+      dbQuery = dbQuery.eq("region_id", String(region_id).trim());
     }
-    if (difficulty && difficulty.trim() !== "" && difficulty !== "all") {
-      dbQuery = dbQuery.eq("difficulty", difficulty);
+    if (difficulty && String(difficulty).trim() !== "" && difficulty !== "all") {
+      dbQuery = dbQuery.eq("difficulty", String(difficulty).trim());
     }
-    if (min_price !== undefined && min_price !== null) {
+    if (min_price !== undefined && min_price !== null && min_price !== "") {
       dbQuery = dbQuery.gte("price_paisa", Number(min_price));
     }
-    if (max_price !== undefined && max_price !== null) {
+    if (max_price !== undefined && max_price !== null && max_price !== "") {
       dbQuery = dbQuery.lte("price_paisa", Number(max_price));
     }
 
-    if (query && query.trim() !== "") {
-      dbQuery = dbQuery.textSearch("search_tsv", query.trim(), {
+    if (query && String(query).trim() !== "") {
+      dbQuery = dbQuery.textSearch("search_tsv", String(query).trim(), {
         config: "english",
         type: "websearch",
       });
@@ -84,6 +82,13 @@ serve(async (req) => {
         break;
       case "rating":
         dbQuery = dbQuery.order("rating_avg", { ascending: false });
+        break;
+      case "duration":
+      case "duration_asc":
+        dbQuery = dbQuery.order("duration_hours", { ascending: true });
+        break;
+      case "duration_desc":
+        dbQuery = dbQuery.order("duration_hours", { ascending: false });
         break;
       case "popular":
         dbQuery = dbQuery.order("rating_count", { ascending: false });
