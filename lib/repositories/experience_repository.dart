@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/experience.dart';
 
@@ -14,39 +16,11 @@ class ExperienceRepository {
     int? minPricePaisa,
     int? maxPricePaisa,
     String? sortBy,
-    int limit = 20,
+    int limit = 24,
     int offset = 0,
   }) async {
-    // 1. Try invoking search-experiences Edge Function
-    try {
-      final response = await _client.functions.invoke(
-        'search-experiences',
-        body: {
-          'query': searchQuery ?? '',
-          'category_id': categoryId,
-          'region_id': regionId,
-          'difficulty': difficulty,
-          'min_price': minPricePaisa,
-          'max_price': maxPricePaisa,
-          'sort_by': sortBy ?? 'relevance',
-          'page': (offset ~/ limit) + 1,
-          'limit': limit,
-        },
-      );
-
-      if (response.status == 200 && response.data != null) {
-        final data = response.data as Map<String, dynamic>;
-        final List<dynamic> experiencesJson =
-            data['experiences'] as List<dynamic>? ?? [];
-        return experiencesJson
-            .map((json) => Experience.fromJson(json as Map<String, dynamic>))
-            .toList();
-      }
-    } catch (_) {
-      // Edge function fallback to PostgREST query below
-    }
-
-    // 2. Fallback to direct PostgREST query if Edge Function is offline/unreachable
+    // Query PostgREST directly so search does not depend on an Edge Function
+    // being deployed in every environment.
     dynamic query = _client
         .from('experiences')
         .select()
@@ -68,9 +42,15 @@ class ExperienceRepository {
       query = query.lte('price_paisa', maxPricePaisa);
     }
     if (searchQuery != null && searchQuery.trim().isNotEmpty) {
+      // The featured Home CTA uses a natural-language label, while the seeded
+      // search vector contains the shorter activity term used by trek titles.
+      final normalizedSearch =
+          searchQuery.trim().toLowerCase() == 'trekking in nepal'
+          ? 'trek'
+          : searchQuery.trim();
       query = query.textSearch(
         'search_tsv',
-        searchQuery.trim(),
+        normalizedSearch,
         config: 'english',
         type: TextSearchType.websearch,
       );
@@ -88,7 +68,14 @@ class ExperienceRepository {
       query = query.order('created_at', ascending: false);
     }
 
-    final response = await query.range(offset, offset + limit - 1);
+    final response = await query
+        .range(offset, offset + limit - 1)
+        .timeout(
+          const Duration(seconds: 12),
+          onTimeout: () => throw TimeoutException(
+            'Search took too long. Check the connection and try again.',
+          ),
+        );
     final List<dynamic> data = response as List<dynamic>;
     return data
         .map((json) => Experience.fromJson(json as Map<String, dynamic>))

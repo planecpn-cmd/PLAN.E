@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'core/onboarding_preferences.dart';
 import 'theme/tokens.dart';
 import 'features/onboarding/splash_screen.dart';
 import 'features/onboarding/onboarding_slide_screen.dart';
@@ -56,6 +58,15 @@ final GlobalKey<NavigatorState> _shellNavigatorKey =
 final GoRouter router = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/',
+  redirect: (context, state) {
+    final path = state.uri.path;
+    final isOnboardingRoute =
+        path == '/' || path.startsWith('/onboarding/') || path == '/interests';
+    if (OnboardingPreferences.isCompleted && isOnboardingRoute) {
+      return '/home';
+    }
+    return null;
+  },
   routes: [
     GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
     GoRoute(
@@ -101,67 +112,74 @@ final GoRouter router = GoRouter(
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) {
-        return Scaffold(
-          extendBody: true,
-          body: child,
-          bottomNavigationBar: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-              child: Container(
-                height: 58,
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: AppColors.borderSubtle, width: 1.0),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x18000000),
-                      blurRadius: 16,
-                      spreadRadius: 0,
-                      offset: Offset(0, 4),
+        return _DoubleBackToExit(
+          child: Scaffold(
+            extendBody: true,
+            body: child,
+            bottomNavigationBar: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                child: Container(
+                  height: 58,
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: AppColors.borderSubtle,
+                      width: 1.0,
                     ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(30),
-                  child: BottomNavigationBar(
-                    currentIndex: _calculateSelectedIndex(state.uri.path),
-                    onTap: (index) => _onItemTapped(index, context),
-                    elevation: 0,
-                    backgroundColor: AppColors.white,
-                    selectedItemColor: AppColors.forest,
-                    unselectedItemColor: AppColors.ink.withValues(alpha: 0.45),
-                    type: BottomNavigationBarType.fixed,
-                    showSelectedLabels: false,
-                    showUnselectedLabels: false,
-                    iconSize: 26,
-                    items: const [
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.home_outlined),
-                        activeIcon: Icon(Icons.home),
-                        label: '',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.explore_outlined),
-                        activeIcon: Icon(Icons.explore),
-                        label: '',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.event_note_outlined),
-                        activeIcon: Icon(Icons.event_note),
-                        label: '',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.card_travel_outlined),
-                        activeIcon: Icon(Icons.card_travel),
-                        label: '',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.person_outline),
-                        activeIcon: Icon(Icons.person),
-                        label: '',
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x18000000),
+                        blurRadius: 16,
+                        spreadRadius: 0,
+                        offset: Offset(0, 4),
                       ),
                     ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(30),
+                    child: BottomNavigationBar(
+                      currentIndex: _calculateSelectedIndex(state.uri.path),
+                      onTap: (index) => _onItemTapped(index, context),
+                      elevation: 0,
+                      backgroundColor: AppColors.white,
+                      selectedItemColor: AppColors.forest,
+                      unselectedItemColor: AppColors.ink.withValues(
+                        alpha: 0.45,
+                      ),
+                      type: BottomNavigationBarType.fixed,
+                      showSelectedLabels: false,
+                      showUnselectedLabels: false,
+                      iconSize: 26,
+                      items: const [
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.home_outlined),
+                          activeIcon: Icon(Icons.home),
+                          label: '',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.explore_outlined),
+                          activeIcon: Icon(Icons.explore),
+                          label: '',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.event_note_outlined),
+                          activeIcon: Icon(Icons.event_note),
+                          label: '',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.card_travel_outlined),
+                          activeIcon: Icon(Icons.card_travel),
+                          label: '',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.person_outline),
+                          activeIcon: Icon(Icons.person),
+                          label: '',
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -176,6 +194,16 @@ final GoRouter router = GoRouter(
           builder: (context, state) => const ExploreScreen(),
         ),
         GoRoute(
+          path: '/search',
+          builder: (context, state) => SearchResultsScreen(
+            initialQuery: state.uri.queryParameters['query'],
+            initialCategoryId: state.uri.queryParameters['category_id'],
+            initialRegionId: state.uri.queryParameters['region_id'],
+            initialDifficulty: state.uri.queryParameters['difficulty'],
+            initialSortBy: state.uri.queryParameters['sort_by'],
+          ),
+        ),
+        GoRoute(
           path: '/plans',
           builder: (context, state) => const PlansScreen(),
         ),
@@ -188,16 +216,6 @@ final GoRouter router = GoRouter(
           builder: (context, state) => const ProfileScreen(),
         ),
       ],
-    ),
-    GoRoute(
-      path: '/search',
-      builder: (context, state) => SearchResultsScreen(
-        initialQuery: state.uri.queryParameters['query'],
-        initialCategoryId: state.uri.queryParameters['category_id'],
-        initialRegionId: state.uri.queryParameters['region_id'],
-        initialDifficulty: state.uri.queryParameters['difficulty'],
-        initialSortBy: state.uri.queryParameters['sort_by'],
-      ),
     ),
     GoRoute(
       path: '/collection/:slug',
@@ -310,11 +328,56 @@ final GoRouter router = GoRouter(
 );
 
 int _calculateSelectedIndex(String location) {
-  if (location.startsWith('/explore')) return 1;
+  if (location.startsWith('/explore') || location.startsWith('/search')) {
+    return 1;
+  }
   if (location.startsWith('/plans')) return 2;
   if (location.startsWith('/trips')) return 3;
   if (location.startsWith('/profile')) return 4;
   return 0;
+}
+
+class _DoubleBackToExit extends StatefulWidget {
+  final Widget child;
+
+  const _DoubleBackToExit({required this.child});
+
+  @override
+  State<_DoubleBackToExit> createState() => _DoubleBackToExitState();
+}
+
+class _DoubleBackToExitState extends State<_DoubleBackToExit> {
+  DateTime? _lastBackPress;
+
+  Future<void> _onPopInvoked(bool didPop, Object? result) async {
+    if (didPop) return;
+    final now = DateTime.now();
+    if (_lastBackPress != null &&
+        now.difference(_lastBackPress!) < const Duration(seconds: 2)) {
+      await SystemNavigator.pop();
+      return;
+    }
+
+    _lastBackPress = now;
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('Press back again to exit'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: _onPopInvoked,
+      child: widget.child,
+    );
+  }
 }
 
 void _onItemTapped(int index, BuildContext context) {

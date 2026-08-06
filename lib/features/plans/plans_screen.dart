@@ -71,14 +71,17 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
                     value: bookingsAsync,
                     isEmpty: (data) => data.isEmpty,
                     emptyView: EmptyStateView(
-                      title: _selectedTabIndex == 0 ? 'No Upcoming Plans' : 'No Draft Plans',
+                      title: _selectedTabIndex == 0
+                          ? 'No Upcoming Plans'
+                          : 'No Draft Plans',
                       description: _selectedTabIndex == 0
                           ? 'Your confirmed trips and upcoming adventures will appear here.'
                           : 'Any incomplete bookings or saved drafts will appear here.',
                       actionLabel: 'Explore Experiences',
                       onActionPressed: () => context.go('/explore'),
                     ),
-                    onRetry: () => ref.invalidate(bookingsProvider(statusQuery)),
+                    onRetry: () =>
+                        ref.invalidate(bookingsProvider(statusQuery)),
                     data: (bookings) {
                       return ListView.separated(
                         padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
@@ -87,7 +90,10 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
                             const SizedBox(height: 14),
                         itemBuilder: (context, index) {
                           if (index == bookings.length) {
-                            return _buildToolsSection(context);
+                            return _buildToolsSection(
+                              context,
+                              bookings.first.id,
+                            );
                           }
                           final booking = bookings[index];
                           return _selectedTabIndex == 0
@@ -106,7 +112,7 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
     );
   }
 
-  Widget _buildToolsSection(BuildContext context) {
+  Widget _buildToolsSection(BuildContext context, String bookingId) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -125,7 +131,7 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
           children: [
             Expanded(
               child: GestureDetector(
-                onTap: () => context.push('/search'),
+                onTap: () => context.push('/gear/$bookingId'),
                 child: const _ToolCard(
                   icon: Icons.backpack_outlined,
                   label: 'Gear Checklist',
@@ -135,7 +141,7 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: GestureDetector(
-                onTap: () => context.push('/search'),
+                onTap: () => context.push('/budget/$bookingId'),
                 child: const _ToolCard(
                   icon: Icons.calculate_outlined,
                   label: 'Budget Tracker',
@@ -150,7 +156,9 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
   }
 
   Widget _buildUpcomingCard(BuildContext context, Booking booking) {
-    final String formattedDate = AppFormatters.formatTripDate(booking.createdAt);
+    final String formattedDate = AppFormatters.formatTripDate(
+      booking.createdAt,
+    );
     final String formattedPrice = AppFormatters.formatNpr(booking.totalPaisa);
 
     return PlanECard(
@@ -158,11 +166,46 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          PlanEPhoto(
+            imageUrl: booking.experienceCoverImageUrl,
+            height: 150,
+            width: double.infinity,
+            radius: 14,
+            overlay: Container(
+              alignment: Alignment.bottomLeft,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppColors.transparent,
+                    AppColors.black.withValues(alpha: .62),
+                  ],
+                ),
+              ),
+              child: Text(
+                booking.experienceTitle ?? 'Upcoming Experience',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.white,
+                  fontFamily: 'serif',
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.successContainer,
                   borderRadius: BorderRadius.circular(12),
@@ -178,7 +221,10 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
               ),
               Text(
                 '#${booking.bookingRef}',
-                style: const TextStyle(fontSize: 12, color: AppColors.disabledText),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.disabledText,
+                ),
               ),
             ],
           ),
@@ -195,9 +241,16 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
           const SizedBox(height: 4),
           Row(
             children: [
-              const Icon(Icons.calendar_today_outlined, size: 14, color: AppColors.ink),
+              const Icon(
+                Icons.calendar_today_outlined,
+                size: 14,
+                color: AppColors.ink,
+              ),
               const SizedBox(width: 4),
-              Text(formattedDate, style: const TextStyle(fontSize: 13, color: AppColors.ink)),
+              Text(
+                formattedDate,
+                style: const TextStyle(fontSize: 13, color: AppColors.ink),
+              ),
               const SizedBox(width: 12),
               const Icon(Icons.people_outline, size: 14, color: AppColors.ink),
               const SizedBox(width: 4),
@@ -214,7 +267,13 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Total Paid', style: TextStyle(fontSize: 11, color: AppColors.disabledText)),
+                  const Text(
+                    'Total Paid',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.disabledText,
+                    ),
+                  ),
                   Text(
                     formattedPrice,
                     style: const TextStyle(
@@ -228,13 +287,21 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.map_outlined, color: AppColors.forest, size: 20),
+                    icon: const Icon(
+                      Icons.map_outlined,
+                      color: AppColors.forest,
+                      size: 20,
+                    ),
                     onPressed: () => context.push('/itinerary/${booking.id}'),
                     tooltip: 'Itinerary',
                   ),
                   IconButton(
-                    icon: const Icon(Icons.chat_bubble_outline, color: AppColors.forest, size: 20),
-                    onPressed: () => context.push('/itinerary/${booking.id}'),
+                    icon: const Icon(
+                      Icons.chat_bubble_outline,
+                      color: AppColors.forest,
+                      size: 20,
+                    ),
+                    onPressed: () => context.push('/chat/${booking.id}'),
                     tooltip: 'Trip Chat',
                   ),
                 ],
@@ -248,7 +315,9 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
 
   Widget _buildDraftCard(BuildContext context, Booking booking) {
     final l10n = AppLocalizations.of(context)!;
-    final String formattedDate = AppFormatters.formatTripDate(booking.createdAt);
+    final String formattedDate = AppFormatters.formatTripDate(
+      booking.createdAt,
+    );
     final String formattedPrice = AppFormatters.formatNpr(booking.totalPaisa);
 
     return PlanECard(
@@ -259,7 +328,10 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.warningContainer,
                   borderRadius: BorderRadius.circular(12),
@@ -273,7 +345,13 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
                   ),
                 ),
               ),
-              Text(formattedDate, style: const TextStyle(fontSize: 12, color: AppColors.disabledText)),
+              Text(
+                formattedDate,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.disabledText,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -289,7 +367,11 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
           const SizedBox(height: 4),
           Text(
             'Estimated Total: $formattedPrice',
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.forest),
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.forest,
+            ),
           ),
           const SizedBox(height: 12),
           Row(
@@ -305,7 +387,10 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
                       planTitle: 'Draft #${booking.bookingRef}',
                     );
                     if (confirm == true && context.mounted) {
-                      AppToast.show(context, message: 'Draft deleted successfully');
+                      AppToast.show(
+                        context,
+                        message: 'Draft deleted successfully',
+                      );
                       ref.invalidate(bookingsProvider('pending'));
                     }
                   },

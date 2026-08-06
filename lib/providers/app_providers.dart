@@ -11,6 +11,7 @@ import '../repositories/booking_repository.dart';
 import '../repositories/experience_repository.dart';
 import '../repositories/profile_repository.dart';
 import '../repositories/recent_searches_repository.dart';
+import '../repositories/review_repository.dart';
 import '../repositories/saved_repository.dart';
 import '../repositories/taxonomy_repository.dart';
 
@@ -42,6 +43,10 @@ final recentSearchesRepositoryProvider = Provider<RecentSearchesRepository>((
   ref,
 ) {
   return RecentSearchesRepository();
+});
+
+final reviewRepositoryProvider = Provider<ReviewRepository>((ref) {
+  return ReviewRepository(ref.watch(supabaseClientProvider));
 });
 
 final recentSearchesProvider = FutureProvider<List<String>>((ref) async {

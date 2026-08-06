@@ -165,7 +165,14 @@ class HomeScreen extends ConsumerWidget {
                               alignment: Alignment.centerLeft,
                               child: AppButton(
                                 label: 'Search Treks',
-                                onPressed: () => context.push('/search'),
+                                onPressed: () => context.push(
+                                  Uri(
+                                    path: '/search',
+                                    queryParameters: const {
+                                      'query': 'Trekking in Nepal',
+                                    },
+                                  ).toString(),
+                                ),
                                 minHeight: 40,
                               ),
                             ),

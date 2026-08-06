@@ -31,7 +31,9 @@ class ProfileScreen extends ConsumerWidget {
             data: (profile) {
               final String name = profile?.fullName ?? 'Traveler';
               final String location = profile?.location ?? 'Kathmandu, Nepal';
-              final String initial = name.isNotEmpty ? name[0].toUpperCase() : 'T';
+              final String initial = name.isNotEmpty
+                  ? name[0].toUpperCase()
+                  : 'T';
               final int savedCount = savedAsync.asData?.value.length ?? 0;
               final int tripsCount = bookingsAsync.asData?.value.length ?? 0;
               final UserRole role = profile?.role ?? UserRole.traveler;
@@ -58,7 +60,10 @@ class ProfileScreen extends ConsumerWidget {
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.border, width: 2),
+                              border: Border.all(
+                                color: AppColors.border,
+                                width: 2,
+                              ),
                             ),
                             child: CircleAvatar(
                               radius: 54,
@@ -92,11 +97,18 @@ class ProfileScreen extends ConsumerWidget {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.location_on_outlined, size: 16, color: AppColors.disabledText),
+                              const Icon(
+                                Icons.location_on_outlined,
+                                size: 16,
+                                color: AppColors.disabledText,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 location,
-                                style: const TextStyle(color: AppColors.disabledText, fontSize: 13),
+                                style: const TextStyle(
+                                  color: AppColors.disabledText,
+                                  fontSize: 13,
+                                ),
                               ),
                             ],
                           ),
@@ -104,7 +116,10 @@ class ProfileScreen extends ConsumerWidget {
                           GestureDetector(
                             onTap: () => context.push('/profile/edit'),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 8,
+                              ),
                               decoration: BoxDecoration(
                                 border: Border.all(color: AppColors.forest),
                                 borderRadius: BorderRadius.circular(24),
@@ -112,7 +127,11 @@ class ProfileScreen extends ConsumerWidget {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.edit_outlined, size: 16, color: AppColors.forest),
+                                  const Icon(
+                                    Icons.edit_outlined,
+                                    size: 16,
+                                    color: AppColors.forest,
+                                  ),
                                   const SizedBox(width: 6),
                                   Text(
                                     l10n.editProfile.toUpperCase(),
@@ -140,19 +159,28 @@ class ProfileScreen extends ConsumerWidget {
                           Expanded(
                             child: GestureDetector(
                               onTap: () => context.go('/trips'),
-                              child: _StatTile(number: '$tripsCount', label: 'Trips'),
+                              child: _StatTile(
+                                number: '$tripsCount',
+                                label: 'Trips',
+                              ),
                             ),
                           ),
                           const SizedBox(height: 40, child: VerticalDivider()),
                           Expanded(
                             child: GestureDetector(
                               onTap: () => context.push('/saved'),
-                              child: _StatTile(number: '$savedCount', label: 'Saved'),
+                              child: _StatTile(
+                                number: '$savedCount',
+                                label: 'Saved',
+                              ),
                             ),
                           ),
                           const SizedBox(height: 40, child: VerticalDivider()),
                           Expanded(
-                            child: _StatTile(number: '${profile?.points ?? 350}', label: 'Points'),
+                            child: _StatTile(
+                              number: '${profile?.points ?? 350}',
+                              label: 'Points',
+                            ),
                           ),
                         ],
                       ),
@@ -171,9 +199,16 @@ class ProfileScreen extends ConsumerWidget {
                           ),
                           const Divider(height: 1),
                           _ProfileRow(
+                            icon: Icons.rate_review_outlined,
+                            label: l10n.myReviews,
+                            onTap: () => context.push('/profile/my-reviews'),
+                          ),
+                          const Divider(height: 1),
+                          _ProfileRow(
                             icon: Icons.credit_card,
                             label: l10n.paymentMethods,
-                            onTap: () => context.push('/profile/payment-methods'),
+                            onTap: () =>
+                                context.push('/profile/payment-methods'),
                           ),
                           const Divider(height: 1),
                           _ProfileRow(
@@ -238,7 +273,11 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHostButton(BuildContext context, UserRole role, AppLocalizations l10n) {
+  Widget _buildHostButton(
+    BuildContext context,
+    UserRole role,
+    AppLocalizations l10n,
+  ) {
     if (role == UserRole.hostApplicant) {
       return GestureDetector(
         onTap: () => context.push('/host/submitted'),
@@ -257,7 +296,11 @@ class ProfileScreen extends ConsumerWidget {
               const SizedBox(width: 10),
               Text(
                 l10n.hostUnderReviewTitle.toUpperCase(),
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.warning),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.warning,
+                ),
               ),
             ],
           ),
@@ -281,7 +324,11 @@ class ProfileScreen extends ConsumerWidget {
             const SizedBox(width: 10),
             Text(
               l10n.hostVerifiedTitle.toUpperCase(),
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.success),
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: AppColors.success,
+              ),
             ),
           ],
         ),
@@ -305,7 +352,11 @@ class ProfileScreen extends ConsumerWidget {
             const SizedBox(width: 10),
             Text(
               l10n.becomeLocalHostTitle.toUpperCase(),
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.forest),
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: AppColors.forest,
+              ),
             ),
           ],
         ),
@@ -365,10 +416,17 @@ class _ProfileRow extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
-            const Icon(Icons.chevron_right, size: 20, color: AppColors.disabledText),
+            const Icon(
+              Icons.chevron_right,
+              size: 20,
+              color: AppColors.disabledText,
+            ),
           ],
         ),
       ),

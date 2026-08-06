@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../theme/theme.dart';
 import '../../widgets/app_button.dart';
+import '../../core/onboarding_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -65,7 +66,9 @@ class _SplashScreenState extends State<SplashScreen>
     context.go('/onboarding/1');
   }
 
-  void _onExploreAsGuest() {
+  Future<void> _onExploreAsGuest() async {
+    await OnboardingPreferences.markCompleted();
+    if (!mounted) return;
     context.go('/home');
   }
 
@@ -92,10 +95,7 @@ class _SplashScreenState extends State<SplashScreen>
                         decoration: BoxDecoration(
                           color: AppColors.forest,
                           shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppColors.gold,
-                            width: 2.0,
-                          ),
+                          border: Border.all(color: AppColors.gold, width: 2.0),
                         ),
                         child: const Icon(
                           Icons.landscape_rounded,
@@ -130,19 +130,21 @@ class _SplashScreenState extends State<SplashScreen>
                                   children: [
                                     Text(
                                       'PLAN ',
-                                      style: AppTypography.displayLarge.copyWith(
-                                        color: AppColors.ivory,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 2.0,
-                                      ),
+                                      style: AppTypography.displayLarge
+                                          .copyWith(
+                                            color: AppColors.ivory,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: 2.0,
+                                          ),
                                     ),
                                     Text(
                                       'E',
-                                      style: AppTypography.displayLarge.copyWith(
-                                        color: AppColors.gold,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 2.0,
-                                      ),
+                                      style: AppTypography.displayLarge
+                                          .copyWith(
+                                            color: AppColors.gold,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: 2.0,
+                                          ),
                                     ),
                                   ],
                                 ),

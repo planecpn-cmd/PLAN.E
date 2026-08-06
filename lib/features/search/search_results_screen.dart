@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
-import '../../l10n/app_localizations.dart';
 import '../../models/experience.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
@@ -35,398 +34,219 @@ class SearchResultsScreen extends ConsumerStatefulWidget {
 }
 
 class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
-  late TextEditingController _searchController;
-  String? _selectedDifficulty;
+  late final TextEditingController _searchController;
+  String _searchQuery = '';
+  String? _difficulty;
   String? _categoryId;
   String? _regionId;
-  String? _sortBy = 'relevance';
-  String _searchQuery = '';
-  bool _showRecentSearches = false;
-  Timer? _searchDebounce;
+  String _sortBy = 'relevance';
+  late Map<String, String?> _filters;
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
     _searchQuery = widget.initialQuery ?? '';
-    _searchController = TextEditingController(text: _searchQuery);
-    _selectedDifficulty = widget.initialDifficulty;
+    _searchController = TextEditingController(text: widget.initialQuery ?? '');
+    _difficulty = widget.initialDifficulty;
     _categoryId = widget.initialCategoryId;
     _regionId = widget.initialRegionId;
     _sortBy = widget.initialSortBy ?? 'relevance';
+    _filters = _buildFilters();
   }
 
   @override
   void dispose() {
-    _searchDebounce?.cancel();
+    _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
-  Map<String, String?> get _filterMap {
-    return {
-      if (_searchQuery.trim().isNotEmpty) 'search_query': _searchQuery.trim(),
-      if (_selectedDifficulty != null && _selectedDifficulty != 'all')
-        'difficulty': _selectedDifficulty,
-      if (_categoryId != null && _categoryId!.isNotEmpty)
-        'category_id': _categoryId,
-      if (_regionId != null && _regionId!.isNotEmpty) 'region_id': _regionId,
-      if (_sortBy != null && _sortBy!.isNotEmpty) 'sort_by': _sortBy,
-    };
-  }
+  Map<String, String?> _buildFilters() => Map.unmodifiable({
+    if (_searchQuery.isNotEmpty) 'search_query': _searchQuery,
+    if (_difficulty != null && _difficulty != 'all') 'difficulty': _difficulty,
+    if (_categoryId != null) 'category_id': _categoryId,
+    if (_regionId != null) 'region_id': _regionId,
+    'sort_by': _sortBy,
+  });
 
-  void _submitSearch(String query) {
-    _searchDebounce?.cancel();
-    final trimmedQuery = query.trim();
-    setState(() {
-      _searchQuery = trimmedQuery;
-      _showRecentSearches = false;
-    });
-    FocusScope.of(context).unfocus();
-    if (trimmedQuery.isNotEmpty) {
-      ref.read(recentSearchesRepositoryProvider).addSearchQuery(trimmedQuery);
-      ref.invalidate(recentSearchesProvider);
-    }
-  }
-
-  void _onSearchChanged(String value) {
-    _searchDebounce?.cancel();
-    setState(() {
-      _showRecentSearches = value.trim().isEmpty;
-    });
-    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+  void _search(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () {
       if (!mounted) return;
       setState(() {
         _searchQuery = value.trim();
+        _filters = _buildFilters();
       });
     });
   }
 
-  void _openFilterSheet() async {
+  void _submitSearch(String value) {
+    _debounce?.cancel();
+    final query = value.trim();
+    setState(() {
+      _searchQuery = query;
+      _filters = _buildFilters();
+    });
+    FocusScope.of(context).unfocus();
+    if (query.isNotEmpty) {
+      ref.read(recentSearchesRepositoryProvider).addSearchQuery(query);
+      ref.invalidate(recentSearchesProvider);
+    }
+  }
+
+  Future<void> _openFilters() async {
     final result = await showModalBottomSheet<Map<String, String?>>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.transparent,
       builder: (context) => FilterSheet(
-        initialDifficulty: _selectedDifficulty,
+        initialDifficulty: _difficulty,
         initialCategoryId: _categoryId,
         initialRegionId: _regionId,
         initialSortBy: _sortBy,
       ),
     );
-
-    if (result != null) {
-      setState(() {
-        _selectedDifficulty = result['difficulty'];
-        _categoryId = result['category_id'];
-        _regionId = result['region_id'];
-        _sortBy = result['sort_by'] ?? 'relevance';
-      });
-    }
+    if (result == null || !mounted) return;
+    setState(() {
+      _difficulty = result['difficulty'];
+      _categoryId = result['category_id'];
+      _regionId = result['region_id'];
+      _sortBy = result['sort_by'] ?? 'relevance';
+      _filters = _buildFilters();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final experiencesAsync = ref.watch(experiencesProvider(_filterMap));
-    final recentSearchesAsync = ref.watch(recentSearchesProvider);
+    final experiencesAsync = ref.watch(experiencesProvider(_filters));
 
     return Scaffold(
+      backgroundColor: AppColors.ivory,
       body: PlanEBackground(
         safeArea: false,
         child: SafeArea(
           bottom: false,
           child: Column(
             children: [
-              // Header Row with Back Button & Logo
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 child: Row(
                   children: [
                     IconButton(
+                      constraints: AppTouchTarget.minConstraints,
+                      onPressed: () => context.canPop()
+                          ? context.pop()
+                          : context.go('/explore'),
                       icon: const Icon(
                         Icons.chevron_left,
                         size: 32,
                         color: AppColors.forest,
                       ),
-                      onPressed: () {
-                        if (context.canPop()) {
-                          context.pop();
-                        } else {
-                          context.go('/home');
-                        }
-                      },
                     ),
                     const Expanded(child: PlanELogo(fontSize: 24)),
-                    IconButton(
-                      icon: const Icon(Icons.tune, color: AppColors.forest),
-                      onPressed: _openFilterSheet,
-                      tooltip: 'Filter',
-                    ),
+                    const SizedBox(width: AppTouchTarget.minSize),
                   ],
                 ),
               ),
-
-              // Search Bar
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Container(
-                  height: 48,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  height: 52,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
                     color: AppColors.white,
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius: AppRadii.borderPill,
                     border: Border.all(color: AppColors.border),
                   ),
                   child: Row(
                     children: [
-                      const Icon(
-                        Icons.search,
-                        size: 22,
-                        color: AppColors.forest,
-                      ),
+                      const Icon(Icons.search, color: AppColors.forest),
                       const SizedBox(width: 10),
                       Expanded(
                         child: TextField(
                           controller: _searchController,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppColors.ink,
-                          ),
-                          decoration: const InputDecoration(
-                            hintText: 'Search trails, places, treks...',
-                            hintStyle: TextStyle(
-                              color: AppColors.disabledText,
-                              fontSize: 14,
-                            ),
-                            border: InputBorder.none,
-                          ),
                           textInputAction: TextInputAction.search,
-                          onTap: () {
-                            setState(() {
-                              _showRecentSearches = _searchController.text
-                                  .trim()
-                                  .isEmpty;
-                            });
-                          },
+                          onChanged: _search,
                           onSubmitted: _submitSearch,
-                          onChanged: _onSearchChanged,
+                          style: AppTypography.bodyMedium,
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            errorBorder: InputBorder.none,
+                            focusedErrorBorder: InputBorder.none,
+                            disabledBorder: InputBorder.none,
+                            hintText: 'Search trails, places, treks...',
+                          ),
                         ),
                       ),
-                      if (_searchController.text.isNotEmpty)
-                        GestureDetector(
-                          onTap: () {
-                            _searchController.clear();
-                            setState(() {
-                              _searchQuery = '';
-                              _showRecentSearches = true;
-                            });
-                          },
-                          child: const Icon(
-                            Icons.close,
-                            size: 20,
-                            color: AppColors.disabledText,
-                          ),
-                        ),
                     ],
                   ),
                 ),
               ),
-
-              // Recent Searches if active
-              if (_showRecentSearches)
-                AsyncValueView<List<String>>(
-                  value: recentSearchesAsync,
-                  onRetry: () => ref.refresh(recentSearchesProvider),
-                  isEmpty: (list) => list.isEmpty,
-                  emptyView: const SizedBox.shrink(),
-                  data: (recentList) {
-                    if (recentList.isEmpty) return const SizedBox.shrink();
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 6,
-                      ),
-                      color: AppColors.sage.withValues(alpha: 0.3),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Recent Searches',
-                                style: AppTypography.caption.copyWith(
-                                  color: AppColors.forest,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: () async {
-                                  await ref
-                                      .read(recentSearchesRepositoryProvider)
-                                      .clearRecentSearches();
-                                  ref.invalidate(recentSearchesProvider);
-                                },
-                                child: Text(
-                                  'Clear',
-                                  style: AppTypography.caption.copyWith(
-                                    color: AppColors.disabledText,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: recentList.map((term) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 8),
-                                  child: ActionChip(
-                                    label: Text(
-                                      term,
-                                      style: AppTypography.caption,
-                                    ),
-                                    backgroundColor: AppColors.white,
-                                    shape: const RoundedRectangleBorder(
-                                      borderRadius: AppRadii.borderPill,
-                                    ),
-                                    onPressed: () {
-                                      _searchController.text = term;
-                                      _submitSearch(term);
-                                    },
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-
-              // Difficulty Chips Bar
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                child: Row(
-                  children: [
-                    _buildDifficultyChip('all', l10n.allLevels),
-                    const SizedBox(width: 8),
-                    _buildDifficultyChip('easy', l10n.easy),
-                    const SizedBox(width: 8),
-                    _buildDifficultyChip('moderate', l10n.moderate),
-                    const SizedBox(width: 8),
-                    _buildDifficultyChip('challenging', l10n.challenging),
-                    const SizedBox(width: 8),
-                    _buildDifficultyChip('strenuous', l10n.strenuous),
-                  ],
-                ),
-              ),
-
-              // Results Count Banner
+              const SizedBox(height: 12),
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      l10n.searchResults,
-                      style: AppTypography.headingMedium.copyWith(
-                        color: AppColors.ink,
-                      ),
+                    _ActionPill(
+                      icon: Icons.tune,
+                      label: 'Filter',
+                      onTap: _openFilters,
                     ),
-                    if (_categoryId != null ||
-                        _regionId != null ||
-                        _selectedDifficulty != null ||
-                        _searchQuery.isNotEmpty)
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedDifficulty = null;
-                            _categoryId = null;
-                            _regionId = null;
-                            _sortBy = 'relevance';
-                            _searchQuery = '';
-                            _searchController.clear();
-                            _showRecentSearches = false;
-                          });
-                        },
-                        child: Text(
-                          'Clear All',
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.error,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                    const SizedBox(width: 10),
+                    _ActionPill(
+                      icon: Icons.swap_vert,
+                      label: 'Sort',
+                      onTap: _openFilters,
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(height: 6),
-
-              // Async Experience Results View
+              const SizedBox(height: 14),
               Expanded(
                 child: AsyncValueView<List<Experience>>(
                   value: experiencesAsync,
-                  onRetry: () => ref.refresh(experiencesProvider(_filterMap)),
-                  isEmpty: (list) => list.isEmpty,
-                  emptyView: EmptyStateView(
+                  onRetry: () => ref.refresh(experiencesProvider(_filters)),
+                  isEmpty: (items) => items.isEmpty,
+                  emptyView: const EmptyStateView(
                     icon: Icons.search_off,
-                    title: l10n.noExperiencesFound,
-                    description: _searchQuery.isNotEmpty
-                        ? 'No results for "$_searchQuery". Try searching for "Everest", "Annapurna", or "Pokhara".'
-                        : 'No experiences match the selected criteria.',
-                    actionLabel: l10n.resetSearch,
-                    onActionPressed: () {
-                      setState(() {
-                        _selectedDifficulty = null;
-                        _categoryId = null;
-                        _regionId = null;
-                        _sortBy = 'relevance';
-                        _searchQuery = '';
-                        _searchController.clear();
-                        _showRecentSearches = false;
-                      });
+                    title: 'No Experiences Found',
+                    description:
+                        'Try another destination or adjust your filters.',
+                  ),
+                  data: (experiences) => ListView.separated(
+                    key: const PageStorageKey('search-results'),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 110),
+                    itemCount: experiences.length + 1,
+                    separatorBuilder: (_, index) =>
+                        SizedBox(height: index == 0 ? 14 : 16),
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Search Results',
+                              style: AppTypography.headingLarge.copyWith(
+                                color: AppColors.forest,
+                              ),
+                            ),
+                            Text(
+                              '${experiences.length} experiences found',
+                              style: AppTypography.caption.copyWith(
+                                color: AppColors.disabledText,
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                      return _SearchExperienceCard(
+                        experience: experiences[index - 1],
+                      );
                     },
                   ),
-                  data: (experiences) {
-                    return ListView.separated(
-                      key: const PageStorageKey<String>('search_results_list'),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      itemCount: experiences.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 14),
-                      itemBuilder: (context, index) {
-                        final exp = experiences[index];
-                        return ExperienceCard(
-                          width: double.infinity,
-                          title: exp.title,
-                          location: exp.locationName ?? 'Nepal',
-                          rating: exp.ratingAvg,
-                          reviewCount: exp.ratingCount,
-                          priceText: AppFormatters.formatNpr(exp.pricePaisa),
-                          imageUrl: exp.coverImageUrl,
-                          categoryTag: exp.difficulty.name.toUpperCase(),
-                          onTap: () => context.push('/experience/${exp.id}'),
-                        );
-                      },
-                    );
-                  },
                 ),
               ),
             ],
@@ -435,21 +255,200 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
       ),
     );
   }
+}
 
-  Widget _buildDifficultyChip(String value, String label) {
-    final isSelected =
-        (_selectedDifficulty == value) ||
-        (value == 'all' &&
-            (_selectedDifficulty == null || _selectedDifficulty == 'all'));
+class _ActionPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
 
-    return FilterChipPill(
-      label: label,
-      isSelected: isSelected,
-      onSelected: (selected) {
-        setState(() {
-          _selectedDifficulty = selected ? value : null;
-        });
-      },
+  const _ActionPill({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.sage,
+      shape: const StadiumBorder(side: BorderSide(color: AppColors.border)),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const StadiumBorder(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18, color: AppColors.forest),
+              const SizedBox(width: 7),
+              Text(
+                label,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.forest,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SearchExperienceCard extends StatelessWidget {
+  final Experience experience;
+
+  const _SearchExperienceCard({required this.experience});
+
+  String get _duration {
+    if (experience.durationHours >= 24 && experience.durationHours % 24 == 0) {
+      final days = experience.durationHours ~/ 24;
+      return '$days ${days == 1 ? 'day' : 'days'}';
+    }
+    return '${experience.durationHours} hours';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: AppRadii.borderLg24,
+        border: Border.all(color: AppColors.borderSubtle),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x12000000),
+            blurRadius: 14,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            children: [
+              PlanEPhoto(
+                imageUrl: experience.coverImageUrl,
+                height: 170,
+                width: double.infinity,
+                radius: AppRadii.lg24,
+              ),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: Material(
+                  color: AppColors.white,
+                  shape: const CircleBorder(),
+                  child: IconButton(
+                    tooltip: 'Save experience',
+                    onPressed: () {},
+                    icon: const Icon(
+                      Icons.bookmark_border,
+                      color: AppColors.forest,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  experience.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.headingMedium.copyWith(
+                    fontFamily: 'serif',
+                    color: AppColors.forest,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 14,
+                  runSpacing: 6,
+                  children: [
+                    _Meta(icon: Icons.schedule, text: _duration),
+                    _Meta(
+                      icon: Icons.terrain,
+                      text: experience.difficulty.name.toUpperCase(),
+                    ),
+                    _Meta(
+                      icon: Icons.star,
+                      text:
+                          '${experience.ratingAvg} (${experience.ratingCount})',
+                      iconColor: AppColors.gold,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            AppFormatters.formatNpr(experience.pricePaisa),
+                            style: AppTypography.bodyLarge.copyWith(
+                              color: AppColors.forest,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'per person',
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.disabledText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    AppButton(
+                      label: 'Book Now',
+                      minHeight: 42,
+                      fontSize: 13,
+                      onPressed: () =>
+                          context.push('/booking/${experience.id}'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Meta extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final Color iconColor;
+
+  const _Meta({
+    required this.icon,
+    required this.text,
+    this.iconColor = AppColors.forest,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: iconColor),
+        const SizedBox(width: 4),
+        Text(text, style: AppTypography.caption.copyWith(color: AppColors.ink)),
+      ],
     );
   }
 }

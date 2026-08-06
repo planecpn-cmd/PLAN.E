@@ -47,6 +47,8 @@ class Booking {
   final String bookingRef;
   final String userId;
   final String experienceId;
+  final String? experienceTitle;
+  final String? experienceCoverImageUrl;
   final String departureId;
   final int adults;
   final int children;
@@ -70,6 +72,8 @@ class Booking {
     required this.bookingRef,
     required this.userId,
     required this.experienceId,
+    this.experienceTitle,
+    this.experienceCoverImageUrl,
     required this.departureId,
     required this.adults,
     this.children = 0,
@@ -90,15 +94,19 @@ class Booking {
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) {
+    final experience = json['experiences'] as Map<String, dynamic>?;
     return Booking(
       id: json['id'] as String,
       bookingRef: json['booking_ref'] as String,
       userId: json['user_id'] as String,
       experienceId: json['experience_id'] as String,
+      experienceTitle: experience?['title'] as String?,
+      experienceCoverImageUrl: experience?['cover_image_url'] as String?,
       departureId: json['departure_id'] as String,
       adults: (json['adults'] as num).toInt(),
       children: (json['children'] as num?)?.toInt() ?? 0,
-      addons: (json['addons'] as List<dynamic>?)
+      addons:
+          (json['addons'] as List<dynamic>?)
               ?.map((e) => Map<String, dynamic>.from(e as Map))
               .toList() ??
           const [],

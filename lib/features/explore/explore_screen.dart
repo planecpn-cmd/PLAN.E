@@ -1,21 +1,57 @@
 // PL-07 Explore Screen
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/format.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/category.dart';
+import '../../models/experience.dart';
 import '../../models/region.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/widgets.dart';
 import '../search/filter_sheet.dart';
 
-class ExploreScreen extends ConsumerWidget {
+class ExploreScreen extends ConsumerStatefulWidget {
   const ExploreScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ExploreScreen> createState() => _ExploreScreenState();
+}
+
+class _ExploreScreenState extends ConsumerState<ExploreScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  Map<String, String?> _searchFilters = const {'sort_by': 'relevance'};
+  Timer? _searchDebounce;
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted) return;
+      final query = value.trim();
+      setState(() {
+        _searchQuery = query;
+        _searchFilters = Map.unmodifiable({
+          if (query.isNotEmpty) 'search_query': query,
+          'sort_by': 'relevance',
+        });
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final categoriesAsync = ref.watch(categoriesProvider);
     final regionsAsync = ref.watch(regionsProvider);
@@ -84,36 +120,68 @@ class ExploreScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  // Search Bar Input Trigger
-                  GestureDetector(
-                    onTap: () => context.push('/search'),
-                    child: Container(
-                      height: 50,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.search,
-                            size: 24,
-                            color: AppColors.forest,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            l10n.searchHint,
+                  Container(
+                    height: 50,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.search,
+                          size: 24,
+                          color: AppColors.forest,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: _onSearchChanged,
+                            textInputAction: TextInputAction.search,
                             style: const TextStyle(
-                              color: AppColors.disabledText,
+                              color: AppColors.ink,
                               fontSize: 14,
                             ),
+                            decoration: InputDecoration(
+                              hintText: l10n.searchHint,
+                              hintStyle: const TextStyle(
+                                color: AppColors.disabledText,
+                                fontSize: 14,
+                              ),
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              contentPadding: EdgeInsets.zero,
+                            ),
                           ),
-                        ],
-                      ),
+                        ),
+                        if (_searchController.text.isNotEmpty)
+                          IconButton(
+                            tooltip: 'Clear search',
+                            onPressed: () {
+                              _searchDebounce?.cancel();
+                              _searchController.clear();
+                              setState(() {
+                                _searchQuery = '';
+                                _searchFilters = const {'sort_by': 'relevance'};
+                              });
+                            },
+                            icon: const Icon(
+                              Icons.close,
+                              size: 20,
+                              color: AppColors.disabledText,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
+                  if (_searchQuery.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    _ExploreSearchResults(filters: _searchFilters),
+                  ],
                   const SizedBox(height: 24),
 
                   // Explore Filters
@@ -357,6 +425,56 @@ class ExploreScreen extends ConsumerWidget {
     };
     context.push(
       Uri(path: '/search', queryParameters: queryParameters).toString(),
+    );
+  }
+}
+
+class _ExploreSearchResults extends ConsumerWidget {
+  final Map<String, String?> filters;
+
+  const _ExploreSearchResults({required this.filters});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final results = ref.watch(experiencesProvider(filters));
+    return AsyncValueView<List<Experience>>(
+      value: results,
+      onRetry: () => ref.refresh(experiencesProvider(filters)),
+      isEmpty: (items) => items.isEmpty,
+      emptyView: const EmptyStateView(
+        icon: Icons.search_off,
+        title: 'No Experiences Found',
+        description: 'Try another trail, place, or trek.',
+      ),
+      data: (items) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${items.length} experiences found',
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.forest,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...items.map(
+            (experience) => Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: ExperienceCard(
+                width: double.infinity,
+                title: experience.title,
+                location: experience.locationName ?? 'Nepal',
+                rating: experience.ratingAvg,
+                reviewCount: experience.ratingCount,
+                priceText: AppFormatters.formatNpr(experience.pricePaisa),
+                imageUrl: experience.coverImageUrl,
+                categoryTag: experience.difficulty.name.toUpperCase(),
+                onTap: () => context.push('/experience/${experience.id}'),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

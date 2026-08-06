@@ -1,6 +1,9 @@
 // RM-16 Edit Profile Screen
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../models/profile.dart';
 import '../../providers/app_providers.dart';
@@ -25,6 +28,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late TextEditingController _locationController;
   late TextEditingController _bioController;
   bool _isSaving = false;
+  bool _isUploadingPhoto = false;
+  Uint8List? _selectedAvatarBytes;
   bool _initialized = false;
 
   @override
@@ -41,7 +46,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _nameController.text = profile?.fullName ?? 'Pema Sherpa';
     _phoneController.text = profile?.phone ?? '+977 9841234567';
     _locationController.text = profile?.location ?? 'Kathmandu, Nepal';
-    _bioController.text = profile?.bio ??
+    _bioController.text =
+        profile?.bio ??
         'Passionate mountain trekker & eco-tourism enthusiast exploring hidden trails across the Himalayas.';
     _initialized = true;
   }
@@ -92,6 +98,51 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
   }
 
+  Future<void> _pickProfilePhoto() async {
+    if (_isUploadingPhoto) return;
+    try {
+      final image = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1200,
+        imageQuality: 85,
+        requestFullMetadata: false,
+      );
+      if (image == null || !mounted) return;
+
+      final bytes = await image.readAsBytes();
+      if (!mounted) return;
+      setState(() {
+        _selectedAvatarBytes = bytes;
+        _isUploadingPhoto = true;
+      });
+
+      final extension = image.name.contains('.')
+          ? image.name.split('.').last.toLowerCase()
+          : 'jpg';
+      await ref
+          .read(profileRepositoryProvider)
+          .uploadAvatar(bytes: bytes, extension: extension);
+      ref.invalidate(profileProvider);
+      if (mounted) {
+        AppToast.show(
+          context,
+          message: 'Profile photo updated!',
+          variant: AppToastVariant.success,
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        AppToast.show(
+          context,
+          message: 'Unable to update photo. Please try another image.',
+          variant: AppToastVariant.error,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingPhoto = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final profileAsync = ref.watch(profileProvider);
@@ -130,10 +181,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         CircleAvatar(
                           radius: 50,
                           backgroundColor: AppColors.forest,
-                          backgroundImage: profile?.avatarUrl != null
+                          backgroundImage: _selectedAvatarBytes != null
+                              ? MemoryImage(_selectedAvatarBytes!)
+                              : profile?.avatarUrl != null
                               ? NetworkImage(profile!.avatarUrl!)
                               : null,
-                          child: profile?.avatarUrl == null
+                          child:
+                              _selectedAvatarBytes == null &&
+                                  profile?.avatarUrl == null
                               ? Text(
                                   _nameController.text.isNotEmpty
                                       ? _nameController.text[0].toUpperCase()
@@ -148,20 +203,27 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           bottom: 0,
                           right: 0,
                           child: InkWell(
-                            onTap: () {
-                              AppToast.show(context, message: 'Photo picker initialized');
-                            },
+                            onTap: _pickProfilePhoto,
                             child: Container(
                               padding: const EdgeInsets.all(AppSpacing.sm8),
                               decoration: const BoxDecoration(
                                 color: AppColors.gold,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
-                                Icons.camera_alt,
-                                color: AppColors.white,
-                                size: 18,
-                              ),
+                              child: _isUploadingPhoto
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColors.white,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.camera_alt,
+                                      color: AppColors.white,
+                                      size: 18,
+                                    ),
                             ),
                           ),
                         ),
