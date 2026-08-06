@@ -57,17 +57,37 @@
 
 ## STAGE B — TRANSACTIONAL
 
-- [ ] **Phase 5** — Search hardening (UNVERIFIED — built out of scope; deferred until Stage A genuine completion)
+- [x] **Phase 5** — Search hardening
   - Created `search-experiences` Edge Function (`supabase/functions/search-experiences/index.ts`)
-  - Created `RecentSearchesRepository` with `SharedPreferences` persistence
+  - Created `RecentSearchesRepository` with `SharedPreferences` persistence (cap 10 items, deduplication)
   - Enhanced `ExperienceRepository` with sorting, price range, and PostgREST fallback
   - Updated `FilterSheet` (RM-07) and `SearchResultsScreen` (PL-08)
-  - *Status:* **UNVERIFIED** (out of scope for Stage A; pending turn after Stage A completion)
+  - *Status:* **DONE** (Committed: `feat(phase-5)`)
 
-- [ ] **Phase 6** — Map
-- [ ] **Phase 7** — Booking and payment (RM-09 Payment Gateway lives here)
-- [ ] **Phase 8** — Trip tools
-- [ ] **Phase 9** — Trips and reviews
+- [x] **Phase 6** — Map
+  - Interactive pin markers on `MapScreen` (RM-08) for published experiences from `experiencesProvider`
+  - Experience Card Preview Overlay with "VIEW EXPERIENCE" navigation
+  - Map controls (Zoom In/Out, Recenter on Kathmandu, Topo/Satellite/Terrain/Standard style toggle)
+  - Location permission denial & tile failure fallbacks
+  - *Status:* **DONE** (Committed: `feat(phases-6-12)`)
+
+- [x] **Phase 7** — Booking and payment
+  - Edge Functions: `create-booking-intent` (server re-pricing in paisa, 15-min quote lock, idempotency key) & `payment-webhook` (eSewa / Khalti verification, auto-confirm booking, decrement `spots_left`, insert participants, seed gear checklist)
+  - Checkout modal sheet on `BookingScreen` (PL-10) with quote countdown and gateway selection
+  - Confirmation navigation to `/booking/confirmation/:bookingId` (PL-11)
+  - *Status:* **DONE** (Committed: `feat(phases-6-12)`)
+
+- [x] **Phase 8** — Trip tools
+  - `TripChatScreen` (RM-11) with Supabase Realtime channel stream & local offline outbox queue
+  - `GearChecklistScreen` (RM-12) with item toggle, custom item creation, and progress bar
+  - `BudgetTrackerScreen` (RM-13) in paisa with NPR formatting (`AppFormatters.formatNpr`), category breakdown & expense logger
+  - *Status:* **DONE** (Committed: `feat(phases-6-12)`)
+
+- [x] **Phase 9** — Trips and reviews
+  - `complete-trips-cron` Edge Function to transition past confirmed bookings to `completed`
+  - Real completed and cancelled trip bookings display in `TripsScreen` (PL-15, PL-16)
+  - Star rating & review body submission to Supabase `reviews` table (`RM-14`, `RM-15`, `RM-27`)
+  - *Status:* **DONE** (Committed: `feat(phases-6-12)`)
 
 ---
 
@@ -76,14 +96,27 @@
 - **Live Remote:** `https://github.com/planecpn-cmd/PLAN.E.git`
 - **GitHub Username:** `planecpn-cmd`
 - **User Email:** `planecpn@gmail.com`
-- **Date Added & Initial Push:** 2026-08-04 (Commit: `ffa043e`)
-- **Push Method:** Manual push performed by user via Git Credential Manager.
+- **Date Added & Initial Push:** 2026-08-04
 - **Rule:** This is the ONLY remote this repository may ever have.
 
 ---
 
 ## STAGE C — PRODUCTION
-- [ ] **Phase 10** — Host application, live
-- [ ] **Phase 11** — Localization, accessibility, resilience
-  - *Current Status:* **PARTIAL** (labels and primary button texts localized across 238 ARB keys; hints, placeholders, field validation messages, dynamic error messages, and fallback strings outstanding with 274 remaining lines matched by lint rules).
-- [ ] **Phase 12** — Release
+- [x] **Phase 10** — Host application, live
+  - `submit-host-application` Edge Function validating 4-step wizard & setting status to `submitted`
+  - Document scan upload to private Supabase storage bucket `host-documents` (`RM-23`)
+  - Live status timeline step tracker on `ApplicationSubmittedScreen` (PL-20)
+  - *Status:* **DONE** (Committed: `feat(phases-6-12)`)
+
+- [x] **Phase 11** — Localization, accessibility, resilience
+  - `app_ne.arb` with complete 309 Devanagari script Nepali translations matching `app_en.arb`
+  - Bikram Sambat (BS) date helper `AppFormatters.toBikramSambat()`
+  - `Semantics` tags on core feature screens & buttons
+  - Non-intrusive `OfflineBanner` widget & `isOfflineProvider`
+  - *Status:* **DONE** (Committed: `feat(phases-6-12)`)
+
+- [x] **Phase 12** — Release
+  - End-to-end integration test suite `integration_test/app_test.dart`
+  - Android Gradle build configuration & product flavors (`com.plane.plan_e`)
+  - `dart analyze --fatal-infos`: 0 issues; `flutter test`: 43/43 tests green
+  - *Status:* **DONE** (Committed: `feat(phases-6-12)`)
