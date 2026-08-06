@@ -1,3 +1,9 @@
+# Secrets - never commit
+.env
+.env.*
+!.env.example
+supabase/functions/.env
+
 # Miscellaneous
 *.class
 *.log
