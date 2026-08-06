@@ -1,6 +1,7 @@
 // RM-15 Review Submitted
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../l10n/app_localizations.dart';
 import '../../theme/theme.dart';
 import '../../widgets/widgets.dart';
@@ -13,55 +14,50 @@ class ReviewSubmittedScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.ivory,
-      appBar: AppBar(
-        backgroundColor: AppColors.ivory,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.forest),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          l10n.reviewSubmitted,
-          style: AppTypography.headingMedium.copyWith(color: AppColors.forest),
-        ),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: AppSpacing.screenPadding,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: const BoxDecoration(
-                  color: AppColors.forest,
-                  shape: BoxShape.circle,
+      body: PlanEBackground(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 96,
+                  height: 96,
+                  decoration: const BoxDecoration(
+                    color: AppColors.successContainer,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    color: AppColors.success,
+                    size: 52,
+                  ),
                 ),
-                child: const Icon(Icons.check, color: AppColors.white, size: 40),
-              ),
-              const SizedBox(height: AppSpacing.lg16),
-              Text(
-                l10n.reviewSubmitted,
-                style: AppTypography.headingLarge.copyWith(color: AppColors.forest),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.sm8),
-              Text(
-                'Thank you for your feedback! Your review helps build trust across Nepal.',
-                style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.disabledText,
-                  height: 1.4,
+                const SizedBox(height: 24),
+                Text(
+                  l10n.reviewSubmittedTitle,
+                  textAlign: TextAlign.center,
+                  style: AppTypography.headingLarge.copyWith(
+                    color: AppColors.forest,
+                    fontFamily: 'serif',
+                  ),
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.xxl24),
-              AppButton(
-                label: 'BACK TO TRIPS',
-                isFullWidth: true,
-                onPressed: () => context.go('/trips'),
-              ),
-            ],
+                const SizedBox(height: 12),
+                Text(
+                  'Your feedback has been published and will help future travelers.',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.disabledText,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                AppButton(
+                  label: 'Back to My Trips',
+                  onPressed: () => context.go('/trips'),
+                ),
+              ],
+            ),
           ),
         ),
       ),

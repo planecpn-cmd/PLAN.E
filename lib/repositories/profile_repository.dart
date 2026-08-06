@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/profile.dart';
 
@@ -37,5 +39,47 @@ class ProfileRepository {
     updates['updated_at'] = DateTime.now().toUtc().toIso8601String();
 
     await _client.from('profiles').update(updates).eq('id', userId);
+  }
+
+  Future<String> uploadAvatar({
+    required Uint8List bytes,
+    required String extension,
+  }) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      throw StateError('Sign in before uploading a profile photo.');
+    }
+
+    final normalizedExtension = extension == 'png' || extension == 'webp'
+        ? extension
+        : 'jpg';
+    final contentType = normalizedExtension == 'png'
+        ? 'image/png'
+        : normalizedExtension == 'webp'
+        ? 'image/webp'
+        : 'image/jpeg';
+    final path = '$userId/avatar.$normalizedExtension';
+
+    await _client.storage
+        .from('avatars')
+        .uploadBinary(
+          path,
+          bytes,
+          fileOptions: FileOptions(
+            upsert: true,
+            contentType: contentType,
+            cacheControl: '3600',
+          ),
+        );
+    final publicUrl = _client.storage.from('avatars').getPublicUrl(path);
+    final avatarUrl = '$publicUrl?v=${DateTime.now().millisecondsSinceEpoch}';
+    await _client
+        .from('profiles')
+        .update({
+          'avatar_url': avatarUrl,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', userId);
+    return avatarUrl;
   }
 }

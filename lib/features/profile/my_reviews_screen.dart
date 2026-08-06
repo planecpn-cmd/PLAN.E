@@ -3,13 +3,53 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/format.dart';
-import '../../models/review.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/async_value_view.dart';
 import '../../widgets/empty_state_view.dart';
 import '../../widgets/rating_stars.dart';
+
+class UserReviewItem {
+  final String id;
+  final String experienceTitle;
+  final String location;
+  final double rating;
+  final String comment;
+  final DateTime createdAt;
+
+  const UserReviewItem({
+    required this.id,
+    required this.experienceTitle,
+    required this.location,
+    required this.rating,
+    required this.comment,
+    required this.createdAt,
+  });
+}
+
+final userReviewsProvider = FutureProvider.autoDispose<List<UserReviewItem>>((
+  ref,
+) async {
+  final reviews = await ref.watch(reviewRepositoryProvider).getMyReviews();
+  return reviews.map((item) {
+    final review = item.review;
+    final comment = review.body?.trim();
+    final title = review.title?.trim();
+    return UserReviewItem(
+      id: review.id,
+      experienceTitle: item.experienceTitle,
+      location: item.location,
+      rating: review.rating.toDouble(),
+      comment: comment?.isNotEmpty == true
+          ? comment!
+          : title?.isNotEmpty == true
+          ? title!
+          : 'Star rating only',
+      createdAt: review.createdAt,
+    );
+  }).toList();
+});
 
 class MyReviewsScreen extends ConsumerWidget {
   const MyReviewsScreen({super.key});
@@ -33,28 +73,27 @@ class MyReviewsScreen extends ConsumerWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: AsyncValueView<List<Review>>(
+      body: AsyncValueView<List<UserReviewItem>>(
         value: reviewsAsync,
-        onRetry: () => ref.invalidate(userReviewsProvider),
+        onRetry: () => ref.refresh(userReviewsProvider),
         isEmpty: (list) => list.isEmpty,
         emptyView: const EmptyStateView(
           title: 'No Reviews Yet',
-          description: 'Complete a local experience trip to leave ratings and share feedback.',
+          description:
+              'Complete a local experience trip to leave ratings and share feedback.',
         ),
         data: (reviews) {
           return ListView.separated(
             padding: const EdgeInsets.all(AppSpacing.lg16),
             itemCount: reviews.length,
-            separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md12),
+            separatorBuilder: (_, __) =>
+                const SizedBox(height: AppSpacing.md12),
             itemBuilder: (context, index) {
               final review = reviews[index];
-              final String experienceTitle = review.experience?.title ?? 'Local Experience';
-              final String locationName = review.experience?.locationName ?? 'Nepal';
               final String formattedDate = AppFormatters.formatTripDate(
                 review.createdAt,
                 pattern: 'd MMM yyyy',
               );
-              final String reviewText = review.body ?? review.title ?? '';
 
               return AppCard(
                 child: Column(
@@ -68,7 +107,7 @@ class MyReviewsScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                experienceTitle,
+                                review.experienceTitle,
                                 style: AppTypography.bodyLarge.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -83,7 +122,7 @@ class MyReviewsScreen extends ConsumerWidget {
                                   ),
                                   const SizedBox(width: AppSpacing.xs4),
                                   Text(
-                                    locationName,
+                                    review.location,
                                     style: AppTypography.caption.copyWith(
                                       color: AppColors.disabledText,
                                     ),
@@ -102,17 +141,15 @@ class MyReviewsScreen extends ConsumerWidget {
                       ],
                     ),
                     const SizedBox(height: AppSpacing.md12),
-                    RatingStars(rating: review.rating.toDouble()),
-                    if (reviewText.isNotEmpty) ...[
-                      const SizedBox(height: AppSpacing.sm8),
-                      Text(
-                        reviewText,
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.ink,
-                          height: 1.4,
-                        ),
+                    RatingStars(rating: review.rating),
+                    const SizedBox(height: AppSpacing.sm8),
+                    Text(
+                      review.comment,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.ink,
+                        height: 1.4,
                       ),
-                    ],
+                    ),
                   ],
                 ),
               );

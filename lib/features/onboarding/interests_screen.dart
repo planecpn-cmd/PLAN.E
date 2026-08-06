@@ -7,6 +7,7 @@ import '../../models/category.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/widgets.dart';
+import '../../core/onboarding_preferences.dart';
 
 class InterestsScreen extends ConsumerWidget {
   const InterestsScreen({super.key});
@@ -37,7 +38,10 @@ class InterestsScreen extends ConsumerWidget {
                 ),
                 const Expanded(child: PlanELogo(fontSize: 26)),
                 TextButton(
-                  onPressed: () => context.go('/home'),
+                  onPressed: () async {
+                    await OnboardingPreferences.markCompleted();
+                    if (context.mounted) context.go('/home');
+                  },
                   child: Text(
                     'Skip',
                     style: AppTypography.bodyMedium.copyWith(
@@ -174,7 +178,12 @@ class InterestsScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             AppButton(
               label: l10n.continueText,
-              onPressed: canContinue ? () => context.go('/home') : null,
+              onPressed: canContinue
+                  ? () async {
+                      await OnboardingPreferences.markCompleted();
+                      if (context.mounted) context.go('/home');
+                    }
+                  : null,
               variant: canContinue
                   ? AppButtonVariant.primary
                   : AppButtonVariant.disabled,

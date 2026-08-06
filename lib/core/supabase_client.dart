@@ -10,14 +10,19 @@ class AppSupabaseClient {
 
     String url = const String.fromEnvironment('SUPABASE_URL');
     String anonKey = const String.fromEnvironment('SUPABASE_ANON_KEY');
+    String demoEmail = '';
+    String demoPassword = '';
 
     // Load from env/local.json if not passed via --dart-define
     if (url.isEmpty || anonKey.isEmpty) {
       try {
         final String jsonStr = await rootBundle.loadString('env/local.json');
-        final Map<String, dynamic> config = jsonDecode(jsonStr) as Map<String, dynamic>;
+        final Map<String, dynamic> config =
+            jsonDecode(jsonStr) as Map<String, dynamic>;
         url = config['SUPABASE_URL'] as String? ?? '';
         anonKey = config['SUPABASE_ANON_KEY'] as String? ?? '';
+        demoEmail = config['DEMO_EMAIL'] as String? ?? '';
+        demoPassword = config['DEMO_PASSWORD'] as String? ?? '';
       } catch (e) {
         throw StateError(
           'Failed to load Supabase configuration from env/local.json or --dart-define: $e',
@@ -39,12 +44,23 @@ class AppSupabaseClient {
         authFlowType: AuthFlowType.pkce,
       ),
     );
+    if (url.startsWith('http://127.0.0.1') &&
+        Supabase.instance.client.auth.currentUser == null &&
+        demoEmail.isNotEmpty &&
+        demoPassword.isNotEmpty) {
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: demoEmail,
+        password: demoPassword,
+      );
+    }
     _initialized = true;
   }
 
   static SupabaseClient get client {
     if (!_initialized) {
-      throw StateError('AppSupabaseClient has not been initialized. Call initialize() first.');
+      throw StateError(
+        'AppSupabaseClient has not been initialized. Call initialize() first.',
+      );
     }
     return Supabase.instance.client;
   }

@@ -9,7 +9,6 @@ import '../models/experience.dart';
 import '../models/host_application.dart';
 import '../models/profile.dart';
 import '../models/region.dart';
-import '../models/review.dart';
 import '../repositories/booking_repository.dart';
 import '../repositories/experience_repository.dart';
 import '../repositories/host_repository.dart';
@@ -137,11 +136,6 @@ final profileProvider = FutureProvider<Profile?>((ref) async {
 final myHostApplicationProvider = FutureProvider<HostApplication?>((ref) async {
   final repo = ref.watch(hostRepositoryProvider);
   return repo.getHostApplication();
-});
-
-final userReviewsProvider = FutureProvider<List<Review>>((ref) async {
-  final repo = ref.watch(reviewRepositoryProvider);
-  return repo.getUserReviews();
 });
 
 // Guest & Deferred Action State
