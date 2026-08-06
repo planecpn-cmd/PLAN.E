@@ -1,4 +1,6 @@
 // PL-08 Search Results
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -16,6 +18,7 @@ class SearchResultsScreen extends ConsumerStatefulWidget {
   final String? initialCategoryId;
   final String? initialRegionId;
   final String? initialDifficulty;
+  final String? initialSortBy;
 
   const SearchResultsScreen({
     super.key,
@@ -23,10 +26,12 @@ class SearchResultsScreen extends ConsumerStatefulWidget {
     this.initialCategoryId,
     this.initialRegionId,
     this.initialDifficulty,
+    this.initialSortBy,
   });
 
   @override
-  ConsumerState<SearchResultsScreen> createState() => _SearchResultsScreenState();
+  ConsumerState<SearchResultsScreen> createState() =>
+      _SearchResultsScreenState();
 }
 
 class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
@@ -37,6 +42,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
   String? _sortBy = 'relevance';
   String _searchQuery = '';
   bool _showRecentSearches = false;
+  Timer? _searchDebounce;
 
   @override
   void initState() {
@@ -46,10 +52,12 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
     _selectedDifficulty = widget.initialDifficulty;
     _categoryId = widget.initialCategoryId;
     _regionId = widget.initialRegionId;
+    _sortBy = widget.initialSortBy ?? 'relevance';
   }
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -59,21 +67,38 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
       if (_searchQuery.trim().isNotEmpty) 'search_query': _searchQuery.trim(),
       if (_selectedDifficulty != null && _selectedDifficulty != 'all')
         'difficulty': _selectedDifficulty,
-      if (_categoryId != null && _categoryId!.isNotEmpty) 'category_id': _categoryId,
+      if (_categoryId != null && _categoryId!.isNotEmpty)
+        'category_id': _categoryId,
       if (_regionId != null && _regionId!.isNotEmpty) 'region_id': _regionId,
       if (_sortBy != null && _sortBy!.isNotEmpty) 'sort_by': _sortBy,
     };
   }
 
   void _submitSearch(String query) {
+    _searchDebounce?.cancel();
+    final trimmedQuery = query.trim();
     setState(() {
-      _searchQuery = query;
+      _searchQuery = trimmedQuery;
       _showRecentSearches = false;
     });
-    if (query.trim().isNotEmpty) {
-      ref.read(recentSearchesRepositoryProvider).addSearchQuery(query);
+    FocusScope.of(context).unfocus();
+    if (trimmedQuery.isNotEmpty) {
+      ref.read(recentSearchesRepositoryProvider).addSearchQuery(trimmedQuery);
       ref.invalidate(recentSearchesProvider);
     }
+  }
+
+  void _onSearchChanged(String value) {
+    _searchDebounce?.cancel();
+    setState(() {
+      _showRecentSearches = value.trim().isEmpty;
+    });
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted) return;
+      setState(() {
+        _searchQuery = value.trim();
+      });
+    });
   }
 
   void _openFilterSheet() async {
@@ -118,7 +143,11 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.chevron_left, size: 32, color: AppColors.forest),
+                      icon: const Icon(
+                        Icons.chevron_left,
+                        size: 32,
+                        color: AppColors.forest,
+                      ),
                       onPressed: () {
                         if (context.canPop()) {
                           context.pop();
@@ -139,7 +168,10 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
 
               // Search Bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
                 child: Container(
                   height: 48,
                   padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -150,28 +182,37 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.search, size: 22, color: AppColors.forest),
+                      const Icon(
+                        Icons.search,
+                        size: 22,
+                        color: AppColors.forest,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: TextField(
                           controller: _searchController,
-                          style: const TextStyle(fontSize: 14, color: AppColors.ink),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppColors.ink,
+                          ),
                           decoration: const InputDecoration(
                             hintText: 'Search trails, places, treks...',
-                            hintStyle: TextStyle(color: AppColors.disabledText, fontSize: 14),
+                            hintStyle: TextStyle(
+                              color: AppColors.disabledText,
+                              fontSize: 14,
+                            ),
                             border: InputBorder.none,
                           ),
+                          textInputAction: TextInputAction.search,
                           onTap: () {
                             setState(() {
-                              _showRecentSearches = true;
+                              _showRecentSearches = _searchController.text
+                                  .trim()
+                                  .isEmpty;
                             });
                           },
                           onSubmitted: _submitSearch,
-                          onChanged: (value) {
-                            setState(() {
-                              _searchQuery = value;
-                            });
-                          },
+                          onChanged: _onSearchChanged,
                         ),
                       ),
                       if (_searchController.text.isNotEmpty)
@@ -183,7 +224,11 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                               _showRecentSearches = true;
                             });
                           },
-                          child: const Icon(Icons.close, size: 20, color: AppColors.disabledText),
+                          child: const Icon(
+                            Icons.close,
+                            size: 20,
+                            color: AppColors.disabledText,
+                          ),
                         ),
                     ],
                   ),
@@ -200,7 +245,10 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                   data: (recentList) {
                     if (recentList.isEmpty) return const SizedBox.shrink();
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
                       color: AppColors.sage.withValues(alpha: 0.3),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,7 +287,10 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                                 return Padding(
                                   padding: const EdgeInsets.only(right: 8),
                                   child: ActionChip(
-                                    label: Text(term, style: AppTypography.caption),
+                                    label: Text(
+                                      term,
+                                      style: AppTypography.caption,
+                                    ),
                                     backgroundColor: AppColors.white,
                                     shape: const RoundedRectangleBorder(
                                       borderRadius: AppRadii.borderPill,
@@ -262,7 +313,10 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
               // Difficulty Chips Bar
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
                     _buildDifficultyChip('all', l10n.allLevels),
@@ -280,13 +334,18 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
 
               // Results Count Banner
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       l10n.searchResults,
-                      style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
+                      style: AppTypography.headingMedium.copyWith(
+                        color: AppColors.ink,
+                      ),
                     ),
                     if (_categoryId != null ||
                         _regionId != null ||
@@ -345,9 +404,13 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                   data: (experiences) {
                     return ListView.separated(
                       key: const PageStorageKey<String>('search_results_list'),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       itemCount: experiences.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 14),
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 14),
                       itemBuilder: (context, index) {
                         final exp = experiences[index];
                         return ExperienceCard(
@@ -374,8 +437,10 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
   }
 
   Widget _buildDifficultyChip(String value, String label) {
-    final isSelected = (_selectedDifficulty == value) ||
-        (value == 'all' && (_selectedDifficulty == null || _selectedDifficulty == 'all'));
+    final isSelected =
+        (_selectedDifficulty == value) ||
+        (value == 'all' &&
+            (_selectedDifficulty == null || _selectedDifficulty == 'all'));
 
     return FilterChipPill(
       label: label,

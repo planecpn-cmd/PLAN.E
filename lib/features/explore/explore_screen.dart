@@ -9,6 +9,7 @@ import '../../models/region.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/widgets.dart';
+import '../search/filter_sheet.dart';
 
 class ExploreScreen extends ConsumerWidget {
   const ExploreScreen({super.key});
@@ -20,6 +21,18 @@ class ExploreScreen extends ConsumerWidget {
     final regionsAsync = ref.watch(regionsProvider);
 
     return Scaffold(
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 128),
+        child: FloatingActionButton(
+          onPressed: () => context.push('/map'),
+          backgroundColor: AppColors.forest,
+          foregroundColor: AppColors.white,
+          shape: const CircleBorder(),
+          tooltip: 'Map View',
+          child: const Icon(Icons.location_on_outlined),
+        ),
+      ),
       body: PlanEBackground(
         safeArea: false,
         child: SafeArea(
@@ -32,7 +45,7 @@ class ExploreScreen extends ConsumerWidget {
             },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 100),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -57,9 +70,14 @@ class ExploreScreen extends ConsumerWidget {
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.map_outlined, color: AppColors.white, size: 22),
-                          onPressed: () => context.push('/map'),
-                          tooltip: 'Map View',
+                          icon: const Icon(
+                            Icons.notifications_none_rounded,
+                            color: AppColors.white,
+                            size: 22,
+                          ),
+                          onPressed: () =>
+                              context.push('/profile/notifications'),
+                          tooltip: 'Notifications',
                         ),
                       ),
                     ],
@@ -79,14 +97,75 @@ class ExploreScreen extends ConsumerWidget {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.search, size: 24, color: AppColors.forest),
+                          const Icon(
+                            Icons.search,
+                            size: 24,
+                            color: AppColors.forest,
+                          ),
                           const SizedBox(width: 12),
                           Text(
                             l10n.searchHint,
-                            style: const TextStyle(color: AppColors.disabledText, fontSize: 14),
+                            style: const TextStyle(
+                              color: AppColors.disabledText,
+                              fontSize: 14,
+                            ),
                           ),
                         ],
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Explore Filters
+                  SectionHeader(
+                    title: 'Filter Experiences',
+                    actionLabel: 'More Filters',
+                    onActionTap: () => _openFilters(context),
+                  ),
+                  const SizedBox(height: 10),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        FilterChipPill(
+                          label: 'All Experiences',
+                          icon: Icons.explore_outlined,
+                          isSelected: false,
+                          onSelected: (_) => context.push('/search'),
+                        ),
+                        const SizedBox(width: 8),
+                        FilterChipPill(
+                          label: l10n.easy,
+                          icon: Icons.directions_walk,
+                          isSelected: false,
+                          onSelected: (_) =>
+                              context.push('/search?difficulty=easy'),
+                        ),
+                        const SizedBox(width: 8),
+                        FilterChipPill(
+                          label: l10n.moderate,
+                          icon: Icons.hiking,
+                          isSelected: false,
+                          onSelected: (_) =>
+                              context.push('/search?difficulty=moderate'),
+                        ),
+                        const SizedBox(width: 8),
+                        FilterChipPill(
+                          label: l10n.challenging,
+                          icon: Icons.landscape_outlined,
+                          isSelected: false,
+                          onSelected: (_) =>
+                              context.push('/search?difficulty=challenging'),
+                        ),
+                        const SizedBox(width: 8),
+                        FilterChipPill(
+                          label: l10n.strenuous,
+                          icon: Icons.terrain,
+                          isSelected: false,
+                          onSelected: (_) =>
+                              context.push('/search?difficulty=strenuous'),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -117,16 +196,19 @@ class ExploreScreen extends ConsumerWidget {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: categories.length,
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 1.35,
-                        ),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              childAspectRatio: 1.35,
+                            ),
                         itemBuilder: (context, index) {
                           final category = categories[index];
                           return GestureDetector(
-                            onTap: () => context.push('/search?category_id=${category.id}'),
+                            onTap: () => context.push(
+                              '/search?category_id=${category.id}',
+                            ),
                             child: PlanEPhoto(
                               imageUrl: category.coverImageUrl,
                               radius: 22,
@@ -163,8 +245,10 @@ class ExploreScreen extends ConsumerWidget {
 
                   // Section 2: Popular Regions
                   SectionHeader(
-                    title: l10n.regions,
+                    title: 'Popular Regions',
                     subtitle: 'From Annapurna circuits to Everest highlands',
+                    actionLabel: l10n.seeAll,
+                    onActionTap: () => context.push('/search'),
                   ),
                   const SizedBox(height: 12),
 
@@ -182,11 +266,14 @@ class ExploreScreen extends ConsumerWidget {
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
                           itemCount: regions.length,
-                          separatorBuilder: (context, index) => const SizedBox(width: 12),
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(width: 12),
                           itemBuilder: (context, index) {
                             final region = regions[index];
                             return GestureDetector(
-                              onTap: () => context.push('/search?region_id=${region.id}'),
+                              onTap: () => context.push(
+                                '/search?region_id=${region.id}',
+                              ),
                               child: SizedBox(
                                 width: 150,
                                 child: PlanEPhoto(
@@ -207,7 +294,8 @@ class ExploreScreen extends ConsumerWidget {
                                     ),
                                     child: Column(
                                       mainAxisAlignment: MainAxisAlignment.end,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           region.nameEn,
@@ -247,6 +335,28 @@ class ExploreScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _openFilters(BuildContext context) async {
+    final result = await showModalBottomSheet<Map<String, String?>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.transparent,
+      builder: (context) => const FilterSheet(),
+    );
+
+    if (result == null || !context.mounted) return;
+
+    final queryParameters = <String, String>{
+      for (final entry in result.entries)
+        if (entry.value != null &&
+            entry.value!.isNotEmpty &&
+            !(entry.key == 'sort_by' && entry.value == 'relevance'))
+          entry.key: entry.value!,
+    };
+    context.push(
+      Uri(path: '/search', queryParameters: queryParameters).toString(),
     );
   }
 }

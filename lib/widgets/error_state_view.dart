@@ -18,49 +18,59 @@ class ErrorStateView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: AppSpacing.paddingXxl24,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: AppSpacing.paddingXl20,
-              decoration: const BoxDecoration(
-                color: AppColors.errorContainer,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                size: 48.0,
-                color: AppColors.error,
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: AppSpacing.paddingXxl24,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.hasBoundedHeight
+                  ? (constraints.maxHeight - AppSpacing.xxl24 * 2).clamp(
+                      0.0,
+                      double.infinity,
+                    )
+                  : 0,
             ),
-            const SizedBox(height: AppSpacing.xl20),
-            Text(
-              title,
-              style: AppTypography.headingLarge,
-              textAlign: TextAlign.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: AppSpacing.paddingXl20,
+                  decoration: const BoxDecoration(
+                    color: AppColors.errorContainer,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, size: 48.0, color: AppColors.error),
+                ),
+                const SizedBox(height: AppSpacing.xl20),
+                Text(
+                  title,
+                  style: AppTypography.headingLarge,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSpacing.sm8),
+                Text(
+                  message,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.ink,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                if (onRetry != null) ...[
+                  const SizedBox(height: AppSpacing.xxl24),
+                  AppButton(
+                    label: 'Try Again',
+                    icon: Icons.refresh,
+                    onPressed: onRetry,
+                    variant: AppButtonVariant.primary,
+                  ),
+                ],
+              ],
             ),
-            const SizedBox(height: AppSpacing.sm8),
-            Text(
-              message,
-              style: AppTypography.bodyMedium.copyWith(color: AppColors.ink),
-              textAlign: TextAlign.center,
-            ),
-            if (onRetry != null) ...[
-              const SizedBox(height: AppSpacing.xxl24),
-              AppButton(
-                label: 'Try Again',
-                icon: Icons.refresh,
-                onPressed: onRetry,
-                variant: AppButtonVariant.primary,
-              ),
-            ],
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

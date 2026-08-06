@@ -40,10 +40,7 @@ class AsyncValueView<T> extends StatelessWidget {
       },
       error: (err, stackTrace) {
         if (error != null) return error!(err, stackTrace);
-        return ErrorStateView(
-          message: err.toString(),
-          onRetry: onRetry,
-        );
+        return ErrorStateView(message: err.toString(), onRetry: onRetry);
       },
     );
   }
@@ -54,18 +51,21 @@ class _DefaultLoadingSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: AppSpacing.paddingLg16,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AppSkeleton(height: 24, width: 180),
-          SizedBox(height: AppSpacing.md12),
-          AppSkeleton(height: 120, width: double.infinity),
-          SizedBox(height: AppSpacing.md12),
-          AppSkeleton(height: 16, width: 240),
-        ],
+    return const SingleChildScrollView(
+      physics: ClampingScrollPhysics(),
+      child: Padding(
+        padding: AppSpacing.paddingLg16,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppSkeleton(height: 24, width: 180),
+            SizedBox(height: AppSpacing.md12),
+            AppSkeleton(height: 120, width: double.infinity),
+            SizedBox(height: AppSpacing.md12),
+            AppSkeleton(height: 16, width: 240),
+          ],
+        ),
       ),
     );
   }

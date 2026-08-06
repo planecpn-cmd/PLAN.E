@@ -163,11 +163,14 @@ class ExperienceCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        RatingStars(
-                          rating: rating,
-                          reviewCount: reviewCount,
-                          starSize: 14.0,
+                        Flexible(
+                          child: RatingStars(
+                            rating: rating,
+                            reviewCount: reviewCount,
+                            starSize: 14.0,
+                          ),
                         ),
+                        const SizedBox(width: AppSpacing.xs4),
                         Text(
                           priceText,
                           style: AppTypography.bodyMedium.copyWith(

@@ -28,7 +28,11 @@ class InterestsScreen extends ConsumerWidget {
             Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.chevron_left, size: 32, color: AppColors.forest),
+                  icon: const Icon(
+                    Icons.chevron_left,
+                    size: 32,
+                    color: AppColors.forest,
+                  ),
                   onPressed: () => context.go('/onboarding/1'),
                 ),
                 const Expanded(child: PlanELogo(fontSize: 26)),
@@ -47,7 +51,8 @@ class InterestsScreen extends ConsumerWidget {
             const SizedBox(height: 24),
             Text(
               'What are\nyou into?',
-              style: Theme.of(context).textTheme.displayMedium?.copyWith(
+              style:
+                  Theme.of(context).textTheme.displayMedium?.copyWith(
                     fontFamily: 'serif',
                     color: AppColors.forest,
                     fontWeight: FontWeight.w600,
@@ -67,33 +72,45 @@ class InterestsScreen extends ConsumerWidget {
                 value: categoriesAsync,
                 isEmpty: (data) => data.isEmpty,
                 onRetry: () => ref.refresh(categoriesProvider),
+                error: (_, __) => ErrorStateView(
+                  title: 'Unable to load interests',
+                  message: 'Check your connection and try again.',
+                  onRetry: () => ref.refresh(categoriesProvider),
+                ),
                 data: (categories) {
                   return GridView.builder(
                     padding: EdgeInsets.zero,
                     physics: const BouncingScrollPhysics(),
                     itemCount: categories.length,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 14,
-                      crossAxisSpacing: 14,
-                      childAspectRatio: 1.9,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 14,
+                          crossAxisSpacing: 14,
+                          childAspectRatio: 1.9,
+                        ),
                     itemBuilder: (context, index) {
                       final category = categories[index];
                       final isSelected = selectedIds.contains(category.id);
                       return GestureDetector(
                         onTap: () {
-                          ref.read(guestProvider.notifier).toggleInterest(category.id);
+                          ref
+                              .read(guestProvider.notifier)
+                              .toggleInterest(category.id);
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? AppColors.forest
-                                : AppColors.cardBackground.withValues(alpha: .6),
+                                : AppColors.cardBackground.withValues(
+                                    alpha: .6,
+                                  ),
                             borderRadius: BorderRadius.circular(22),
                             border: Border.all(
-                              color: isSelected ? AppColors.gold : AppColors.border,
+                              color: isSelected
+                                  ? AppColors.gold
+                                  : AppColors.border,
                               width: 1.3,
                             ),
                           ),
@@ -102,7 +119,9 @@ class InterestsScreen extends ConsumerWidget {
                               Icon(
                                 _getCategoryIcon(category.slug),
                                 size: 28,
-                                color: isSelected ? AppColors.white : AppColors.forest,
+                                color: isSelected
+                                    ? AppColors.white
+                                    : AppColors.forest,
                               ),
                               const SizedBox(width: 10),
                               Expanded(
@@ -112,7 +131,9 @@ class InterestsScreen extends ConsumerWidget {
                                     fontFamily: 'serif',
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
-                                    color: isSelected ? AppColors.white : AppColors.ink,
+                                    color: isSelected
+                                        ? AppColors.white
+                                        : AppColors.ink,
                                   ),
                                 ),
                               ),
@@ -154,7 +175,9 @@ class InterestsScreen extends ConsumerWidget {
             AppButton(
               label: l10n.continueText,
               onPressed: canContinue ? () => context.go('/home') : null,
-              variant: canContinue ? AppButtonVariant.primary : AppButtonVariant.disabled,
+              variant: canContinue
+                  ? AppButtonVariant.primary
+                  : AppButtonVariant.disabled,
               isFullWidth: true,
               minHeight: AppTouchTarget.minSize,
             ),

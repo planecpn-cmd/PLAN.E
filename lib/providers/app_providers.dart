@@ -38,7 +38,9 @@ final taxonomyRepositoryProvider = Provider<TaxonomyRepository>((ref) {
   return TaxonomyRepository(ref.watch(supabaseClientProvider));
 });
 
-final recentSearchesRepositoryProvider = Provider<RecentSearchesRepository>((ref) {
+final recentSearchesRepositoryProvider = Provider<RecentSearchesRepository>((
+  ref,
+) {
   return RecentSearchesRepository();
 });
 
@@ -48,46 +50,45 @@ final recentSearchesProvider = FutureProvider<List<String>>((ref) async {
 });
 
 // Async Providers
-final experiencesProvider = FutureProvider.family<List<Experience>, Map<String, String?>>((ref, filters) async {
-  final repo = ref.watch(experienceRepositoryProvider);
-  int? minPricePaisa;
-  int? maxPricePaisa;
-  if (filters['min_price'] != null) {
-    minPricePaisa = int.tryParse(filters['min_price']!);
-  }
-  if (filters['max_price'] != null) {
-    maxPricePaisa = int.tryParse(filters['max_price']!);
-  }
+final experiencesProvider =
+    FutureProvider.family<List<Experience>, Map<String, String?>>((
+      ref,
+      filters,
+    ) async {
+      final repo = ref.watch(experienceRepositoryProvider);
+      int? minPricePaisa;
+      int? maxPricePaisa;
+      if (filters['min_price'] != null) {
+        minPricePaisa = int.tryParse(filters['min_price']!);
+      }
+      if (filters['max_price'] != null) {
+        maxPricePaisa = int.tryParse(filters['max_price']!);
+      }
 
-  return repo.getExperiences(
-    categoryId: filters['category_id'],
-    regionId: filters['region_id'],
-    difficulty: filters['difficulty'],
-    searchQuery: filters['search_query'],
-    minPricePaisa: minPricePaisa,
-    maxPricePaisa: maxPricePaisa,
-    sortBy: filters['sort_by'],
-  );
-});
+      return repo.getExperiences(
+        categoryId: filters['category_id'],
+        regionId: filters['region_id'],
+        difficulty: filters['difficulty'],
+        searchQuery: filters['search_query'],
+        minPricePaisa: minPricePaisa,
+        maxPricePaisa: maxPricePaisa,
+        sortBy: filters['sort_by'],
+      );
+    });
 
-final experienceDetailProvider = FutureProvider.family<Experience?, String>((ref, id) async {
+final experienceDetailProvider = FutureProvider.family<Experience?, String>((
+  ref,
+  id,
+) async {
   final repo = ref.watch(experienceRepositoryProvider);
   return repo.getExperienceById(id);
 });
 
-final homeRailsProvider = FutureProvider<Map<String, List<Experience>>>((ref) async {
+final homeRailsProvider = FutureProvider<Map<String, List<Experience>>>((
+  ref,
+) async {
   final repo = ref.watch(experienceRepositoryProvider);
-  final recommended = await repo.getHomeRailExperiences('recommended');
-  final trending = await repo.getHomeRailExperiences('trending');
-  final homestays = await repo.getHomeRailExperiences('homestays');
-  final community = await repo.getHomeRailExperiences('community');
-
-  return {
-    'recommended': recommended,
-    'trending': trending,
-    'homestays': homestays,
-    'community': community,
-  };
+  return repo.getHomeRails();
 });
 
 final categoriesProvider = FutureProvider<List<Category>>((ref) async {
@@ -105,7 +106,10 @@ final savedExperiencesProvider = FutureProvider<List<Experience>>((ref) async {
   return repo.getSavedExperiences();
 });
 
-final bookingsProvider = FutureProvider.family<List<Booking>, String>((ref, status) async {
+final bookingsProvider = FutureProvider.family<List<Booking>, String>((
+  ref,
+  status,
+) async {
   final repo = ref.watch(bookingRepositoryProvider);
   return repo.getBookingsByStatus(status);
 });
@@ -169,6 +173,7 @@ class DeferredActionNotifier extends StateNotifier<DeferredAction?> {
   }
 }
 
-final deferredActionProvider = StateNotifierProvider<DeferredActionNotifier, DeferredAction?>((ref) {
-  return DeferredActionNotifier();
-});
+final deferredActionProvider =
+    StateNotifierProvider<DeferredActionNotifier, DeferredAction?>((ref) {
+      return DeferredActionNotifier();
+    });
