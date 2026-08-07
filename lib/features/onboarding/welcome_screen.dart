@@ -51,66 +51,79 @@ class WelcomeScreen extends StatelessWidget {
             child: PlanEBackground(
               safeArea: true,
               padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    children: [
-                      Text(
-                        'WELCOME TO PLAN E',
-                        textAlign: TextAlign.center,
-                        style: AppTypography.headingLarge.copyWith(
-                          fontFamily: 'serif',
-                          color: AppColors.deep,
-                          letterSpacing: 1.2,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: IntrinsicHeight(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              children: [
+                                Text(
+                                  'WELCOME TO PLAN E',
+                                  textAlign: TextAlign.center,
+                                  style: AppTypography.headingLarge.copyWith(
+                                    fontFamily: 'serif',
+                                    color: AppColors.deep,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.sm8),
+                                Text(
+                                  'Plan your adventures. Experience Nepal.',
+                                  textAlign: TextAlign.center,
+                                  style: AppTypography.bodyLarge.copyWith(
+                                    color: AppColors.ink,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.xl20),
+                                const _DotsIndicator(activeIndex: 0, count: 3),
+                              ],
+                            ),
+                            Column(
+                              children: [
+                                AppButton(
+                                  label: 'Get Started',
+                                  isFullWidth: true,
+                                  minHeight: AppTouchTarget.minSize,
+                                  onPressed: () => context.go('/onboarding/1'),
+                                ),
+                                const SizedBox(height: AppSpacing.md12),
+                                TextButton(
+                                  onPressed: () => context.go('/auth/login'),
+                                  child: Text(
+                                    'I already have an account',
+                                    style: AppTypography.bodyMedium.copyWith(
+                                      color: AppColors.forest,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () async {
+                                    await OnboardingPreferences.markCompleted();
+                                    if (context.mounted) context.go('/home');
+                                  },
+                                  child: Text(
+                                    'Continue as Guest',
+                                    style: AppTypography.bodyMedium.copyWith(
+                                      color: AppColors.disabledText,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.sm8),
-                      Text(
-                        'Plan your adventures. Experience Nepal.',
-                        textAlign: TextAlign.center,
-                        style: AppTypography.bodyLarge.copyWith(
-                          color: AppColors.ink,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.xl20),
-                      const _DotsIndicator(activeIndex: 0, count: 3),
-                    ],
-                  ),
-                  Column(
-                    children: [
-                      AppButton(
-                        label: 'Get Started',
-                        isFullWidth: true,
-                        minHeight: AppTouchTarget.minSize,
-                        onPressed: () => context.go('/onboarding/1'),
-                      ),
-                      const SizedBox(height: AppSpacing.md12),
-                      TextButton(
-                        onPressed: () => context.go('/auth/login'),
-                        child: Text(
-                          'I already have an account',
-                          style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.forest,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () async {
-                          await OnboardingPreferences.markCompleted();
-                          if (context.mounted) context.go('/home');
-                        },
-                        child: Text(
-                          'Continue as Guest',
-                          style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.disabledText,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  );
+                },
               ),
             ),
           ),

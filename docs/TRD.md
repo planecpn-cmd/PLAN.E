@@ -120,13 +120,14 @@ integration_test/              E2E
 
 | Env | Supabase | App |
 |---|---|---|
-| local | `supabase start` (Docker) | `flutter run --dart-define-from-file=env/local.json` |
-| staging | plan-e-staging (Mumbai) | `--flavor staging`, Khalti sandbox |
-| prod | plan-e-prod (Mumbai) | `--flavor prod`, Khalti live |
+| local/LAN | `supabase start` (Docker) | `flutter run` |
+| hosted | configured Supabase project | `flutter run --dart-define-from-file=<config.json>` |
 
-Config via `--dart-define-from-file`, never a committed `.env` parsed at runtime. Only
-`SUPABASE_URL` and `SUPABASE_ANON_KEY` reach the app binary. Service-role keys live in Supabase
-Vault and GitHub Actions secrets.
+Android uses one application ID, `com.plane.plan_e`; there are no product
+flavors or alternate app installs. Local config is loaded from the ignored
+`env/local.json`, and `--dart-define`/`--dart-define-from-file` can override it.
+Only `SUPABASE_URL` and `SUPABASE_ANON_KEY` reach the app binary. Service-role
+keys remain server-side.
 
 ---
 

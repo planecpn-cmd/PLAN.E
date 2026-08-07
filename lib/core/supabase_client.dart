@@ -19,14 +19,19 @@ class AppSupabaseClient {
     String demoEmail = '';
     String demoPassword = '';
 
-    // Load from env/local.json if not passed via --dart-define
+    // Load any missing value from env/local.json. A --dart-define can override
+    // either setting independently without discarding the other local value.
     if (url.isEmpty || anonKey.isEmpty) {
       try {
         final String jsonStr = await rootBundle.loadString('env/local.json');
         final Map<String, dynamic> config =
             jsonDecode(jsonStr) as Map<String, dynamic>;
-        url = config['SUPABASE_URL'] as String? ?? '';
-        anonKey = config['SUPABASE_ANON_KEY'] as String? ?? '';
+        if (url.isEmpty) {
+          url = config['SUPABASE_URL'] as String? ?? '';
+        }
+        if (anonKey.isEmpty) {
+          anonKey = config['SUPABASE_ANON_KEY'] as String? ?? '';
+        }
         demoEmail = config['DEMO_EMAIL'] as String? ?? '';
         demoPassword = config['DEMO_PASSWORD'] as String? ?? '';
       } catch (e) {
@@ -51,8 +56,7 @@ class AppSupabaseClient {
       ),
     );
     _url = url;
-    if (url.startsWith('http://127.0.0.1') &&
-        Supabase.instance.client.auth.currentUser == null &&
+    if (Supabase.instance.client.auth.currentUser == null &&
         demoEmail.isNotEmpty &&
         demoPassword.isNotEmpty) {
       await Supabase.instance.client.auth.signInWithPassword(

@@ -59,6 +59,10 @@ serve(async (req) => {
       .single();
 
     if (expError || !experience) {
+      console.error("Experience lookup failed", {
+        experience_id,
+        error: expError?.message ?? "No matching row",
+      });
       return new Response(
         JSON.stringify({ error: "Experience not found" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -74,6 +78,11 @@ serve(async (req) => {
       .single();
 
     if (depError || !departure) {
+      console.error("Departure lookup failed", {
+        experience_id,
+        departure_id,
+        error: depError?.message ?? "No matching row",
+      });
       return new Response(
         JSON.stringify({ error: "Departure date not found or invalid" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }

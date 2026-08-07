@@ -13,6 +13,7 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const publicSupabaseUrl = Deno.env.get("PUBLIC_SUPABASE_URL") ?? supabaseUrl;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY") ?? "";
     const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -61,11 +62,14 @@ serve(async (req) => {
       );
     }
 
-    const returnUrl = `${supabaseUrl}/functions/v1/payment-return`;
+    const returnUrl = `${publicSupabaseUrl}/functions/v1/payment-return`;
     const normalizedProvider = provider === "esewa" ? "esewa" : "khalti";
 
     if (normalizedProvider === "khalti") {
       const khaltiSecret = Deno.env.get("KHALTI_SECRET_KEY");
+      const khaltiApiBaseUrl = (
+        Deno.env.get("KHALTI_API_BASE_URL") ?? "https://dev.khalti.com/api/v2"
+      ).replace(/\/$/, "");
       if (!khaltiSecret) {
         return new Response(
           JSON.stringify({ error: "Khalti is not configured on the server" }),
@@ -73,7 +77,7 @@ serve(async (req) => {
         );
       }
 
-      const khaltiRes = await fetch("https://khalti.com/api/v2/epayment/initiate/", {
+      const khaltiRes = await fetch(`${khaltiApiBaseUrl}/epayment/initiate/`, {
         method: "POST",
         headers: {
           Authorization: `Key ${khaltiSecret}`,
@@ -117,7 +121,7 @@ serve(async (req) => {
     }
 
     // eSewa: hand off to esewa-redirect, which builds + serves the signed auto-submit form.
-    const esewaUrl = `${supabaseUrl}/functions/v1/esewa-redirect?booking_id=${booking_id}`;
+    const esewaUrl = `${publicSupabaseUrl}/functions/v1/esewa-redirect?booking_id=${booking_id}`;
     return new Response(
       JSON.stringify({ success: true, payment_url: esewaUrl }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

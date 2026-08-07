@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/supabase_client.dart';
 import '../../models/booking.dart';
 import '../../models/booking_intent.dart';
 import '../../models/experience_departure.dart';
@@ -20,7 +21,12 @@ class BookingFeatureRepository {
           .order('start_date', ascending: true);
 
       final List<dynamic> data = response as List<dynamic>;
-      return data.map((json) => ExperienceDeparture.fromJson(json as Map<String, dynamic>)).toList();
+      return data
+          .map(
+            (json) =>
+                ExperienceDeparture.fromJson(json as Map<String, dynamic>),
+          )
+          .toList();
     } catch (e) {
       // Fallback: If table is empty or error occurs, return empty list or fallback departure
       return [];
@@ -53,48 +59,31 @@ class BookingFeatureRepository {
     required String contactPhone,
     String paymentProvider = 'khalti',
   }) async {
-    try {
-      final response = await _client.functions.invoke(
-        'create-booking-intent',
-        body: {
-          'experience_id': experienceId,
-          'departure_id': departureId,
-          'adults': adults,
-          'children': children,
-          'contact_name': contactName,
-          'contact_phone': contactPhone,
-          'payment_provider': paymentProvider,
-          'user_id': _client.auth.currentUser?.id,
-        },
-      );
+    final response = await _client.functions.invoke(
+      'create-booking-intent',
+      body: {
+        'experience_id': experienceId,
+        'departure_id': departureId,
+        'adults': adults,
+        'children': children,
+        'contact_name': contactName,
+        'contact_phone': contactPhone,
+        'payment_provider': paymentProvider,
+        'user_id': _client.auth.currentUser?.id,
+      },
+    );
 
-      if (response.status == 200 && response.data != null) {
-        final Map<String, dynamic> data = Map<String, dynamic>.from(response.data as Map);
-        return BookingIntentResult.fromJson(data);
-      } else {
-        final errorMsg = response.data is Map
-            ? (response.data['error'] ?? 'Failed to create booking intent')
-            : 'Failed to create booking intent';
-        throw Exception(errorMsg.toString());
-      }
-    } catch (e) {
-      // Fallback for offline or dev test mode
-      final String bookingId = 'bk-${DateTime.now().millisecondsSinceEpoch}';
-      final String idempotencyKey = 'intent_${DateTime.now().millisecondsSinceEpoch}';
-      final String refCode = 'PLE-${Random().nextInt(899999) + 100000}';
-      final quoteExpiresAt = DateTime.now().add(const Duration(minutes: 15));
-
-      return BookingIntentResult(
-        bookingId: bookingId,
-        bookingRef: refCode,
-        idempotencyKey: idempotencyKey,
-        quoteExpiresAt: quoteExpiresAt,
-        subtotalPaisa: 1000000,
-        feesPaisa: 50000,
-        totalPaisa: 1050000,
-        provider: paymentProvider,
+    if (response.status == 200 && response.data != null) {
+      final Map<String, dynamic> data = Map<String, dynamic>.from(
+        response.data as Map,
       );
+      return BookingIntentResult.fromJson(data);
     }
+
+    final errorMsg = response.data is Map
+        ? (response.data['error'] ?? 'Failed to create booking intent')
+        : 'Failed to create booking intent';
+    throw Exception(errorMsg.toString());
   }
 
   /// Ask the server to open a real payment session with the gateway and
@@ -111,10 +100,26 @@ class BookingFeatureRepository {
     if (response.status == 200 && response.data != null) {
       final data = Map<String, dynamic>.from(response.data as Map);
       final url = data['payment_url'] as String?;
-      if (url != null) return url;
+      if (url != null) return _normalizePaymentUrl(url);
     }
-    final errorMsg = response.data is Map ? (response.data['error'] ?? 'Failed to start payment') : 'Failed to start payment';
+    final errorMsg = response.data is Map
+        ? (response.data['error'] ?? 'Failed to start payment')
+        : 'Failed to start payment';
     throw Exception(errorMsg.toString());
+  }
+
+  String _normalizePaymentUrl(String value) {
+    final uri = Uri.parse(value);
+    if (uri.host != 'kong') return value;
+
+    final publicBase = Uri.parse(AppSupabaseClient.baseUrl);
+    return uri
+        .replace(
+          scheme: publicBase.scheme,
+          host: publicBase.host,
+          port: publicBase.hasPort ? publicBase.port : null,
+        )
+        .toString();
   }
 
   /// Verify payment with the gateway server-side (never trusts client-claimed
@@ -161,7 +166,8 @@ class BookingFeatureRepository {
     required int feesPaisa,
     required int totalPaisa,
   }) async {
-    final String userId = _client.auth.currentUser?.id ?? '00000000-0000-0000-0000-000000000000';
+    final String userId =
+        _client.auth.currentUser?.id ?? '00000000-0000-0000-0000-000000000000';
     final String refCode = 'PLE-${Random().nextInt(899999) + 100000}';
 
     final Map<String, dynamic> insertData = {
@@ -213,4 +219,3 @@ class BookingFeatureRepository {
     }
   }
 }
-

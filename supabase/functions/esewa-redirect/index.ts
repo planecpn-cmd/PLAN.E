@@ -19,6 +19,7 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const publicSupabaseUrl = Deno.env.get("PUBLIC_SUPABASE_URL") ?? supabaseUrl;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY") ?? "";
     const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -68,7 +69,7 @@ serve(async (req) => {
     const signatureBuffer = await crypto.subtle.sign("HMAC", cryptoKey, msgData);
     const signature = btoa(String.fromCharCode(...new Uint8Array(signatureBuffer)));
 
-    const returnBase = `${supabaseUrl}/functions/v1/payment-return?provider=esewa&booking_id=${bookingId}&transaction_uuid=${transactionUuid}`;
+    const returnBase = `${publicSupabaseUrl}/functions/v1/payment-return?provider=esewa&booking_id=${bookingId}&transaction_uuid=${transactionUuid}`;
 
     const fields: Record<string, string> = {
       amount: totalAmount,

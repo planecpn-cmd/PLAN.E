@@ -101,6 +101,9 @@ serve(async (req) => {
 
     if (normalizedProvider === "khalti") {
       const khaltiSecret = Deno.env.get("KHALTI_SECRET_KEY");
+      const khaltiApiBaseUrl = (
+        Deno.env.get("KHALTI_API_BASE_URL") ?? "https://dev.khalti.com/api/v2"
+      ).replace(/\/$/, "");
       if (!khaltiSecret) {
         return new Response(
           JSON.stringify({ error: "Khalti is not configured on the server" }),
@@ -108,7 +111,7 @@ serve(async (req) => {
         );
       }
 
-      const lookupRes = await fetch("https://khalti.com/api/v2/epayment/lookup/", {
+      const lookupRes = await fetch(`${khaltiApiBaseUrl}/epayment/lookup/`, {
         method: "POST",
         headers: {
           Authorization: `Key ${khaltiSecret}`,
