@@ -18,6 +18,24 @@ Those records are either security credentials or reference a local Auth user
 that does not exist in a new hosted project. The 11 current local payment
 attempts are test transactions and must not be migrated as real payments.
 
+## Scripted setup
+
+`tool/setup_hosted_backend.sh` performs sections 1, 3, and 4 in one run. It
+links the project, pushes migrations, and writes `env/local.json`, reading the
+publishable key from the CLI so it never has to be pasted by hand:
+
+```sh
+supabase login
+tool/setup_hosted_backend.sh --project-ref <PROJECT_REF>
+```
+
+Add `--with-functions` to upload secrets and deploy Edge Functions, and
+`--check` to run preflight checks without changing anything. The catalog seed is
+deliberately excluded from the default run — see section 2. Run
+`tool/setup_hosted_backend.sh --help` for all options.
+
+The manual steps below remain accurate and are what the script automates.
+
 ## 1. Create and link the project
 
 Install the Supabase CLI, sign in, create a hosted Supabase project, and copy
@@ -34,12 +52,20 @@ views, profile triggers, and departure generation.
 
 ## 2. Load the application catalog
 
-Only do this on a new/empty project. The seed deliberately replaces existing
-experiences and cascades dependent booking data.
+**Destructive.** Only do this on a new/empty project. The seed deliberately
+replaces existing experiences and cascades dependent booking data, so running it
+against a project that already holds real bookings will destroy them.
 
 ```sh
 supabase db query --linked --file supabase/seed.sql
 supabase db query --linked --file supabase/migrations/0018_seed_experience_departures.sql
+```
+
+The scripted equivalent requires an explicit flag and a typed confirmation of
+the project ref:
+
+```sh
+tool/setup_hosted_backend.sh --project-ref <PROJECT_REF> --with-seed
 ```
 
 The second command is repeated because the migration runs before the external
@@ -82,6 +108,17 @@ flutter run -d <DEVICE_ID> \
 
 The same two client values can be used on macOS, Windows, and Android devices.
 All of them will then read and write the same hosted database from any network.
+
+Alternatively, write the values once to `env/local.json` (gitignored) and run
+`flutter run` with no defines. `AppSupabaseClient.initialize()` prefers a
+`--dart-define` when present and falls back to the file per key, so either value
+can be overridden independently.
+
+`env/` is declared as a Flutter asset in `pubspec.yaml`, which means everything
+in `env/local.json` is extractable from a shipped build. The anon key is safe
+there by design and is constrained by RLS. The optional `DEMO_EMAIL` and
+`DEMO_PASSWORD` auto-login values are not — keep them out of any build you
+distribute.
 
 ## 5. Recreate test users
 
