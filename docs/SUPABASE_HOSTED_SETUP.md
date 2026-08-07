@@ -36,6 +36,36 @@ deliberately excluded from the default run — see section 2. Run
 
 The manual steps below remain accurate and are what the script automates.
 
+## Setup without a terminal
+
+When no terminal is available (working from a phone, for example), the schema
+can be applied from the Supabase dashboard instead:
+
+1. Open `supabase/hosted_schema_bundle.sql` on GitHub and copy it.
+2. In the dashboard, open the project and go to **SQL Editor > New query**.
+3. Paste the file and run it.
+
+The bundle covers migrations 0001-0017 plus 0019, which is everything the schema
+needs including the service-role grants used by Edge Functions. Regenerate it
+with `tool/build_schema_bundle.sh` after changing any migration.
+
+This path applies **only to an empty database**. Tables use bare `create table`
+and the taxonomy inserts in 0004 have no `on conflict` clause, so running it
+against a project that already has the schema aborts on a duplicate object or
+slug. The failure rolls back rather than corrupting data, so a duplicate-object
+error simply means the schema is already installed.
+
+Two limitations are worth knowing before choosing this route. Edge Functions
+cannot be deployed from the dashboard — that step needs the CLI. And applying
+SQL by hand leaves the CLI migration history empty, so a later `supabase db
+push` will try to re-apply everything; reconcile it once you have a terminal:
+
+```sh
+supabase migration repair --status applied <version>
+```
+
+Prefer the scripted setup whenever a terminal is available.
+
 ## 1. Create and link the project
 
 Install the Supabase CLI, sign in, create a hosted Supabase project, and copy

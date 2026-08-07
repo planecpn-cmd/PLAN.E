@@ -1,4 +1,4 @@
--- PLAN E: full schema bundle for local Docker Supabase
+-- PLAN E: schema bundle for a hosted project (dashboard SQL Editor)
 -- Generated 2026-08-07T13:06:25Z by tool/build_schema_bundle.sh. Do not edit by hand.
 -- Source of truth is supabase/migrations/; regenerate after changing it.
 -- Contains schema, RLS, grants, and the taxonomy reference rows from
@@ -11,9 +11,14 @@
 -- duplicate slug. That failure is safe -- it rolls back rather than
 -- corrupting data -- but it means this is not a repair or upgrade tool.
 --
--- Run once against a fresh local Supabase (docker) instance:
---   supabase db reset   (applies migrations automatically), OR
---   psql "$DATABASE_URL" -f supabase/full_schema_bundle.sql
+-- For setting up a hosted project without the CLI: open the project in the
+-- Supabase dashboard, go to SQL Editor, paste this whole file, and run it.
+-- Includes 0019_service_role_grants.sql, which Edge Functions require.
+--
+-- Prefer `tool/setup_hosted_backend.sh --project-ref <REF>` when a terminal is
+-- available; it keeps the CLI migration history in sync. After applying this
+-- bundle by hand, reconcile that history with:
+--   supabase migration repair --status applied <version>
 
 -- ===== 0001_extensions.sql =====
 -- Migration 0001: Extensions and common triggers
@@ -873,3 +878,15 @@ create policy "Users can delete their own avatar"
     bucket_id = 'avatars' and
     auth.uid()::text = (storage.foldername(name))[1]
   );
+
+-- ===== 0019_service_role_grants.sql =====
+-- Edge Functions use service_role for trusted server-side booking and payment
+-- operations. Explicit grants are required in addition to bypassing RLS.
+grant usage on schema public to service_role;
+grant select, insert, update, delete on all tables in schema public to service_role;
+grant usage, select on all sequences in schema public to service_role;
+
+alter default privileges in schema public
+  grant select, insert, update, delete on tables to service_role;
+alter default privileges in schema public
+  grant usage, select on sequences to service_role;
