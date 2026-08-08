@@ -9,9 +9,15 @@ class AppButton extends StatelessWidget {
   final AppButtonVariant variant;
   final bool isLoading;
   final IconData? icon;
+  // Takes precedence over [icon] when set — for leading graphics that
+  // aren't a single-color IconData, e.g. a multi-color brand mark.
+  final Widget? iconWidget;
   final bool isFullWidth;
   final double minHeight;
   final double? fontSize;
+  // Overrides the variant's default corner radius (16px rect, 8px for
+  // .text) — e.g. AppRadii.borderPill for a stadium-shaped button.
+  final BorderRadius? borderRadius;
 
   const AppButton({
     super.key,
@@ -20,9 +26,11 @@ class AppButton extends StatelessWidget {
     this.variant = AppButtonVariant.primary,
     this.isLoading = false,
     this.icon,
+    this.iconWidget,
     this.isFullWidth = false,
     this.minHeight = AppTouchTarget.minSize,
     this.fontSize,
+    this.borderRadius,
   });
 
   const AppButton.secondary({
@@ -31,9 +39,11 @@ class AppButton extends StatelessWidget {
     this.onPressed,
     this.isLoading = false,
     this.icon,
+    this.iconWidget,
     this.isFullWidth = false,
     this.minHeight = AppTouchTarget.minSize,
     this.fontSize,
+    this.borderRadius,
   }) : variant = AppButtonVariant.secondary;
 
   const AppButton.text({
@@ -42,9 +52,11 @@ class AppButton extends StatelessWidget {
     this.onPressed,
     this.isLoading = false,
     this.icon,
+    this.iconWidget,
     this.isFullWidth = false,
     this.minHeight = AppTouchTarget.minSize,
     this.fontSize,
+    this.borderRadius,
   }) : variant = AppButtonVariant.text;
 
   @override
@@ -69,8 +81,11 @@ class AppButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (icon != null) ...[
-                Icon(icon, size: 20.0),
+              if (iconWidget != null) ...[
+                iconWidget!,
+                const SizedBox(width: AppSpacing.sm8),
+              ] else if (icon != null) ...[
+                Icon(icon, size: 20.0, color: _getTextColor(isDisabled)),
                 const SizedBox(width: AppSpacing.sm8),
               ],
               Flexible(
@@ -112,8 +127,8 @@ class AppButton extends StatelessWidget {
               horizontal: AppSpacing.xxl24,
               vertical: AppSpacing.md12,
             ),
-            shape: const RoundedRectangleBorder(
-              borderRadius: AppRadii.borderMd16,
+            shape: RoundedRectangleBorder(
+              borderRadius: borderRadius ?? AppRadii.borderMd16,
             ),
           ),
           child: content,
@@ -139,8 +154,8 @@ class AppButton extends StatelessWidget {
               color: isDisabled ? AppColors.borderSubtle : AppColors.forest,
               width: 1.5,
             ),
-            shape: const RoundedRectangleBorder(
-              borderRadius: AppRadii.borderMd16,
+            shape: RoundedRectangleBorder(
+              borderRadius: borderRadius ?? AppRadii.borderMd16,
             ),
           ),
           child: content,
@@ -161,8 +176,8 @@ class AppButton extends StatelessWidget {
               horizontal: AppSpacing.lg16,
               vertical: AppSpacing.sm8,
             ),
-            shape: const RoundedRectangleBorder(
-              borderRadius: AppRadii.borderSm8,
+            shape: RoundedRectangleBorder(
+              borderRadius: borderRadius ?? AppRadii.borderSm8,
             ),
           ),
           child: content,
@@ -183,8 +198,8 @@ class AppButton extends StatelessWidget {
               horizontal: AppSpacing.xxl24,
               vertical: AppSpacing.md12,
             ),
-            shape: const RoundedRectangleBorder(
-              borderRadius: AppRadii.borderMd16,
+            shape: RoundedRectangleBorder(
+              borderRadius: borderRadius ?? AppRadii.borderMd16,
             ),
           ),
           child: content,

@@ -1,8 +1,11 @@
 // RM-08 Map View
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../core/format.dart';
 import '../../core/native_intents.dart';
@@ -11,26 +14,6 @@ import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/widgets.dart';
 import 'map_strings.dart';
-
-enum MapStyle {
-  topographic,
-  satellite,
-  terrain,
-  standard;
-
-  String get label {
-    switch (this) {
-      case MapStyle.topographic:
-        return MapStrings.styleTopographic;
-      case MapStyle.satellite:
-        return MapStrings.styleSatellite;
-      case MapStyle.terrain:
-        return MapStrings.styleTerrain;
-      case MapStyle.standard:
-        return MapStrings.styleStandard;
-    }
-  }
-}
 
 class MapScreen extends ConsumerStatefulWidget {
   final double? lat;
@@ -53,13 +36,76 @@ class MapScreen extends ConsumerStatefulWidget {
 class _MapScreenState extends ConsumerState<MapScreen> {
   static const double _defaultKathmanduLat = 27.7172;
   static const double _defaultKathmanduLng = 85.3240;
+  static const double _initialZoom = 14.0;
 
-  double _zoomLevel = 14.0;
+  final MapController _mapController = MapController();
+  double _currentZoom = _initialZoom;
   double? _centerLat;
   double? _centerLng;
-  Offset _panOffset = Offset.zero;
-  MapStyle _currentMapStyle = MapStyle.topographic;
   Experience? _selectedExperience;
+  LatLng? _myLocation;
+  bool _locatingMe = false;
+
+  @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _goToMyLocation() async {
+    setState(() => _locatingMe = true);
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        await Geolocator.openLocationSettings();
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.deniedForever) {
+        await Geolocator.openAppSettings();
+        return;
+      }
+      if (permission == LocationPermission.denied) {
+        if (mounted) {
+          AppToast.show(
+            context,
+            message: 'Location permission denied',
+            variant: AppToastVariant.error,
+          );
+        }
+        return;
+      }
+
+      Position? position = await Geolocator.getLastKnownPosition();
+      position ??= await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 8),
+        ),
+      );
+      final here = LatLng(position.latitude, position.longitude);
+      _mapController.move(here, 15);
+      setState(() {
+        _myLocation = here;
+        _centerLat = here.latitude;
+        _centerLng = here.longitude;
+      });
+    } catch (_) {
+      if (mounted) {
+        AppToast.show(
+          context,
+          message: 'Could not detect your location',
+          variant: AppToastVariant.error,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _locatingMe = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -126,50 +172,83 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     return Column(
       children: [
-        // Interactive Map Viewport Shell
+        // Interactive Map Viewport
         Expanded(
           child: Stack(
             children: [
-              // Stylized Map Canvas Viewport with Pan Gesture
-              GestureDetector(
-                onPanUpdate: (details) {
-                  setState(() {
-                    _panOffset += details.delta;
-                  });
-                },
-                child: Container(
-                  width: double.infinity,
-                  color: _getBackgroundColorForStyle(_currentMapStyle),
-                  child: CustomPaint(
-                    painter: _MapStylePainter(mapStyle: _currentMapStyle),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        return Stack(
-                          children: [
-                            // Render Pin Markers for Published Experiences
-                            ...publishedExperiences.map((exp) {
-                              return _buildExperienceMarker(
-                                context,
-                                experience: exp,
-                                size: constraints.biggest,
-                              );
-                            }),
-
-                            // Render Selected / Center Pin Marker if no experience matched
-                            if (publishedExperiences.isEmpty || _selectedExperience == null)
-                              _buildDefaultCenterMarker(
-                                size: constraints.biggest,
-                                title: experienceTitle,
-                              ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
+              FlutterMap(
+                mapController: _mapController,
+                options: MapOptions(
+                  initialCenter: LatLng(initialLat, initialLng),
+                  initialZoom: _initialZoom,
+                  minZoom: 4,
+                  maxZoom: 18,
+                  onTap: (_, __) => setState(() => _selectedExperience = null),
+                  onMapEvent: (event) {
+                    final zoom = event.camera.zoom;
+                    if (zoom != _currentZoom) {
+                      setState(() => _currentZoom = zoom);
+                    }
+                  },
                 ),
+                children: [
+                  TileLayer(
+                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.plane.plan_e',
+                    maxZoom: 19,
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      if (_myLocation != null)
+                        Marker(
+                          point: _myLocation!,
+                          width: 22,
+                          height: 22,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.forest,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.white, width: 3),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: AppColors.overlay,
+                                  blurRadius: 6,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      if (publishedExperiences.isEmpty || _selectedExperience == null)
+                        Marker(
+                          point: LatLng(initialLat, initialLng),
+                          width: 200,
+                          height: 96,
+                          alignment: Alignment.bottomCenter,
+                          child: _buildDefaultCenterMarker(title: experienceTitle),
+                        ),
+                      ...publishedExperiences.map((exp) {
+                        final double expLat = exp.lat ?? _defaultKathmanduLat;
+                        final double expLng = exp.lng ?? _defaultKathmanduLng;
+                        return Marker(
+                          point: LatLng(expLat, expLng),
+                          width: 160,
+                          height: 72,
+                          alignment: Alignment.bottomCenter,
+                          child: _buildExperienceMarker(context, experience: exp),
+                        );
+                      }),
+                    ],
+                  ),
+                  const RichAttributionWidget(
+                    attributions: [
+                      TextSourceAttribution('OpenStreetMap contributors'),
+                    ],
+                  ),
+                ],
               ),
 
-              // Map Control Buttons Overlay (Zoom In, Zoom Out, Recenter, Map Style Toggle)
+              // Map Control Buttons Overlay (Zoom In, Zoom Out, Recenter)
               Positioned(
                 right: AppSpacing.lg16,
                 top: AppSpacing.lg16,
@@ -179,9 +258,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       icon: Icons.add,
                       tooltip: 'Zoom In',
                       onPressed: () {
-                        setState(() {
-                          _zoomLevel = (_zoomLevel + 1.0).clamp(6.0, 24.0);
-                        });
+                        final camera = _mapController.camera;
+                        _mapController.move(
+                          camera.center,
+                          (camera.zoom + 1.0).clamp(4.0, 18.0),
+                        );
                       },
                     ),
                     const SizedBox(height: AppSpacing.sm8),
@@ -189,21 +270,28 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       icon: Icons.remove,
                       tooltip: 'Zoom Out',
                       onPressed: () {
-                        setState(() {
-                          _zoomLevel = (_zoomLevel - 1.0).clamp(6.0, 24.0);
-                        });
+                        final camera = _mapController.camera;
+                        _mapController.move(
+                          camera.center,
+                          (camera.zoom - 1.0).clamp(4.0, 18.0),
+                        );
                       },
                     ),
                     const SizedBox(height: AppSpacing.sm8),
                     _buildControlButton(
-                      icon: Icons.my_location,
+                      icon: _locatingMe ? Icons.gps_not_fixed : Icons.my_location,
+                      tooltip: 'My Location',
+                      onPressed: _locatingMe ? () {} : _goToMyLocation,
+                    ),
+                    const SizedBox(height: AppSpacing.sm8),
+                    _buildControlButton(
+                      icon: Icons.place_outlined,
                       tooltip: MapStrings.recenterMap,
                       onPressed: () {
+                        _mapController.move(LatLng(initialLat, initialLng), _initialZoom);
                         setState(() {
                           _centerLat = initialLat;
                           _centerLng = initialLng;
-                          _zoomLevel = 14.0;
-                          _panOffset = Offset.zero;
                         });
                         AppToast.show(
                           context,
@@ -212,27 +300,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         );
                       },
                     ),
-                    const SizedBox(height: AppSpacing.sm8),
-                    _buildControlButton(
-                      icon: Icons.layers_outlined,
-                      tooltip: 'Map Style Toggle',
-                      onPressed: () {
-                        setState(() {
-                          final nextIndex = (_currentMapStyle.index + 1) % MapStyle.values.length;
-                          _currentMapStyle = MapStyle.values[nextIndex];
-                        });
-                        AppToast.show(
-                          context,
-                          message: '${MapStrings.styleToggledPrefix} ${_currentMapStyle.label}',
-                          variant: AppToastVariant.info,
-                        );
-                      },
-                    ),
                   ],
                 ),
               ),
 
-              // Zoom Level & Style Indicator Pill
+              // Zoom Level Indicator Pill
               Positioned(
                 left: AppSpacing.lg16,
                 top: AppSpacing.lg16,
@@ -249,7 +321,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       const Icon(Icons.map_outlined, size: 14, color: AppColors.forest),
                       const SizedBox(width: 4),
                       Text(
-                        '${_currentMapStyle.label} • ${_zoomLevel.toInt()}x',
+                        '${_currentZoom.toInt()}x',
                         style: AppTypography.caption.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppColors.ink,
@@ -365,152 +437,121 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   Widget _buildExperienceMarker(
     BuildContext context, {
     required Experience experience,
-    required Size size,
   }) {
-    final double expLat = experience.lat ?? _defaultKathmanduLat;
-    final double expLng = experience.lng ?? _defaultKathmanduLng;
-
-    final double centerLat = _centerLat ?? _defaultKathmanduLat;
-    final double centerLng = _centerLng ?? _defaultKathmanduLng;
-
-    final double dLat = expLat - centerLat;
-    final double dLng = expLng - centerLng;
-
-    final double scaleFactor = _zoomLevel * 350.0;
-    final double posX = (size.width / 2) + (dLng * scaleFactor) + _panOffset.dx;
-    final double posY = (size.height / 2) - (dLat * scaleFactor) + _panOffset.dy;
-
     final bool isSelected = _selectedExperience?.id == experience.id;
 
-    return Positioned(
-      left: posX.clamp(16.0, size.width - 120.0),
-      top: posY.clamp(16.0, size.height - 80.0),
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _selectedExperience = experience;
-            _centerLat = expLat;
-            _centerLng = expLng;
-          });
-        },
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.forest : AppColors.deep,
-                borderRadius: AppRadii.borderPill,
-                boxShadow: const [
-                  BoxShadow(
-                    color: AppColors.overlay,
-                    blurRadius: 6,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.location_on,
-                    size: isSelected ? 16 : 14,
-                    color: AppColors.ivory,
-                  ),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      experience.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.ivory,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                      ),
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedExperience = experience;
+          _centerLat = experience.lat ?? _defaultKathmanduLat;
+          _centerLng = experience.lng ?? _defaultKathmanduLng;
+        });
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: isSelected ? AppColors.forest : AppColors.deep,
+              borderRadius: AppRadii.borderPill,
+              boxShadow: const [
+                BoxShadow(
+                  color: AppColors.overlay,
+                  blurRadius: 6,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.location_on,
+                  size: isSelected ? 16 : 14,
+                  color: AppColors.ivory,
+                ),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    experience.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.ivory,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                     ),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 2),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: const BoxDecoration(
-                color: AppColors.gold,
-                borderRadius: AppRadii.borderSm8,
-              ),
-              child: Text(
-                AppFormatters.formatNpr(experience.pricePaisa),
-                style: AppTypography.caption.copyWith(
-                  color: AppColors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDefaultCenterMarker({
-    required Size size,
-    required String title,
-  }) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0.9, end: 1.1),
-            duration: const Duration(seconds: 1),
-            curve: Curves.easeInOut,
-            builder: (context, scale, child) {
-              return Transform.scale(
-                scale: scale,
-                child: Container(
-                  padding: AppSpacing.paddingSm8,
-                  decoration: const BoxDecoration(
-                    color: AppColors.forest,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.overlay,
-                        blurRadius: 10,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.location_on,
-                    color: AppColors.ivory,
-                    size: 32,
-                  ),
-                ),
-              );
-            },
           ),
-          const SizedBox(height: AppSpacing.sm8),
+          const SizedBox(height: 2),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md12,
-              vertical: AppSpacing.xs4,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.deep.withValues(alpha: 0.9),
-              borderRadius: AppRadii.borderPill,
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: const BoxDecoration(
+              color: AppColors.gold,
+              borderRadius: AppRadii.borderSm8,
             ),
             child: Text(
-              title,
+              AppFormatters.formatNpr(experience.pricePaisa),
               style: AppTypography.caption.copyWith(
-                color: AppColors.ivory,
+                color: AppColors.white,
+                fontSize: 10,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDefaultCenterMarker({required String title}) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: AppSpacing.paddingSm8,
+          decoration: const BoxDecoration(
+            color: AppColors.forest,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.overlay,
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.location_on,
+            color: AppColors.ivory,
+            size: 32,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm8),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md12,
+            vertical: AppSpacing.xs4,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.deep.withValues(alpha: 0.9),
+            borderRadius: AppRadii.borderPill,
+          ),
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.caption.copyWith(
+              color: AppColors.ivory,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -637,83 +678,5 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         ),
       ),
     );
-  }
-
-  Color _getBackgroundColorForStyle(MapStyle style) {
-    switch (style) {
-      case MapStyle.topographic:
-        return AppColors.sage;
-      case MapStyle.satellite:
-        return AppColors.deep;
-      case MapStyle.terrain:
-        return AppColors.cardBackgroundAlt;
-      case MapStyle.standard:
-        return AppColors.ivory;
-    }
-  }
-}
-
-class _MapStylePainter extends CustomPainter {
-  final MapStyle mapStyle;
-
-  _MapStylePainter({required this.mapStyle});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Color gridColor = mapStyle == MapStyle.satellite
-        ? AppColors.borderSubtle.withValues(alpha: 0.15)
-        : AppColors.borderSubtle.withValues(alpha: 0.5);
-
-    final gridPaint = Paint()
-      ..color = gridColor
-      ..strokeWidth = 1.0;
-
-    const double step = 40.0;
-    for (double x = 0; x < size.width; x += step) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
-    }
-    for (double y = 0; y < size.height; y += step) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
-
-    final Color contourColor = mapStyle == MapStyle.satellite
-        ? AppColors.ivory.withValues(alpha: 0.15)
-        : (mapStyle == MapStyle.terrain
-            ? AppColors.gold.withValues(alpha: 0.15)
-            : AppColors.forest.withValues(alpha: 0.10));
-
-    final contourPaint = Paint()
-      ..color = contourColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-
-    final path1 = Path();
-    path1.moveTo(0, size.height * 0.4);
-    path1.cubicTo(
-      size.width * 0.25,
-      size.height * 0.2,
-      size.width * 0.75,
-      size.height * 0.6,
-      size.width,
-      size.height * 0.3,
-    );
-    canvas.drawPath(path1, contourPaint);
-
-    final path2 = Path();
-    path2.moveTo(0, size.height * 0.7);
-    path2.cubicTo(
-      size.width * 0.35,
-      size.height * 0.85,
-      size.width * 0.65,
-      size.height * 0.5,
-      size.width,
-      size.height * 0.75,
-    );
-    canvas.drawPath(path2, contourPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _MapStylePainter oldDelegate) {
-    return oldDelegate.mapStyle != mapStyle;
   }
 }

@@ -1,0 +1,16 @@
+<!--
+  Signup confirmation email. Default Supabase template only shows
+  {{ .ConfirmationURL }}, which points at auth.site_url — a placeholder
+  (127.0.0.1) until this project has a real domain. The {{ .Token }} code
+  works independently of that URL, so it's shown as the primary path; the
+  link is kept as a fallback for whenever a real site_url exists.
+-->
+<div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; color: #1a1a1a;">
+  <h2 style="margin: 0 0 8px; color: #14532d;">Verify your email</h2>
+  <p style="margin: 0 0 24px; color: #444;">Enter this code in the Plan E app to finish creating your account:</p>
+  <div style="text-align: center; padding: 20px; background: #f4f1ea; border-radius: 12px; margin-bottom: 24px;">
+    <span style="font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #14532d;">{{ .Token }}</span>
+  </div>
+  <p style="margin: 0 0 8px; color: #777; font-size: 14px;">This code expires in 1 hour. If you didn't request this, you can ignore this email.</p>
+  <p style="margin: 24px 0 0; color: #aaa; font-size: 12px;">Or use this link: <a href="{{ .ConfirmationURL }}">{{ .ConfirmationURL }}</a></p>
+</div>

@@ -13,6 +13,8 @@ import 'features/auth/login_screen.dart';
 import 'features/auth/forgot_password_screen.dart';
 import 'features/auth/reset_result_screen.dart';
 import 'features/auth/auth_required_sheet.dart';
+import 'features/auth/otp_verification_screen.dart';
+import 'features/auth/set_new_password_screen.dart';
 
 import 'features/home/home_screen.dart';
 import 'features/explore/explore_screen.dart';
@@ -51,6 +53,8 @@ import 'features/host/host_step_4_screen.dart';
 import 'features/host/application_submitted_screen.dart';
 
 import 'features/dev/routes_screen.dart';
+import 'features/notifications/notification_feed_screen.dart';
+import 'features/ai_itinerary/ai_itinerary_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> _shellNavigatorKey =
@@ -61,8 +65,16 @@ final GoRouter router = GoRouter(
   initialLocation: '/',
   redirect: (context, state) {
     final path = state.uri.path;
+    // '/' (splash) is deliberately NOT in this list. It used to be, which
+    // meant any navigation back to '/' after onboarding was complete (e.g.
+    // main.dart's replay-splash-on-resume) got silently redirected straight
+    // to /home before SplashScreen ever mounted — the splash would only
+    // ever play pre-login, never after, since login/guest both complete
+    // onboarding. Splash already has its own logic (in _navigate()) to send
+    // a returning, already-onboarded user to /home after the animation, so
+    // it doesn't need this redirect to do that job for it.
     final isOnboardingRoute =
-        path == '/' || path.startsWith('/onboarding/') || path == '/interests';
+        path.startsWith('/onboarding/') || path == '/interests';
     if (OnboardingPreferences.isCompleted && isOnboardingRoute) {
       return '/home';
     }
@@ -109,6 +121,20 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/auth/reset-result',
       builder: (context, state) => const ResetResultScreen(),
+    ),
+    GoRoute(
+      path: '/auth/otp-verify',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        return OtpVerificationScreen(
+          email: extra?['email'] as String? ?? '',
+          isRecovery: extra?['purpose'] == 'recovery',
+        );
+      },
+    ),
+    GoRoute(
+      path: '/auth/set-new-password',
+      builder: (context, state) => const SetNewPasswordScreen(),
     ),
     GoRoute(
       path: '/auth/required',
@@ -196,7 +222,9 @@ final GoRouter router = GoRouter(
         GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
         GoRoute(
           path: '/explore',
-          builder: (context, state) => const ExploreScreen(),
+          builder: (context, state) => ExploreScreen(
+            initialQuery: state.uri.queryParameters['query'],
+          ),
         ),
         GoRoute(
           path: '/search',
@@ -306,6 +334,14 @@ final GoRouter router = GoRouter(
       builder: (context, state) => const MyReviewsScreen(),
     ),
     GoRoute(
+      path: '/notifications',
+      builder: (context, state) => const NotificationFeedScreen(),
+    ),
+    GoRoute(
+      path: '/ai-planner',
+      builder: (context, state) => const AiItineraryScreen(),
+    ),
+    GoRoute(
       path: '/host',
       builder: (context, state) => const BecomeHostScreen(),
     ),
@@ -342,6 +378,18 @@ int _calculateSelectedIndex(String location) {
   return 0;
 }
 
+/// Double-back-to-exit for the bottom-nav tabs.
+///
+/// Uses BackButtonListener rather than PopScope. PopScope only works when it
+/// can register with an enclosing ModalRoute; placing it in MaterialApp's
+/// `builder` puts it *above* the router's Navigator where there is no route
+/// to attach to, so it silently never fires and back closed the app outright.
+/// BackButtonListener hooks the root back-button dispatcher directly, so it
+/// runs regardless of which navigator owns the current route.
+///
+/// Returning true consumes the press; false lets it fall through to normal
+/// back-navigation. Only the tab roots reach here with nothing to pop, so a
+/// pushed detail screen still pops normally on the first press.
 class _DoubleBackToExit extends StatefulWidget {
   final Widget child;
 
@@ -354,32 +402,36 @@ class _DoubleBackToExit extends StatefulWidget {
 class _DoubleBackToExitState extends State<_DoubleBackToExit> {
   DateTime? _lastBackPress;
 
-  Future<void> _onPopInvoked(bool didPop, Object? result) async {
-    if (didPop) return;
+  Future<bool> _onBackPressed() async {
+    // Something to go back to (a pushed screen above the shell) — let the
+    // normal pop happen instead of treating this as an exit attempt.
+    if (router.canPop()) return false;
+
     final now = DateTime.now();
     if (_lastBackPress != null &&
         now.difference(_lastBackPress!) < const Duration(seconds: 2)) {
       await SystemNavigator.pop();
-      return;
+      return true;
     }
 
     _lastBackPress = now;
-    if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(
-          content: Text('Press back again to exit'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+    if (mounted) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('Press back again to exit'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+    }
+    return true;
   }
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: _onPopInvoked,
+    return BackButtonListener(
+      onBackButtonPressed: _onBackPressed,
       child: widget.child,
     );
   }

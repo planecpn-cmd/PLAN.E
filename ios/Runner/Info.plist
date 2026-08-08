@@ -26,6 +26,8 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>PLAN E uses your location to show your current city on the home screen and find nearby treks.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -65,6 +67,21 @@
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<!-- Deep link the OS routes back into the app after a Google/Apple OAuth
+	     browser flow (see AppSupabaseClient.authRedirectUrl). A custom scheme
+	     needs no domain; swap for an Associated Domain on a real domain later
+	     without touching Dart code. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.planee.auth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>planee</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

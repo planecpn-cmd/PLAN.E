@@ -39,12 +39,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   void _populateControllers(Profile? profile) {
     if (_initialized) return;
-    _nameController.text = profile?.fullName ?? 'Pema Sherpa';
-    _phoneController.text = profile?.phone ?? '+977 9841234567';
+    // Empty, not a fake name/phone/bio — this form edits the real profile,
+    // and pre-filling placeholder text here reads as the user's own data if
+    // they don't look closely, risking an accidental save of someone else's
+    // (fictional) identity.
+    _nameController.text = profile?.fullName ?? '';
+    _phoneController.text = profile?.phone ?? '';
     _locationController.text = profile?.location ?? 'Kathmandu, Nepal';
-    _bioController.text =
-        profile?.bio ??
-        'Passionate mountain trekker & eco-tourism enthusiast exploring hidden trails across the Himalayas.';
+    _bioController.text = profile?.bio ?? '';
     _initialized = true;
   }
 
@@ -185,14 +187,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           child:
                               _selectedAvatarBytes == null &&
                                   profile?.avatarUrl == null
-                              ? Text(
-                                  _nameController.text.isNotEmpty
-                                      ? _nameController.text[0].toUpperCase()
-                                      : 'P',
-                                  style: AppTypography.displayMedium.copyWith(
-                                    color: AppColors.ivory,
-                                  ),
-                                )
+                              ? (_nameController.text.isNotEmpty
+                                    ? Text(
+                                        _nameController.text[0].toUpperCase(),
+                                        style: AppTypography.displayMedium.copyWith(
+                                          color: AppColors.ivory,
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.person_outline,
+                                        color: AppColors.ivory,
+                                        size: 40,
+                                      ))
                               : null,
                         ),
                         Positioned(

@@ -16,16 +16,23 @@ import '../../widgets/widgets.dart';
 import '../search/filter_sheet.dart';
 
 class ExploreScreen extends ConsumerStatefulWidget {
-  const ExploreScreen({super.key});
+  final String? initialQuery;
+
+  const ExploreScreen({super.key, this.initialQuery});
 
   @override
   ConsumerState<ExploreScreen> createState() => _ExploreScreenState();
 }
 
 class _ExploreScreenState extends ConsumerState<ExploreScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
-  Map<String, String?> _searchFilters = const {'sort_by': 'relevance'};
+  late final TextEditingController _searchController =
+      TextEditingController(text: widget.initialQuery ?? '');
+  late String _searchQuery = widget.initialQuery ?? '';
+  late Map<String, String?> _searchFilters = Map.unmodifiable({
+    if (widget.initialQuery != null && widget.initialQuery!.isNotEmpty)
+      'search_query': widget.initialQuery,
+    'sort_by': 'relevance',
+  });
   Timer? _searchDebounce;
 
   @override
@@ -59,7 +66,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     return Scaffold(
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 128),
+        padding: const EdgeInsets.only(bottom: 88),
         child: FloatingActionButton(
           onPressed: () => context.push('/map'),
           backgroundColor: AppColors.forest,
@@ -111,8 +118,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                             color: AppColors.white,
                             size: 22,
                           ),
-                          onPressed: () =>
-                              context.push('/profile/notifications'),
+                          onPressed: () => context.push('/notifications'),
                           tooltip: 'Notifications',
                         ),
                       ),
@@ -273,36 +279,16 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                             ),
                         itemBuilder: (context, index) {
                           final category = categories[index];
-                          return GestureDetector(
+                          // No real cover photos are seeded for categories
+                          // yet (all null) — a bespoke icon-on-gradient card
+                          // reads as an intentional brand pattern, where the
+                          // old PlanEPhoto fallback (flat sage + centered
+                          // icon + dark wash) read as a broken/loading image.
+                          return _CategoryCard(
+                            title: category.nameEn,
+                            icon: _categoryIcon(category.slug),
                             onTap: () => context.push(
                               '/search?category_id=${category.id}',
-                            ),
-                            child: PlanEPhoto(
-                              imageUrl: category.coverImageUrl,
-                              radius: 22,
-                              overlay: Container(
-                                padding: const EdgeInsets.all(12),
-                                alignment: Alignment.bottomLeft,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [
-                                      AppColors.transparent,
-                                      AppColors.black.withValues(alpha: .65),
-                                    ],
-                                  ),
-                                ),
-                                child: Text(
-                                  category.nameEn,
-                                  style: const TextStyle(
-                                    fontFamily: 'serif',
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.white,
-                                  ),
-                                ),
-                              ),
                             ),
                           );
                         },
@@ -338,56 +324,14 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                               const SizedBox(width: 12),
                           itemBuilder: (context, index) {
                             final region = regions[index];
-                            return GestureDetector(
-                              onTap: () => context.push(
-                                '/search?region_id=${region.id}',
-                              ),
-                              child: SizedBox(
-                                width: 150,
-                                child: PlanEPhoto(
-                                  imageUrl: region.coverImageUrl,
-                                  radius: 20,
-                                  overlay: Container(
-                                    padding: const EdgeInsets.all(10),
-                                    alignment: Alignment.bottomLeft,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                        colors: [
-                                          AppColors.transparent,
-                                          AppColors.black.withValues(alpha: .6),
-                                        ],
-                                      ),
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          region.nameEn,
-                                          style: const TextStyle(
-                                            fontFamily: 'serif',
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.white,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        Text(
-                                          region.nameNe,
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            color: AppColors.sage,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                            return SizedBox(
+                              width: 150,
+                              child: _RegionCard(
+                                title: region.nameEn,
+                                subtitle: region.nameNe,
+                                icon: _regionIcon(region.slug),
+                                onTap: () => context.push(
+                                  '/search?region_id=${region.id}',
                                 ),
                               ),
                             );
@@ -425,6 +369,217 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     };
     context.push(
       Uri(path: '/search', queryParameters: queryParameters).toString(),
+    );
+  }
+
+  IconData _categoryIcon(String slug) {
+    switch (slug) {
+      case 'trekking':
+        return Icons.hiking;
+      case 'hiking':
+        return Icons.directions_walk;
+      case 'camping':
+        return Icons.cabin_outlined;
+      case 'climbing':
+        return Icons.terrain;
+      case 'homestay':
+        return Icons.home_outlined;
+      case 'culture':
+        return Icons.temple_buddhist_outlined;
+      case 'wildlife':
+        return Icons.pets;
+      case 'wellness':
+        return Icons.self_improvement;
+      case 'volunteering':
+        return Icons.volunteer_activism;
+      default:
+        return Icons.landscape_outlined;
+    }
+  }
+
+  IconData _regionIcon(String slug) {
+    switch (slug) {
+      case 'everest':
+      case 'manaslu':
+      case 'kanchenjunga':
+        return Icons.terrain;
+      case 'annapurna':
+      case 'langtang':
+        return Icons.landscape_outlined;
+      case 'mustang':
+        return Icons.account_balance_outlined;
+      case 'chitwan':
+        return Icons.forest_outlined;
+      case 'pokhara':
+      case 'rara':
+        return Icons.water_outlined;
+      case 'kathmandu':
+        return Icons.temple_buddhist_outlined;
+      default:
+        return Icons.map_outlined;
+    }
+  }
+}
+
+class _CategoryCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _CategoryCard({
+    required this.title,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.forest, AppColors.deep],
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: AppColors.shadow,
+              blurRadius: 12,
+              offset: Offset(0, 6),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            // Oversized, low-opacity icon as background texture — fills the
+            // card with brand-relevant visual interest in place of a photo.
+            Positioned(
+              right: -16,
+              bottom: -16,
+              child: Icon(
+                icon,
+                size: 96,
+                color: AppColors.white.withValues(alpha: 0.10),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.white.withValues(alpha: 0.16),
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(icon, size: 18, color: AppColors.white),
+                  ),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontFamily: 'serif',
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.white,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RegionCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _RegionCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.forest, AppColors.deep],
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: AppColors.shadow,
+              blurRadius: 10,
+              offset: Offset(0, 5),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            Positioned(
+              right: -12,
+              bottom: -12,
+              child: Icon(
+                icon,
+                size: 76,
+                color: AppColors.white.withValues(alpha: 0.10),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontFamily: 'serif',
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.white,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.sage,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

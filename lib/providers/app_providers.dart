@@ -6,12 +6,16 @@ import '../core/supabase_client.dart';
 import '../models/booking.dart';
 import '../models/category.dart';
 import '../models/experience.dart';
+import '../models/generated_itinerary.dart';
 import '../models/host_application.dart';
+import '../models/notification.dart';
 import '../models/profile.dart';
 import '../models/region.dart';
+import '../repositories/ai_itinerary_repository.dart';
 import '../repositories/booking_repository.dart';
 import '../repositories/experience_repository.dart';
 import '../repositories/host_repository.dart';
+import '../repositories/notification_repository.dart';
 import '../repositories/profile_repository.dart';
 import '../repositories/recent_searches_repository.dart';
 import '../repositories/review_repository.dart';
@@ -21,6 +25,18 @@ import '../repositories/taxonomy_repository.dart';
 final supabaseClientProvider = Provider<SupabaseClient>((ref) {
   return AppSupabaseClient.client;
 });
+
+/// Set right before launching the Google/Apple browser flow, cleared once the
+/// resulting `signedIn` event is handled. Distinguishes an OAuth return
+/// (which has no other code path to navigate home) from a `signedIn` event
+/// fired by the OTP verification screen, which navigates itself.
+final oauthInFlightProvider = StateProvider<bool>((ref) => false);
+
+/// Home screen's location label — starts as a static default and is
+/// overwritten with a reverse-geocoded city once the user taps it to use
+/// their real GPS location (see HomeScreen's location row).
+final homeLocationLabelProvider = StateProvider<String>((ref) => 'Kathmandu, Nepal');
+final homeLocationLoadingProvider = StateProvider<bool>((ref) => false);
 
 final experienceRepositoryProvider = Provider<ExperienceRepository>((ref) {
   return ExperienceRepository(ref.watch(supabaseClientProvider));
@@ -137,6 +153,83 @@ final myHostApplicationProvider = FutureProvider<HostApplication?>((ref) async {
   final repo = ref.watch(hostRepositoryProvider);
   return repo.getHostApplication();
 });
+
+final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
+  return NotificationRepository(ref.watch(supabaseClientProvider));
+});
+
+final notificationsProvider = FutureProvider<List<AppNotification>>((ref) async {
+  final repo = ref.watch(notificationRepositoryProvider);
+  return repo.getNotifications();
+});
+
+final unreadNotificationCountProvider = FutureProvider<int>((ref) async {
+  final repo = ref.watch(notificationRepositoryProvider);
+  return repo.getUnreadCount();
+});
+
+final aiItineraryRepositoryProvider = Provider<AiItineraryRepository>((ref) {
+  return AiItineraryRepository(ref.watch(supabaseClientProvider));
+});
+
+class AiItineraryState {
+  final bool isLoading;
+  final String? errorMessage;
+  final GeneratedItinerary? result;
+
+  const AiItineraryState({this.isLoading = false, this.errorMessage, this.result});
+
+  AiItineraryState copyWith({
+    bool? isLoading,
+    String? errorMessage,
+    GeneratedItinerary? result,
+  }) {
+    return AiItineraryState(
+      isLoading: isLoading ?? this.isLoading,
+      errorMessage: errorMessage,
+      result: result ?? this.result,
+    );
+  }
+}
+
+class AiItineraryNotifier extends StateNotifier<AiItineraryState> {
+  final AiItineraryRepository _repository;
+
+  AiItineraryNotifier(this._repository) : super(const AiItineraryState());
+
+  Future<void> generate({
+    required String tripType,
+    required int durationDays,
+    String? pace,
+    int? budgetNpr,
+    String? interests,
+    String? groupType,
+  }) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final result = await _repository.generate(
+        tripType: tripType,
+        durationDays: durationDays,
+        pace: pace,
+        budgetNpr: budgetNpr,
+        interests: interests,
+        groupType: groupType,
+      );
+      state = state.copyWith(isLoading: false, result: result);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    }
+  }
+
+  void reset() {
+    state = const AiItineraryState();
+  }
+}
+
+final aiItineraryNotifierProvider =
+    StateNotifierProvider<AiItineraryNotifier, AiItineraryState>((ref) {
+      return AiItineraryNotifier(ref.watch(aiItineraryRepositoryProvider));
+    });
 
 // Guest & Deferred Action State
 class GuestState {

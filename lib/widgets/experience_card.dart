@@ -3,6 +3,12 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../theme/theme.dart';
 import 'rating_stars.dart';
 
+/// .horizontal: the original landscape-image card (search results, saved,
+/// explore grids). .poster: a taller, portrait-image card for home-screen
+/// rails — same idea as Netflix's title rows, where a tall consistent poster
+/// shape reads as curated rather than a generic list-item thumbnail.
+enum ExperienceCardVariant { horizontal, poster }
+
 class ExperienceCard extends StatelessWidget {
   final String title;
   final String location;
@@ -15,6 +21,7 @@ class ExperienceCard extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onBookmarkTap;
   final double width;
+  final ExperienceCardVariant variant;
 
   const ExperienceCard({
     super.key,
@@ -29,10 +36,14 @@ class ExperienceCard extends StatelessWidget {
     this.onTap,
     this.onBookmarkTap,
     this.width = 260.0,
+    this.variant = ExperienceCardVariant.horizontal,
   });
 
   @override
   Widget build(BuildContext context) {
+    final bool isPoster = variant == ExperienceCardVariant.poster;
+    final double imageHeight = isPoster ? width * 1.07 : 140.0;
+
     return Semantics(
       container: true,
       button: true,
@@ -65,7 +76,7 @@ class ExperienceCard extends StatelessWidget {
                         image: true,
                         label: '$title photo',
                         child: Container(
-                          height: 140.0,
+                          height: imageHeight,
                           width: double.infinity,
                           color: AppColors.sage,
                           child: imageUrl != null && imageUrl!.isNotEmpty
@@ -120,17 +131,21 @@ class ExperienceCard extends StatelessWidget {
                         ),
                       ),
 
-                    // Bookmark Button (min touch target >= 48dp)
+                    // Bookmark button — top offset matches the category
+                    // badge's exactly (both AppSpacing.sm8) so the two sit
+                    // on the same plane instead of the badge sitting lower
+                    // than the bookmark's larger tap-target box did.
                     Positioned(
-                      top: 0,
-                      right: 0,
+                      top: AppSpacing.sm8,
+                      right: AppSpacing.sm8,
                       child: Semantics(
                         button: true,
                         label: isSaved ? 'Remove $title from saved' : 'Save $title',
                         child: SizedBox(
-                          width: AppTouchTarget.minSize,
-                          height: AppTouchTarget.minSize,
+                          width: 36,
+                          height: 36,
                           child: IconButton(
+                            padding: EdgeInsets.zero,
                             onPressed: onBookmarkTap,
                             icon: Icon(
                               isSaved ? Icons.bookmark : Icons.bookmark_border,
@@ -172,26 +187,63 @@ class ExperienceCard extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: AppSpacing.sm8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Flexible(
-                            child: RatingStars(
-                              rating: rating,
-                              reviewCount: reviewCount,
-                              starSize: 14.0,
+                      if (isPoster)
+                        // Stacked, not shared on one row — a poster card is
+                        // narrow enough that cramming a 5-star rating, a
+                        // review count, and a price onto one line was
+                        // truncating the price. Each gets the card's full
+                        // width on its own line instead.
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.star, size: 14, color: AppColors.gold),
+                                const SizedBox(width: 2),
+                                Text(
+                                  rating.toStringAsFixed(1),
+                                  style: AppTypography.caption.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.ink,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(width: AppSpacing.xs4),
-                          Text(
-                            priceText,
-                            style: AppTypography.bodyMedium.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.forest,
+                            const SizedBox(height: 2),
+                            Text(
+                              priceText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.bodyMedium.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.forest,
+                                fontSize: 13,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        )
+                      else
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: RatingStars(
+                                rating: rating,
+                                reviewCount: reviewCount,
+                                starSize: 14.0,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.xs4),
+                            Text(
+                              priceText,
+                              style: AppTypography.bodyMedium.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.forest,
+                              ),
+                            ),
+                          ],
+                        ),
                     ],
                   ),
                 ),

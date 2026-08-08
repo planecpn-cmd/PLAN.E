@@ -46,6 +46,13 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
   String _searchQuery = '';
   bool _showRecentSearches = false;
   Timer? _searchDebounce;
+  // Stored, not recomputed inline in build() — experiencesProvider is a
+  // .family provider keyed on this map's `==`, and a plain Dart Map has
+  // identity equality. A getter that rebuilds a fresh Map every build() call
+  // (including rebuilds triggered by totally unrelated state) made every
+  // watch() key a "new" provider, restarting the fetch from loading each
+  // time and never letting a completed one actually render.
+  late Map<String, String?> _filters;
 
   @override
   void initState() {
@@ -58,6 +65,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
     _sortBy = widget.initialSortBy ?? 'relevance';
     _searchFocusNode = FocusNode();
     _searchFocusNode.addListener(_onFocusChange);
+    _filters = _computeFilterMap();
   }
 
   void _onFocusChange() {
@@ -77,7 +85,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
     super.dispose();
   }
 
-  Map<String, String?> get _filterMap {
+  Map<String, String?> _computeFilterMap() {
     return {
       if (_searchQuery.trim().isNotEmpty) 'search_query': _searchQuery.trim(),
       if (_selectedDifficulty != null && _selectedDifficulty != 'all')
@@ -97,6 +105,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
     setState(() {
       _searchQuery = trimmedQuery;
       _showRecentSearches = false;
+      _filters = _computeFilterMap();
     });
     _searchFocusNode.unfocus();
     if (trimmedQuery.isNotEmpty) {
@@ -114,6 +123,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
       if (!mounted) return;
       setState(() {
         _searchQuery = value.trim();
+        _filters = _computeFilterMap();
       });
     });
   }
@@ -143,6 +153,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
         _maxPricePaisa =
             result['max_price'] != null ? int.tryParse(result['max_price']!) : null;
         _sortBy = result['sort_by'] ?? 'relevance';
+        _filters = _computeFilterMap();
       });
     }
   }
@@ -158,6 +169,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
       _searchQuery = '';
       _searchController.clear();
       _showRecentSearches = false;
+      _filters = _computeFilterMap();
     });
     _searchFocusNode.unfocus();
   }
@@ -165,7 +177,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final experiencesAsync = ref.watch(experiencesProvider(_filterMap));
+    final experiencesAsync = ref.watch(experiencesProvider(_filters));
     final recentSearchesAsync = ref.watch(recentSearchesProvider);
 
     final bool hasActiveFilters = _categoryId != null ||
@@ -276,6 +288,9 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                               fontSize: 14,
                             ),
                             border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            contentPadding: EdgeInsets.zero,
                           ),
                           textInputAction: TextInputAction.search,
                           onSubmitted: _submitSearch,
@@ -445,7 +460,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
               Expanded(
                 child: AsyncValueView<List<Experience>>(
                   value: experiencesAsync,
-                  onRetry: () => ref.refresh(experiencesProvider(_filterMap)),
+                  onRetry: () => ref.refresh(experiencesProvider(_filters)),
                   isEmpty: (list) => list.isEmpty,
                   emptyView: EmptyStateView(
                     icon: Icons.search_off,

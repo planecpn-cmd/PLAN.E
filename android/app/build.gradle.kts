@@ -6,7 +6,10 @@ plugins {
 
 android {
     namespace = "com.plane.plan_e"
-    compileSdk = flutter.compileSdkVersion
+    // geocoding_android's androidx deps require compiling against API 34+;
+    // flutter.compileSdkVersion resolved to 33 on this Flutter version, and
+    // several other plugins (geolocator, app_links, etc.) want 36.
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

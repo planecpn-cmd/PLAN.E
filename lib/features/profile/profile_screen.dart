@@ -178,7 +178,7 @@ class ProfileScreen extends ConsumerWidget {
                           const SizedBox(height: 40, child: VerticalDivider()),
                           Expanded(
                             child: _StatTile(
-                              number: '${profile?.points ?? 350}',
+                              number: '${profile?.points ?? 0}',
                               label: 'Points',
                             ),
                           ),
@@ -227,12 +227,6 @@ class ProfileScreen extends ConsumerWidget {
                             icon: Icons.help_outline,
                             label: l10n.helpAndSupport,
                             onTap: () => context.push('/profile/help'),
-                          ),
-                          const Divider(height: 1),
-                          _ProfileRow(
-                            icon: Icons.rate_review_outlined,
-                            label: l10n.myReviews,
-                            onTap: () => context.push('/profile/my-reviews'),
                           ),
                           const Divider(height: 1),
                           _ProfileRow(

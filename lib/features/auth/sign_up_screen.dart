@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/format.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers/app_providers.dart';
@@ -9,6 +10,7 @@ import '../../theme/theme.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_text_field.dart';
 import '../../widgets/app_toast.dart';
+import '../../widgets/brand_icons.dart';
 import 'auth_repository.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
@@ -58,6 +60,17 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     if (!mounted) return;
 
     if (success) {
+      // Email confirmation is required (supabase/config.toml auth.email
+      // .enable_confirmations), so signUp() succeeding does not yet mean a
+      // session exists — verify the OTP that was just emailed before
+      // treating the account as usable. Phone-only signups have no email to
+      // send a code to, so they go straight through as before.
+      final hasSession =
+          ref.read(supabaseClientProvider).auth.currentSession != null;
+      if (isEmail && !hasSession) {
+        context.go('/auth/otp-verify', extra: {'email': email, 'purpose': 'signup'});
+        return;
+      }
       AppToast.show(context, message: l10n.accountCreatedSuccess, variant: AppToastVariant.success);
       final deferred = ref.read(deferredActionProvider);
       if (deferred != null) {
@@ -71,6 +84,17 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         message: state.errorMessage ?? 'Failed to create account. Please try again.',
         variant: AppToastVariant.error,
       );
+    }
+  }
+
+  Future<void> _handleOAuthSignIn(OAuthProvider provider) async {
+    ref.read(oauthInFlightProvider.notifier).state = true;
+    try {
+      await ref.read(authNotifierProvider.notifier).signInWithOAuth(provider);
+    } catch (e) {
+      ref.read(oauthInFlightProvider.notifier).state = false;
+      if (!mounted) return;
+      AppToast.show(context, message: 'Could not open sign-in. Please try again.', variant: AppToastVariant.error);
     }
   }
 
@@ -226,6 +250,41 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   isFullWidth: true,
                   minHeight: AppTouchTarget.minSize,
                 ),
+                const SizedBox(height: AppSpacing.xxl24),
+
+                Row(
+                  children: [
+                    const Expanded(child: Divider(color: AppColors.borderSubtle)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md12),
+                      child: Text(
+                        'OR',
+                        style: AppTypography.bodyMedium.copyWith(color: AppColors.ink),
+                      ),
+                    ),
+                    const Expanded(child: Divider(color: AppColors.borderSubtle)),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.lg16),
+
+                AppButton.secondary(
+                  label: 'Continue with Google',
+                  iconWidget: const GoogleMark(),
+                  isFullWidth: true,
+                  minHeight: AppTouchTarget.minSize,
+                  onPressed: () => _handleOAuthSignIn(OAuthProvider.google),
+                ),
+                const SizedBox(height: AppSpacing.sm8),
+                if (isApplePlatform)
+                  AppButton.secondary(
+                    label: 'Continue with Apple',
+                    // iconWidget, not icon: Apple's mark must stay black
+                    // regardless of button variant, not tinted to match text.
+                    iconWidget: const Icon(Icons.apple, size: 20.0, color: Colors.black),
+                    isFullWidth: true,
+                    minHeight: AppTouchTarget.minSize,
+                    onPressed: () => _handleOAuthSignIn(OAuthProvider.apple),
+                  ),
                 const SizedBox(height: AppSpacing.xxl24),
 
                 // Login Link

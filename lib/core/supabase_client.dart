@@ -11,6 +11,12 @@ class AppSupabaseClient {
   /// (payment gateway checkout/return links).
   static String get baseUrl => _url;
 
+  /// Deep link the OS routes back into this app after an OAuth browser flow.
+  /// A custom URL scheme needs no domain — it's registered directly in
+  /// AndroidManifest.xml and Info.plist. Swap for a Universal/App Link on a
+  /// real domain later without touching any call site of this constant.
+  static const String authRedirectUrl = 'planee://login-callback';
+
   static Future<void> initialize() async {
     if (_initialized) return;
 

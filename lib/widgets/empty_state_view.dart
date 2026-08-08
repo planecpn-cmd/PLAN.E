@@ -33,10 +33,10 @@ class EmptyStateView extends StatelessWidget {
                     )
                   : 0,
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                 Container(
                   padding: AppSpacing.paddingXl20,
                   decoration: const BoxDecoration(
@@ -69,7 +69,8 @@ class EmptyStateView extends StatelessWidget {
                     variant: AppButtonVariant.primary,
                   ),
                 ],
-              ],
+                ],
+              ),
             ),
           ),
         );

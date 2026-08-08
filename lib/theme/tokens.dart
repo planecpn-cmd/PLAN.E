@@ -5,7 +5,7 @@ abstract class AppColors {
   // Brand Palette
   static const Color forest = Color(0xFF18372D);
   static const Color deep = Color(0xFF01251C);
-  static const Color ivory = Color(0xFFF6F2E9);
+  static const Color ivory = Color(0xFFFFFFFF);
   static const Color sage = Color(0xFFE7ECE7);
   static const Color ink = Color(0xFF24312D);
   static const Color gold = Color(0xFF8F5E1B); // WCAG AA 5.07:1 contrast on ivory

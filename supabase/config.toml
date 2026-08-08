@@ -160,7 +160,10 @@ site_url = "http://127.0.0.1:3000"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+# planee://login-callback is the Flutter app's custom URL scheme (see
+# AppSupabaseClient.authRedirectUrl) — it needs no domain of its own since
+# Google/Apple redirect to this project's own Supabase URL, not to it.
+additional_redirect_urls = ["https://127.0.0.1:3000", "planee://login-callback"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -196,7 +199,7 @@ password_requirements = ""
 
 [auth.rate_limit]
 # Number of emails that can be sent per hour. Requires auth.email.smtp to be enabled.
-email_sent = 2
+email_sent = 30
 # Number of SMS messages that can be sent per hour. Requires auth.sms to be enabled.
 sms_sent = 30
 # Number of anonymous sign-ins that can be made per hour per IP address. Requires enable_anonymous_sign_ins = true.
@@ -223,7 +226,9 @@ enable_signup = true
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
-enable_confirmations = false
+# Required for the OTP verification screen (lib/features/auth/otp_verification_screen.dart)
+# to have anything to verify.
+enable_confirmations = true
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
@@ -233,20 +238,35 @@ otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
-# Use a production-ready SMTP server
-# [auth.email.smtp]
-# enabled = true
-# host = "smtp.sendgrid.net"
-# port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
+# Resend free tier — no domain needed. Without a verified domain, Resend
+# only delivers to the email the Resend account was created with; verify a
+# domain in Resend's dashboard later to send to real users, no config change
+# needed here when that happens.
+[auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 587
+user = "resend"
+pass = "env(RESEND_API_KEY)"
+admin_email = "onboarding@resend.dev"
+sender_name = "Plan E"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
+
+# Show the 6-digit {{ .Token }} rather than only the default
+# {{ .ConfirmationURL }}, which points at auth.site_url — a placeholder
+# until this project has a real domain to host it on. Needs [auth.email.smtp]
+# enabled above — the platform default email provider rejects template pushes.
+[auth.email.template.confirmation]
+subject = "Verify your email — Plan E"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Reset your password — Plan E"
+content_path = "./supabase/templates/recovery.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
@@ -319,6 +339,30 @@ max_frequency = "5s"
 # Use an external OAuth provider. The full list of providers are: `apple`, `azure`, `bitbucket`,
 # `discord`, `facebook`, `github`, `gitlab`, `google`, `keycloak`, `linkedin_oidc`, `notion`, `twitch`,
 # `twitter`, `x`, `slack`, `spotify`, `workos`, `zoom`.
+#
+# Google and Apple both redirect back to *this Supabase project's* own URL
+# (https://dtebgbrqynxahuzmbtbc.supabase.co/auth/v1/callback) — not to any
+# domain of ours — so neither provider needs us to own a domain to work.
+# What's missing is a real client_id/secret, which only whoever owns the
+# Google Cloud / Apple Developer account can generate. Once you have them:
+#   1. Fill in client_id below and put the secret in supabase/functions/.env.hosted
+#      (or export it) as the named env var, then set `enabled = true`.
+#   2. Push with `supabase config push` — it reads env(...) references from
+#      your shell environment at push time.
+# Until then these stay disabled; the app's "Continue with Google/Apple"
+# buttons will surface a Supabase error if tapped.
+[auth.external.google]
+enabled = true
+# Web application client — this is the one Supabase's server-side OAuth
+# callback authenticates as, regardless of which platform the app runs on.
+# The separate Android debug client (SHA-1-bound, for native google_sign_in)
+# isn't used here since the app does the browser-redirect flow instead.
+client_id = "897459562181-tm02s7p267v5a4tdjmcrv4dad5qkkc8o.apps.googleusercontent.com"
+# DO NOT commit your OAuth provider secret to git. Use environment variable substitution instead:
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+redirect_uri = ""
+skip_nonce_check = false
+
 [auth.external.apple]
 enabled = false
 client_id = ""

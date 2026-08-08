@@ -36,7 +36,15 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     if (!mounted) return;
 
     if (success) {
-      context.go('/auth/reset-result');
+      // Email carries a 6-digit OTP (supabase/templates/recovery.html) —
+      // works without a domain to host a reset link on. Phone reset has no
+      // OTP-entry screen wired up yet, so it falls back to the static
+      // "check your messages" screen.
+      if (input.contains('@')) {
+        context.go('/auth/otp-verify', extra: {'email': input, 'purpose': 'recovery'});
+      } else {
+        context.go('/auth/reset-result');
+      }
     } else {
       final state = ref.read(authNotifierProvider);
       AppToast.show(
