@@ -2,6 +2,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -25,8 +26,9 @@ class ExploreScreen extends ConsumerStatefulWidget {
 }
 
 class _ExploreScreenState extends ConsumerState<ExploreScreen> {
-  late final TextEditingController _searchController =
-      TextEditingController(text: widget.initialQuery ?? '');
+  late final TextEditingController _searchController = TextEditingController(
+    text: widget.initialQuery ?? '',
+  );
   late String _searchQuery = widget.initialQuery ?? '';
   late Map<String, String?> _searchFilters = Map.unmodifiable({
     if (widget.initialQuery != null && widget.initialQuery!.isNotEmpty)
@@ -62,287 +64,237 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final l10n = AppLocalizations.of(context)!;
     final categoriesAsync = ref.watch(categoriesProvider);
     final regionsAsync = ref.watch(regionsProvider);
+    final navigationClearance =
+        MediaQuery.viewPaddingOf(context).bottom + 128.0;
 
-    return Scaffold(
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 88),
-        child: FloatingActionButton(
-          onPressed: () => context.push('/map'),
-          backgroundColor: AppColors.forest,
-          foregroundColor: AppColors.white,
-          shape: const CircleBorder(),
-          tooltip: 'Map View',
-          child: const Icon(Icons.location_on_outlined),
-        ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
       ),
-      body: PlanEBackground(
-        safeArea: false,
-        child: SafeArea(
-          bottom: false,
+      child: Scaffold(
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        floatingActionButton: Padding(
+          padding: EdgeInsets.only(bottom: navigationClearance),
+          child: FloatingActionButton(
+            onPressed: () => context.push('/map'),
+            backgroundColor: AppColors.sage,
+            foregroundColor: AppColors.ink,
+            shape: const CircleBorder(),
+            tooltip: 'Map View',
+            child: const Icon(Icons.location_on_outlined),
+          ),
+        ),
+        body: PlanEBackground(
+          safeArea: false,
           child: RefreshIndicator(
             color: AppColors.forest,
             onRefresh: () async {
               ref.invalidate(categoriesProvider);
               ref.invalidate(regionsProvider);
             },
-            child: SingleChildScrollView(
+            child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(18, 16, 18, 100),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          l10n.explore,
+              slivers: [
+                SliverToBoxAdapter(
+                  child: _ScrollableExploreHeader(
+                    statusBarInset: MediaQuery.paddingOf(context).top,
+                    title: l10n.explore,
+                    onNotificationsTap: () => context.push('/notifications'),
+                  ),
+                ),
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _PinnedSearchHeaderDelegate(
+                    statusBarInset: MediaQuery.paddingOf(context).top,
+                    child: _ExploreSearchBar(
+                      controller: _searchController,
+                      hintText: l10n.searchHint,
+                      onChanged: _onSearchChanged,
+                      onClear: () {
+                        _searchDebounce?.cancel();
+                        _searchController.clear();
+                        setState(() {
+                          _searchQuery = '';
+                          _searchFilters = const {'sort_by': 'relevance'};
+                        });
+                      },
+                    ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 100),
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (_searchQuery.isNotEmpty) ...[
+                          const SizedBox(height: 20),
+                          _ExploreSearchResults(filters: _searchFilters),
+                        ],
+                        const SizedBox(height: 16),
+
+                        // Explore Filters
+                        SectionHeader(
+                          title: 'Filter Experiences',
+                          actionLabel: 'More Filters',
+                          onActionTap: () => _openFilters(context),
+                        ),
+                        const SizedBox(height: 8),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              FilterChipPill(
+                                label: 'All Experiences',
+                                icon: Icons.explore_outlined,
+                                isSelected: false,
+                                onSelected: (_) => context.push('/search'),
+                              ),
+                              const SizedBox(width: 8),
+                              FilterChipPill(
+                                label: l10n.easy,
+                                icon: Icons.directions_walk,
+                                isSelected: false,
+                                onSelected: (_) =>
+                                    context.push('/search?difficulty=easy'),
+                              ),
+                              const SizedBox(width: 8),
+                              FilterChipPill(
+                                label: l10n.moderate,
+                                icon: Icons.hiking,
+                                isSelected: false,
+                                onSelected: (_) =>
+                                    context.push('/search?difficulty=moderate'),
+                              ),
+                              const SizedBox(width: 8),
+                              FilterChipPill(
+                                label: l10n.challenging,
+                                icon: Icons.landscape_outlined,
+                                isSelected: false,
+                                onSelected: (_) => context.push(
+                                  '/search?difficulty=challenging',
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              FilterChipPill(
+                                label: l10n.strenuous,
+                                icon: Icons.terrain,
+                                isSelected: false,
+                                onSelected: (_) => context.push(
+                                  '/search?difficulty=strenuous',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Section 1: Categories
+                        Text(
+                          l10n.categories,
                           style: const TextStyle(
                             fontFamily: 'serif',
-                            fontSize: 32,
+                            fontSize: 24,
                             fontWeight: FontWeight.bold,
                             color: AppColors.forest,
                           ),
                         ),
-                      ),
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: const BoxDecoration(
-                          color: AppColors.forest,
-                          shape: BoxShape.circle,
-                        ),
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.notifications_none_rounded,
-                            color: AppColors.white,
-                            size: 22,
+                        const SizedBox(height: 8),
+
+                        AsyncValueView<List<Category>>(
+                          value: categoriesAsync,
+                          onRetry: () => ref.refresh(categoriesProvider),
+                          isEmpty: (list) => list.isEmpty,
+                          emptyView: const EmptyStateView(
+                            title: 'No Categories Available',
+                            description:
+                                'Explore categories will be loaded soon.',
                           ),
-                          onPressed: () => context.push('/notifications'),
-                          tooltip: 'Notifications',
+                          data: (categories) {
+                            return GridView.builder(
+                              padding: EdgeInsets.zero,
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: categories.length,
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    mainAxisSpacing: 10,
+                                    crossAxisSpacing: 10,
+                                    childAspectRatio: 1.85,
+                                  ),
+                              itemBuilder: (context, index) {
+                                final category = categories[index];
+                                // No real cover photos are seeded for categories
+                                // yet (all null) — a bespoke icon-on-gradient card
+                                // reads as an intentional brand pattern, where the
+                                // old PlanEPhoto fallback (flat sage + centered
+                                // icon + dark wash) read as a broken/loading image.
+                                return _CategoryCard(
+                                  title: category.nameEn,
+                                  icon: _categoryIcon(category.slug),
+                                  onTap: () => context.push(
+                                    '/search?category_id=${category.id}',
+                                  ),
+                                );
+                              },
+                            );
+                          },
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                  Container(
-                    height: 50,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(28),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.search,
-                          size: 24,
-                          color: AppColors.forest,
+                        // Section 2: Popular Regions
+                        SectionHeader(
+                          title: 'Popular Regions',
+                          subtitle:
+                              'From Annapurna circuits to Everest highlands',
+                          actionLabel: l10n.seeAll,
+                          onActionTap: () => context.push('/search'),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextField(
-                            controller: _searchController,
-                            onChanged: _onSearchChanged,
-                            textInputAction: TextInputAction.search,
-                            style: const TextStyle(
-                              color: AppColors.ink,
-                              fontSize: 14,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: l10n.searchHint,
-                              hintStyle: const TextStyle(
-                                color: AppColors.disabledText,
-                                fontSize: 14,
-                              ),
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              contentPadding: EdgeInsets.zero,
-                            ),
+                        const SizedBox(height: 8),
+
+                        AsyncValueView<List<Region>>(
+                          value: regionsAsync,
+                          onRetry: () => ref.refresh(regionsProvider),
+                          isEmpty: (list) => list.isEmpty,
+                          emptyView: const EmptyStateView(
+                            title: 'No Regions Found',
+                            description: 'Regions will appear here shortly.',
                           ),
-                        ),
-                        if (_searchController.text.isNotEmpty)
-                          IconButton(
-                            tooltip: 'Clear search',
-                            onPressed: () {
-                              _searchDebounce?.cancel();
-                              _searchController.clear();
-                              setState(() {
-                                _searchQuery = '';
-                                _searchFilters = const {'sort_by': 'relevance'};
-                              });
-                            },
-                            icon: const Icon(
-                              Icons.close,
-                              size: 20,
-                              color: AppColors.disabledText,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  if (_searchQuery.isNotEmpty) ...[
-                    const SizedBox(height: 20),
-                    _ExploreSearchResults(filters: _searchFilters),
-                  ],
-                  const SizedBox(height: 24),
-
-                  // Explore Filters
-                  SectionHeader(
-                    title: 'Filter Experiences',
-                    actionLabel: 'More Filters',
-                    onActionTap: () => _openFilters(context),
-                  ),
-                  const SizedBox(height: 10),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        FilterChipPill(
-                          label: 'All Experiences',
-                          icon: Icons.explore_outlined,
-                          isSelected: false,
-                          onSelected: (_) => context.push('/search'),
-                        ),
-                        const SizedBox(width: 8),
-                        FilterChipPill(
-                          label: l10n.easy,
-                          icon: Icons.directions_walk,
-                          isSelected: false,
-                          onSelected: (_) =>
-                              context.push('/search?difficulty=easy'),
-                        ),
-                        const SizedBox(width: 8),
-                        FilterChipPill(
-                          label: l10n.moderate,
-                          icon: Icons.hiking,
-                          isSelected: false,
-                          onSelected: (_) =>
-                              context.push('/search?difficulty=moderate'),
-                        ),
-                        const SizedBox(width: 8),
-                        FilterChipPill(
-                          label: l10n.challenging,
-                          icon: Icons.landscape_outlined,
-                          isSelected: false,
-                          onSelected: (_) =>
-                              context.push('/search?difficulty=challenging'),
-                        ),
-                        const SizedBox(width: 8),
-                        FilterChipPill(
-                          label: l10n.strenuous,
-                          icon: Icons.terrain,
-                          isSelected: false,
-                          onSelected: (_) =>
-                              context.push('/search?difficulty=strenuous'),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Section 1: Categories
-                  Text(
-                    l10n.categories,
-                    style: const TextStyle(
-                      fontFamily: 'serif',
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.forest,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  AsyncValueView<List<Category>>(
-                    value: categoriesAsync,
-                    onRetry: () => ref.refresh(categoriesProvider),
-                    isEmpty: (list) => list.isEmpty,
-                    emptyView: const EmptyStateView(
-                      title: 'No Categories Available',
-                      description: 'Explore categories will be loaded soon.',
-                    ),
-                    data: (categories) {
-                      return GridView.builder(
-                        padding: EdgeInsets.zero,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: categories.length,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: 12,
-                              crossAxisSpacing: 12,
-                              childAspectRatio: 1.35,
-                            ),
-                        itemBuilder: (context, index) {
-                          final category = categories[index];
-                          // No real cover photos are seeded for categories
-                          // yet (all null) — a bespoke icon-on-gradient card
-                          // reads as an intentional brand pattern, where the
-                          // old PlanEPhoto fallback (flat sage + centered
-                          // icon + dark wash) read as a broken/loading image.
-                          return _CategoryCard(
-                            title: category.nameEn,
-                            icon: _categoryIcon(category.slug),
-                            onTap: () => context.push(
-                              '/search?category_id=${category.id}',
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Section 2: Popular Regions
-                  SectionHeader(
-                    title: 'Popular Regions',
-                    subtitle: 'From Annapurna circuits to Everest highlands',
-                    actionLabel: l10n.seeAll,
-                    onActionTap: () => context.push('/search'),
-                  ),
-                  const SizedBox(height: 12),
-
-                  AsyncValueView<List<Region>>(
-                    value: regionsAsync,
-                    onRetry: () => ref.refresh(regionsProvider),
-                    isEmpty: (list) => list.isEmpty,
-                    emptyView: const EmptyStateView(
-                      title: 'No Regions Found',
-                      description: 'Regions will appear here shortly.',
-                    ),
-                    data: (regions) {
-                      return SizedBox(
-                        height: 120,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: regions.length,
-                          separatorBuilder: (context, index) =>
-                              const SizedBox(width: 12),
-                          itemBuilder: (context, index) {
-                            final region = regions[index];
+                          data: (regions) {
                             return SizedBox(
-                              width: 150,
-                              child: _RegionCard(
-                                title: region.nameEn,
-                                subtitle: region.nameNe,
-                                icon: _regionIcon(region.slug),
-                                onTap: () => context.push(
-                                  '/search?region_id=${region.id}',
-                                ),
+                              height: 120,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: regions.length,
+                                separatorBuilder: (context, index) =>
+                                    const SizedBox(width: 12),
+                                itemBuilder: (context, index) {
+                                  final region = regions[index];
+                                  return SizedBox(
+                                    width: 150,
+                                    child: _RegionCard(
+                                      title: region.nameEn,
+                                      subtitle: region.nameNe,
+                                      icon: _regionIcon(region.slug),
+                                      onTap: () => context.push(
+                                        '/search?region_id=${region.id}',
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                             );
                           },
                         ),
-                      );
-                    },
+                        const SizedBox(height: 16),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 24),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -421,6 +373,213 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   }
 }
 
+class _ScrollableExploreHeader extends StatelessWidget {
+  final double statusBarInset;
+  final String title;
+  final VoidCallback onNotificationsTap;
+
+  const _ScrollableExploreHeader({
+    required this.statusBarInset,
+    required this.title,
+    required this.onNotificationsTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: statusBarInset + 133,
+      width: double.infinity,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          const ColoredBox(color: AppColors.ivory),
+          Positioned(
+            top: -10,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Image.asset(
+              'assets/images/explore_header_mountains.png',
+              fit: BoxFit.fill,
+              alignment: Alignment.center,
+            ),
+          ),
+          Positioned(
+            top: statusBarInset + 14,
+            left: 32,
+            right: 32,
+            height: 56,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    textAlign: TextAlign.left,
+                    style: const TextStyle(
+                      fontFamily: 'serif',
+                      fontSize: 32,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.forest,
+                    ),
+                  ),
+                ),
+                _HeaderActionButton(
+                  icon: Icons.notifications_none_rounded,
+                  tooltip: 'Notifications',
+                  onPressed: onNotificationsTap,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExploreSearchBar extends StatelessWidget {
+  final TextEditingController controller;
+  final String hintText;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+
+  const _ExploreSearchBar({
+    required this.controller,
+    required this.hintText,
+    required this.onChanged,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 50,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.search, size: 24, color: AppColors.forest),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              onChanged: onChanged,
+              textInputAction: TextInputAction.search,
+              style: const TextStyle(color: AppColors.ink, fontSize: 14),
+              decoration: InputDecoration(
+                hintText: hintText,
+                hintStyle: const TextStyle(
+                  color: AppColors.disabledText,
+                  fontSize: 14,
+                ),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ),
+          if (controller.text.isNotEmpty)
+            IconButton(
+              tooltip: 'Clear search',
+              onPressed: onClear,
+              icon: const Icon(
+                Icons.close,
+                size: 20,
+                color: AppColors.disabledText,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PinnedSearchHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  final double statusBarInset;
+
+  const _PinnedSearchHeaderDelegate({
+    required this.child,
+    required this.statusBarInset,
+  });
+
+  @override
+  double get minExtent => 70;
+
+  @override
+  double get maxExtent => 70;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              stops: [0, 0.36, 0.36, 1],
+              colors: [
+                Color(0xFFE3EAE2),
+                Color(0xFFE3EAE2),
+                AppColors.ivory,
+                AppColors.ivory,
+              ],
+            ),
+          ),
+        ),
+        Positioned(
+          top: overlapsContent ? statusBarInset : 0,
+          left: 18,
+          right: 18,
+          child: child,
+        ),
+      ],
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _PinnedSearchHeaderDelegate oldDelegate) {
+    return child != oldDelegate.child ||
+        statusBarInset != oldDelegate.statusBarInset;
+  }
+}
+
+class _HeaderActionButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  const _HeaderActionButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.ivory.withValues(alpha: 0.88),
+      shape: const CircleBorder(),
+      child: IconButton(
+        onPressed: onPressed,
+        tooltip: tooltip,
+        icon: Icon(icon, size: 21, color: AppColors.forest),
+      ),
+    );
+  }
+}
+
 class _CategoryCard extends StatelessWidget {
   final String title;
   final IconData icon;
@@ -438,7 +597,7 @@ class _CategoryCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(18),
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -447,8 +606,8 @@ class _CategoryCard extends StatelessWidget {
           boxShadow: const [
             BoxShadow(
               color: AppColors.shadow,
-              blurRadius: 12,
-              offset: Offset(0, 6),
+              blurRadius: 10,
+              offset: Offset(0, 4),
             ),
           ],
         ),
@@ -458,35 +617,35 @@ class _CategoryCard extends StatelessWidget {
             // Oversized, low-opacity icon as background texture — fills the
             // card with brand-relevant visual interest in place of a photo.
             Positioned(
-              right: -16,
-              bottom: -16,
+              right: -12,
+              bottom: -12,
               child: Icon(
                 icon,
-                size: 96,
+                size: 78,
                 color: AppColors.white.withValues(alpha: 0.10),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    width: 36,
-                    height: 36,
+                    width: 32,
+                    height: 32,
                     decoration: BoxDecoration(
                       color: AppColors.white.withValues(alpha: 0.16),
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
-                    child: Icon(icon, size: 18, color: AppColors.white),
+                    child: Icon(icon, size: 16, color: AppColors.white),
                   ),
                   Text(
                     title,
                     style: const TextStyle(
                       fontFamily: 'serif',
-                      fontSize: 17,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: AppColors.white,
                     ),
@@ -567,10 +726,7 @@ class _RegionCard extends StatelessWidget {
                   ),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.sage,
-                    ),
+                    style: const TextStyle(fontSize: 11, color: AppColors.sage),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
