@@ -16,6 +16,11 @@ import '../../theme/theme.dart';
 import '../../widgets/widgets.dart';
 import '../search/filter_sheet.dart';
 
+// Header image content height (excludes the status bar inset, which each
+// user adds on top). Shared by _ScrollableExploreHeader's own sizing and
+// _ExploreScreenState's scroll-based pin detection so they can't drift.
+const double _kExploreHeaderContentHeight = 112;
+
 class ExploreScreen extends ConsumerStatefulWidget {
   final String? initialQuery;
 
@@ -97,18 +102,20 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
-                SliverToBoxAdapter(
-                  child: _ScrollableExploreHeader(
+                // One collapsing header owning both the photo and the search
+                // bar, rather than two stacked slivers. Two sequential slivers
+                // can never overlap, so the search bar was always forced to
+                // start below the photo's bottom edge — it could not sit
+                // centered on the fade seam no matter how the heights were
+                // tuned. Sharing one box lets the search bar be positioned
+                // relative to that edge directly.
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _ExploreHeaderDelegate(
                     statusBarInset: MediaQuery.paddingOf(context).top,
                     title: l10n.explore,
                     onNotificationsTap: () => context.push('/notifications'),
-                  ),
-                ),
-                SliverPersistentHeader(
-                  pinned: true,
-                  delegate: _PinnedSearchHeaderDelegate(
-                    statusBarInset: MediaQuery.paddingOf(context).top,
-                    child: _ExploreSearchBar(
+                    searchBar: _ExploreSearchBar(
                       controller: _searchController,
                       hintText: l10n.searchHint,
                       onChanged: _onSearchChanged,
@@ -373,67 +380,154 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   }
 }
 
-class _ScrollableExploreHeader extends StatelessWidget {
+/// Collapsing Explore header: photo + title on top, search bar straddling
+/// the photo's bottom edge, collapsing to just the search bar when scrolled.
+///
+/// Driven entirely by `shrinkOffset`, which the sliver system updates every
+/// frame — no ScrollController listener and no setState-per-scroll-frame,
+/// which is what made the previous version stutter.
+class _ExploreHeaderDelegate extends SliverPersistentHeaderDelegate {
   final double statusBarInset;
   final String title;
   final VoidCallback onNotificationsTap;
+  final Widget searchBar;
 
-  const _ScrollableExploreHeader({
+  const _ExploreHeaderDelegate({
     required this.statusBarInset,
     required this.title,
     required this.onNotificationsTap,
+    required this.searchBar,
   });
 
+  static const double _searchBarHeight = 50;
+  static const double _bottomPad = 8;
+  // Clearance between the status bar and the search bar once collapsed.
+  static const double _pinnedTopGap = 12;
+
+  /// Height of the photo area (below the status bar).
+  double get _imageHeight => statusBarInset + _kExploreHeaderContentHeight;
+
+  // Expanded: photo, plus enough room below its bottom edge for the search
+  // bar's lower half. The search bar is bottom-anchored, so this is exactly
+  // what centers it on the photo's bottom edge.
   @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: statusBarInset + 133,
-      width: double.infinity,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          const ColoredBox(color: AppColors.ivory),
-          Positioned(
-            top: -10,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Image.asset(
-              'assets/images/explore_header_mountains.png',
-              fit: BoxFit.fill,
-              alignment: Alignment.center,
-            ),
-          ),
-          Positioned(
-            top: statusBarInset + 14,
-            left: 32,
-            right: 32,
-            height: 56,
-            child: Row(
+  double get maxExtent => _imageHeight + _searchBarHeight / 2 + _bottomPad;
+
+  // Collapsed: status bar + gap + search bar + pad, and nothing else. The
+  // old delegate always reserved statusBarInset even while expanded, which
+  // is where the dead space under the search bar came from.
+  @override
+  double get minExtent =>
+      statusBarInset + _pinnedTopGap + _searchBarHeight + _bottomPad;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    final collapseRange = maxExtent - minExtent;
+    final t = collapseRange <= 0
+        ? 1.0
+        : (shrinkOffset / collapseRange).clamp(0.0, 1.0);
+
+    return Stack(
+      clipBehavior: Clip.hardEdge,
+      fit: StackFit.expand,
+      children: [
+        const ColoredBox(color: AppColors.ivory),
+        // Slides up and fades as the header collapses, so it clears out
+        // from behind the search bar rather than being abruptly clipped.
+        Positioned(
+          top: -shrinkOffset,
+          left: 0,
+          right: 0,
+          height: _imageHeight,
+          child: Opacity(
+            opacity: 1 - t,
+            child: Stack(
+              fit: StackFit.expand,
               children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    textAlign: TextAlign.left,
-                    style: const TextStyle(
-                      fontFamily: 'serif',
-                      fontSize: 32,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.forest,
+                // topCenter, so the crop takes from the bottom (lake and
+                // reflection) and keeps the peaks — they're the subject of
+                // the app, and cropping from the top decapitated them.
+                // BoxFit.cover, not fill, so the photo keeps its aspect
+                // ratio instead of being squashed to the box.
+                Image.asset(
+                  'assets/images/explore_header_mountains.png',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.topCenter,
+                ),
+                // The photo's own fade-to-pale tail sits in its bottom rows,
+                // which cropping from below now discards — so the seam is
+                // painted explicitly here instead. Without it the photo
+                // would end on a hard horizontal edge mid-search-bar.
+                const Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 46,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Color(0x00FFFFFF), AppColors.ivory],
+                      ),
                     ),
                   ),
                 ),
-                _HeaderActionButton(
-                  icon: Icons.notifications_none_rounded,
-                  tooltip: 'Notifications',
-                  onPressed: onNotificationsTap,
+                Positioned(
+                  top: statusBarInset + 14,
+                  left: 32,
+                  right: 32,
+                  height: 56,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          textAlign: TextAlign.left,
+                          style: const TextStyle(
+                            fontFamily: 'serif',
+                            fontSize: 32,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.forest,
+                          ),
+                        ),
+                      ),
+                      _HeaderActionButton(
+                        icon: Icons.notifications_none_rounded,
+                        tooltip: 'Notifications',
+                        onPressed: onNotificationsTap,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
+        ),
+        // Bottom-anchored: expanded, its centre lands exactly on the photo's
+        // bottom edge (maxExtent is defined from that); collapsed, it sits
+        // statusBarInset + 12 below the top. Both fall out of one rule, so
+        // the transition between them is continuous instead of a jump.
+        Positioned(
+          left: 18,
+          right: 18,
+          bottom: _bottomPad,
+          height: _searchBarHeight,
+          child: searchBar,
+        ),
+      ],
     );
+  }
+
+  @override
+  bool shouldRebuild(covariant _ExploreHeaderDelegate oldDelegate) {
+    return searchBar != oldDelegate.searchBar ||
+        title != oldDelegate.title ||
+        statusBarInset != oldDelegate.statusBarInset;
   }
 }
 
@@ -496,62 +590,6 @@ class _ExploreSearchBar extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class _PinnedSearchHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final Widget child;
-  final double statusBarInset;
-
-  const _PinnedSearchHeaderDelegate({
-    required this.child,
-    required this.statusBarInset,
-  });
-
-  @override
-  double get minExtent => 70;
-
-  @override
-  double get maxExtent => 70;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        const DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              stops: [0, 0.36, 0.36, 1],
-              colors: [
-                Color(0xFFE3EAE2),
-                Color(0xFFE3EAE2),
-                AppColors.ivory,
-                AppColors.ivory,
-              ],
-            ),
-          ),
-        ),
-        Positioned(
-          top: overlapsContent ? statusBarInset : 0,
-          left: 18,
-          right: 18,
-          child: child,
-        ),
-      ],
-    );
-  }
-
-  @override
-  bool shouldRebuild(covariant _PinnedSearchHeaderDelegate oldDelegate) {
-    return child != oldDelegate.child ||
-        statusBarInset != oldDelegate.statusBarInset;
   }
 }
 

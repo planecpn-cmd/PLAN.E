@@ -424,7 +424,7 @@ class _LetterRow extends StatelessWidget {
                 final eCurrentX = eSrcX + (eTgtX - eSrcX) * xMorphs[eSourceIndex].value;
                 return Positioned(
                   left: eCurrentX + _fontSize * 0.5,
-                  top: _fontSize * 0.35,
+                  top: _fontSize * 0.2,
                   child: Opacity(
                     opacity: flagFade.value,
                     child: const Text(
