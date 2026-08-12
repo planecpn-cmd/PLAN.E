@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/format.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/experience.dart';
+import '../../models/promo_banner.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/widgets.dart';
@@ -21,6 +22,7 @@ class HomeScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final homeRailsAsync = ref.watch(homeRailsProvider);
     final profileAsync = ref.watch(profileProvider);
+    final aiItineraryEnabled = ref.watch(featureFlagProvider('ai_itinerary')) ?? true;
     // Side-effect only — triggers the silent location auto-fetch once per
     // app session; the AsyncValue<void> result itself is never read.
     ref.watch(_homeLocationAutoFetchProvider);
@@ -289,18 +291,25 @@ class HomeScreen extends ConsumerWidget {
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 10),
-                                    // Lower-commitment path next to the hard
-                                    // "book something" CTA — a guided quiz,
-                                    // not a purchase decision.
-                                    Expanded(
-                                      child: AppButton.secondary(
-                                        label: 'Plan with AI',
-                                        icon: Icons.auto_awesome,
-                                        minHeight: 46,
-                                        onPressed: () => context.push('/ai-planner'),
+                                    // Remote kill switch (feature_flags.ai_itinerary)
+                                    // — pulled from home entirely when the LLM
+                                    // provider behind it is down, not just
+                                    // disabled, so it doesn't invite a tap that
+                                    // only leads to an error screen.
+                                    if (aiItineraryEnabled) ...[
+                                      const SizedBox(width: 10),
+                                      // Lower-commitment path next to the hard
+                                      // "book something" CTA — a guided quiz,
+                                      // not a purchase decision.
+                                      Expanded(
+                                        child: AppButton.secondary(
+                                          label: 'Plan with AI',
+                                          icon: Icons.auto_awesome,
+                                          minHeight: 46,
+                                          onPressed: () => context.push('/ai-planner'),
+                                        ),
                                       ),
-                                    ),
+                                    ],
                                   ],
                                 ),
                               ],
@@ -311,6 +320,7 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 10),
+                  const _PromoBanner(),
 
                   // Content Rails wrapped in AsyncValueView
                   AsyncValueView<Map<String, List<Experience>>>(
@@ -640,6 +650,82 @@ class _NotificationBell extends StatelessWidget {
                   decoration: const BoxDecoration(color: AppColors.gold, shape: BoxShape.circle),
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Reads `remote_content.promo_banner` — a slot nothing has configured yet,
+/// so this renders nothing by default (fail-open: no content = no visible
+/// change from before this existed). Expected payload shape:
+/// `{"headline": "...", "subtitle": "...", "cta_label": "...", "cta_route": "..."}`
+/// — subtitle/cta are both optional; a malformed payload also renders
+/// nothing rather than crashing the home screen.
+class _PromoBanner extends ConsumerWidget {
+  const _PromoBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final raw = ref.watch(remoteContentProvider('promo_banner'));
+    final content = PromoBannerContent.tryParse(raw);
+    if (content == null) return const SizedBox.shrink();
+
+    final headline = content.headline;
+    final subtitle = content.subtitle;
+    final ctaLabel = content.ctaLabel;
+    final ctaRoute = content.ctaRoute;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.forest, AppColors.deep],
+          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: const [
+            BoxShadow(color: AppColors.shadow, blurRadius: 10, offset: Offset(0, 4)),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    headline,
+                    style: const TextStyle(
+                      fontFamily: 'serif',
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.white,
+                    ),
+                  ),
+                  if (subtitle != null && subtitle.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(fontSize: 12, color: AppColors.sage),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (ctaLabel != null && ctaLabel.isNotEmpty && ctaRoute != null) ...[
+              const SizedBox(width: 12),
+              AppButton.secondary(
+                label: ctaLabel,
+                minHeight: 38,
+                onPressed: () => context.push(ctaRoute),
+              ),
+            ],
           ],
         ),
       ),

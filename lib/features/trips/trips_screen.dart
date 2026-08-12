@@ -35,6 +35,7 @@ class _TripsScreenState extends ConsumerState<TripsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const OfflineBanner(),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
                 child: Text(

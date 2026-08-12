@@ -1,12 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 export 'trip_tools_providers.dart';
+export 'remote_config_providers.dart';
 
 import '../core/supabase_client.dart';
 import '../models/booking.dart';
 import '../models/category.dart';
 import '../models/experience.dart';
 import '../models/generated_itinerary.dart';
+import '../models/home_rail_rule.dart';
 import '../models/host_application.dart';
 import '../models/notification.dart';
 import '../models/profile.dart';
@@ -21,6 +23,7 @@ import '../repositories/recent_searches_repository.dart';
 import '../repositories/review_repository.dart';
 import '../repositories/saved_repository.dart';
 import '../repositories/taxonomy_repository.dart';
+import 'remote_config_providers.dart';
 
 final supabaseClientProvider = Provider<SupabaseClient>((ref) {
   return AppSupabaseClient.client;
@@ -118,7 +121,10 @@ final homeRailsProvider = FutureProvider<Map<String, List<Experience>>>((
   ref,
 ) async {
   final repo = ref.watch(experienceRepositoryProvider);
-  return repo.getHomeRails();
+  final railRules = resolveHomeRailRules(
+    ref.watch(remoteContentProvider('home_rail_rules')),
+  );
+  return repo.getHomeRails(railRules: railRules);
 });
 
 final categoriesProvider = FutureProvider<List<Category>>((ref) async {

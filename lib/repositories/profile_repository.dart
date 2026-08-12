@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/offline_cache.dart';
 import '../models/profile.dart';
 
 class ProfileRepository {
@@ -12,14 +13,26 @@ class ProfileRepository {
     final String? userId = _client.auth.currentUser?.id;
     if (userId == null) return null;
 
-    final response = await _client
-        .from('profiles')
-        .select()
-        .eq('id', userId)
-        .maybeSingle();
+    final cacheKey = 'profile:$userId';
+    try {
+      final response = await _client
+          .from('profiles')
+          .select()
+          .eq('id', userId)
+          .maybeSingle();
 
-    if (response == null) return null;
-    return Profile.fromJson(response);
+      if (response == null) return null;
+      final profile = Profile.fromJson(response);
+      await OfflineCache.write(cacheKey, profile.toJson());
+      return profile;
+    } catch (_) {
+      final cached = await OfflineCache.read<Profile>(
+        cacheKey,
+        (json) => Profile.fromJson(json as Map<String, dynamic>),
+      );
+      if (cached != null) return cached;
+      rethrow;
+    }
   }
 
   Future<void> updateProfile({

@@ -577,6 +577,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     child: PlanEPhoto(
                       imageUrl: exp.coverImageUrl,
                       fit: BoxFit.cover,
+                      // Real render size, not PlanEPhoto's own 400px
+                      // default — this preview is a 70x70 thumbnail.
+                      imageRequestWidth: 140,
                     ),
                   ),
                 ),

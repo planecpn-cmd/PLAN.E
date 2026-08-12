@@ -52,6 +52,12 @@ class _AiItineraryScreenState extends ConsumerState<AiItineraryScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(aiItineraryNotifierProvider);
+    final aiItineraryEnabled = ref.watch(featureFlagProvider('ai_itinerary')) ?? true;
+    // No cache exists for this — it's a live LLM call — so offline isn't
+    // "show stale data", it's "this genuinely cannot work right now".
+    // Gating the button up front beats letting someone fill out the whole
+    // quiz and only then get a raw network-exception error message.
+    final isOffline = ref.watch(isOfflineProvider);
 
     return Scaffold(
       backgroundColor: AppColors.ivory,
@@ -69,26 +75,45 @@ class _AiItineraryScreenState extends ConsumerState<AiItineraryScreen> {
         ),
       ),
       body: SafeArea(
-        child: state.result != null
-            ? _ResultView(
-                result: state.result!,
-                onStartOver: () => ref.read(aiItineraryNotifierProvider.notifier).reset(),
-              )
-            : _QuizView(
-                tripType: _tripType,
-                pace: _pace,
-                groupType: _groupType,
-                durationDays: _durationDays,
-                interestsController: _interestsController,
-                budgetController: _budgetController,
-                isLoading: state.isLoading,
-                errorMessage: state.errorMessage,
-                onTripTypeChanged: (v) => setState(() => _tripType = v),
-                onPaceChanged: (v) => setState(() => _pace = v),
-                onGroupTypeChanged: (v) => setState(() => _groupType = v),
-                onDurationChanged: (v) => setState(() => _durationDays = v),
-                onSubmit: _generate,
-              ),
+        child: Column(
+          children: [
+            const OfflineBanner(),
+            Expanded(
+              // Home already pulls the entry CTA when this flag is off, but a
+              // deep link, browser back, or an already-open screen when the
+              // flag flips mid-session can still land here — so the screen
+              // itself needs the same gate, not just its one entry point.
+              child: !aiItineraryEnabled
+                  ? const EmptyStateView(
+                      icon: Icons.auto_awesome_outlined,
+                      title: 'AI Planning Unavailable',
+                      description:
+                          'AI trip planning is temporarily offline. Try Search instead, or check back soon.',
+                    )
+                  : state.result != null
+                      ? _ResultView(
+                          result: state.result!,
+                          onStartOver: () => ref.read(aiItineraryNotifierProvider.notifier).reset(),
+                        )
+                      : _QuizView(
+                          tripType: _tripType,
+                          pace: _pace,
+                          groupType: _groupType,
+                          durationDays: _durationDays,
+                          interestsController: _interestsController,
+                          budgetController: _budgetController,
+                          isLoading: state.isLoading,
+                          isOffline: isOffline,
+                          errorMessage: state.errorMessage,
+                          onTripTypeChanged: (v) => setState(() => _tripType = v),
+                          onPaceChanged: (v) => setState(() => _pace = v),
+                          onGroupTypeChanged: (v) => setState(() => _groupType = v),
+                          onDurationChanged: (v) => setState(() => _durationDays = v),
+                          onSubmit: _generate,
+                        ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -102,6 +127,7 @@ class _QuizView extends StatelessWidget {
   final TextEditingController interestsController;
   final TextEditingController budgetController;
   final bool isLoading;
+  final bool isOffline;
   final String? errorMessage;
   final ValueChanged<String> onTripTypeChanged;
   final ValueChanged<String> onPaceChanged;
@@ -117,6 +143,7 @@ class _QuizView extends StatelessWidget {
     required this.interestsController,
     required this.budgetController,
     required this.isLoading,
+    required this.isOffline,
     required this.errorMessage,
     required this.onTripTypeChanged,
     required this.onPaceChanged,
@@ -217,7 +244,28 @@ class _QuizView extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xxl24),
 
-          if (errorMessage != null) ...[
+          if (isOffline) ...[
+            Container(
+              padding: AppSpacing.paddingMd12,
+              decoration: const BoxDecoration(
+                color: AppColors.warningContainer,
+                borderRadius: AppRadii.borderSm8,
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.wifi_off_rounded, size: 18, color: AppColors.warning),
+                  const SizedBox(width: AppSpacing.sm8),
+                  Expanded(
+                    child: Text(
+                      'AI planning needs an internet connection — there\'s no offline fallback for this one.',
+                      style: AppTypography.bodyMedium.copyWith(color: AppColors.warning),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md12),
+          ] else if (errorMessage != null) ...[
             Text(errorMessage!, style: AppTypography.bodyMedium.copyWith(color: AppColors.error)),
             const SizedBox(height: AppSpacing.md12),
           ],
@@ -227,7 +275,7 @@ class _QuizView extends StatelessWidget {
             icon: Icons.auto_awesome,
             isFullWidth: true,
             isLoading: isLoading,
-            onPressed: isLoading ? null : onSubmit,
+            onPressed: (isLoading || isOffline) ? null : onSubmit,
           ),
           const SizedBox(height: AppSpacing.lg16),
         ],

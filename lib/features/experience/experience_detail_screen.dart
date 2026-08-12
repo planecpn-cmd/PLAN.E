@@ -236,6 +236,7 @@ class _ExperienceDetailScreenState
             imageUrl: experience.coverImageUrl,
             height: 265,
             width: double.infinity,
+            imageRequestWidth: 900,
             radius: 0,
           ),
         ),

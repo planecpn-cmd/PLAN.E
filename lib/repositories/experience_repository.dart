@@ -1,12 +1,16 @@
 import 'dart:async';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/offline_cache.dart';
 import '../models/experience.dart';
+import '../models/home_rail_rule.dart';
 
 class ExperienceRepository {
   final SupabaseClient _client;
 
   ExperienceRepository(this._client);
+
+  static const _homeRailsCacheKey = 'home_rails';
 
   Future<List<Experience>> getExperiences({
     String? categoryId,
@@ -89,14 +93,26 @@ class ExperienceRepository {
   }
 
   Future<Experience?> getExperienceById(String id) async {
-    final response = await _client
-        .from('experiences')
-        .select('*, experience_departures(*), itinerary_items(*)')
-        .eq('id', id)
-        .maybeSingle();
+    final cacheKey = 'experience_detail:$id';
+    try {
+      final response = await _client
+          .from('experiences')
+          .select('*, experience_departures(*), itinerary_items(*)')
+          .eq('id', id)
+          .maybeSingle();
 
-    if (response == null) return null;
-    return Experience.fromJson(response);
+      if (response == null) return null;
+      final experience = Experience.fromJson(response);
+      await OfflineCache.write(cacheKey, experience.toJson());
+      return experience;
+    } catch (_) {
+      final cached = await OfflineCache.read<Experience>(
+        cacheKey,
+        (json) => Experience.fromJson(json as Map<String, dynamic>),
+      );
+      if (cached != null) return cached;
+      rethrow;
+    }
   }
 
   Future<List<Experience>> getHomeRailExperiences(String railType) async {
@@ -104,115 +120,79 @@ class ExperienceRepository {
     return rails[railType] ?? const [];
   }
 
-  Future<Map<String, List<Experience>>> getHomeRails() async {
-    final categoriesResponse = await _client
-        .from('categories')
-        .select('id, slug');
-    final categorySlugs = <String, String>{
-      for (final category in categoriesResponse as List<dynamic>)
-        (category as Map<String, dynamic>)['id'] as String:
-            category['slug'] as String,
-    };
+  Future<Map<String, List<Experience>>> getHomeRails({
+    List<HomeRailRule>? railRules,
+  }) async {
+    try {
+      final categoriesResponse = await _client
+          .from('categories')
+          .select('id, slug');
+      final categorySlugs = <String, String>{
+        for (final category in categoriesResponse as List<dynamic>)
+          (category as Map<String, dynamic>)['id'] as String:
+              category['slug'] as String,
+      };
 
-    final response = await _client
-        .from('experiences')
-        .select()
-        .eq('status', 'published')
-        .order('rating_avg', ascending: false)
-        .limit(50);
+      final response = await _client
+          .from('experiences')
+          .select()
+          .eq('status', 'published')
+          .order('rating_avg', ascending: false)
+          .limit(50);
 
-    final List<dynamic> data = response as List<dynamic>;
-    final experiences = data
-        .map((json) => Experience.fromJson(json as Map<String, dynamic>))
-        .toList();
+      final List<dynamic> data = response as List<dynamic>;
+      final experiences = data
+          .map((json) => Experience.fromJson(json as Map<String, dynamic>))
+          .toList();
 
-    String categoryOf(Experience experience) =>
-        categorySlugs[experience.categoryId] ?? '';
+      String categoryOf(Experience experience) =>
+          categorySlugs[experience.categoryId] ?? '';
 
-    String searchableText(Experience experience) => [
-      experience.title,
-      experience.summary ?? '',
-      experience.description ?? '',
-      ...experience.thingsToKnow,
-    ].join(' ').toLowerCase();
+      List<Experience> take(Iterable<Experience> source) =>
+          source.take(10).toList(growable: false);
 
-    bool containsAny(Experience experience, List<String> terms) {
-      final text = searchableText(experience);
-      return terms.any(text.contains);
+      final trending = [...experiences]
+        ..sort((a, b) => b.ratingCount.compareTo(a.ratingCount));
+
+      final rails = {
+        'recommended': take(experiences),
+        'trending': take(trending),
+        'homestays': take(
+          experiences.where((experience) => categoryOf(experience) == 'homestay'),
+        ),
+        // Merchandising rails (community/adventure-together/mind-soul/
+        // give-back) — keyword+category rules, editable without a release via
+        // remote_content.home_rail_rules. See lib/models/home_rail_rule.dart.
+        ...buildRuleBasedRails(
+          experiences,
+          categorySlugs,
+          railRules ?? defaultHomeRailRules,
+        ),
+      };
+
+      // Cached as a snapshot of whatever rail set/rules produced it — an
+      // offline view reflects the last successful sync, not a live
+      // recomputation against rules that may have changed since (see
+      // docs/OFFLINE_CACHE_PLAN.md §2.3).
+      await OfflineCache.write(
+        _homeRailsCacheKey,
+        rails.map((key, list) => MapEntry(key, list.map((e) => e.toJson()).toList())),
+      );
+      return rails;
+    } catch (_) {
+      final cached = await OfflineCache.read<Map<String, List<Experience>>>(
+        _homeRailsCacheKey,
+        (json) => (json as Map).map(
+          (key, value) => MapEntry(
+            key as String,
+            (value as List)
+                .map((e) => Experience.fromJson(e as Map<String, dynamic>))
+                .toList(),
+          ),
+        ),
+      );
+      if (cached != null) return cached;
+      rethrow;
     }
-
-    List<Experience> take(Iterable<Experience> source) =>
-        source.take(10).toList(growable: false);
-
-    final trending = [...experiences]
-      ..sort((a, b) => b.ratingCount.compareTo(a.ratingCount));
-
-    return {
-      'recommended': take(experiences),
-      'trending': take(trending),
-      'homestays': take(
-        experiences.where((experience) => categoryOf(experience) == 'homestay'),
-      ),
-      'community': take(
-        experiences.where(
-          (experience) => containsAny(experience, const [
-            'community',
-            'local women',
-            'local family',
-            'cooperative',
-          ]),
-        ),
-      ),
-      'adventure-together': take(
-        experiences.where(
-          (experience) => containsAny(experience, const [
-            'family',
-            'group',
-            'tandem',
-            'rafting',
-            'camping',
-            'safari',
-            'day out',
-            'festival',
-            'homestay',
-          ]),
-        ),
-      ),
-      'mind-soul': take(
-        experiences.where(
-          (experience) =>
-              categoryOf(experience) == 'wellness' ||
-              containsAny(experience, const [
-                'yoga',
-                'meditation',
-                'spiritual',
-                'wellness',
-                'relax',
-                'healing',
-                'peace',
-                'quiet',
-                'monastery',
-                'forest',
-              ]),
-        ),
-      ),
-      'give-back': take(
-        experiences.where(
-          (experience) =>
-              categoryOf(experience) == 'volunteering' ||
-              containsAny(experience, const [
-                'volunteer',
-                'community',
-                'conservation',
-                'environment',
-                'sustainable',
-                'empower',
-                'cooperative',
-                'organic farm',
-                'social impact',
-              ]),
-        ),
-      ),
-    };
   }
 }

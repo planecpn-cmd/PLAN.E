@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../core/image_cache_manager.dart';
+import '../core/image_url.dart';
 import '../theme/theme.dart';
 import 'rating_stars.dart';
 
@@ -81,7 +83,17 @@ class ExperienceCard extends StatelessWidget {
                           color: AppColors.sage,
                           child: imageUrl != null && imageUrl!.isNotEmpty
                               ? CachedNetworkImage(
-                                  imageUrl: imageUrl!,
+                                  // 2x width for retina crispness — `width`
+                                  // here is this card's own real, always-
+                                  // finite render width (never unbounded),
+                                  // so this is the exact size actually
+                                  // needed, not a guess. See
+                                  // docs/OFFLINE_CACHE_PLAN.md §4.2.
+                                  imageUrl: resizedImageUrl(
+                                    imageUrl!,
+                                    width: (width * 2).round(),
+                                  ),
+                                  cacheManager: AppImageCacheManager.instance,
                                   fit: BoxFit.cover,
                                   placeholder: (context, url) => Container(
                                     color: AppColors.skeletonBase,

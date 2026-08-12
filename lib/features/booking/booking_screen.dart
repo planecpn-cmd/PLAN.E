@@ -19,6 +19,7 @@ import '../../widgets/counter_field.dart';
 import '../../widgets/price_bottom_bar.dart';
 import '../../widgets/progress_steps.dart';
 import '../../widgets/offline_banner.dart';
+import '../../providers/app_providers.dart';
 import 'booking_providers.dart';
 import 'payment_webview_screen.dart';
 
@@ -105,7 +106,11 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
 
       if (mounted) {
         setState(() => _isCreatingIntent = false);
-        _showPaymentIntentModalSheet(experience, intent);
+        // Read, not watch — this is a one-shot decision at the moment the
+        // sheet opens, not something the already-open sheet needs to react
+        // to live if the flag flips mid-checkout.
+        final esewaEnabled = ref.read(featureFlagProvider('payment_esewa')) ?? true;
+        _showPaymentIntentModalSheet(experience, intent, esewaEnabled: esewaEnabled);
       }
     } catch (e) {
       if (mounted) {
@@ -119,8 +124,9 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
 
   void _showPaymentIntentModalSheet(
     Experience experience,
-    BookingIntentResult intent,
-  ) {
+    BookingIntentResult intent, {
+    required bool esewaEnabled,
+  }) {
     String currentGateway = _selectedGateway;
     bool isProcessing = false;
 
@@ -333,55 +339,61 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.sm8),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () =>
-                              setModalState(() => currentGateway = 'esewa'),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: AppSpacing.md12,
-                              horizontal: AppSpacing.sm8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: currentGateway == 'esewa'
-                                  ? AppColors.sage
-                                  : AppColors.white,
-                              borderRadius: BorderRadius.circular(12.0),
-                              border: Border.all(
-                                color: currentGateway == 'esewa'
-                                    ? AppColors.forest
-                                    : AppColors.borderSubtle,
-                                width: 2,
+                      // Remote kill switch (feature_flags.payment_esewa) —
+                      // pulled from the picker entirely when disabled, not
+                      // just greyed out, so a gateway outage can be taken
+                      // out of the flow without a store release.
+                      if (esewaEnabled) ...[
+                        const SizedBox(width: AppSpacing.sm8),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () =>
+                                setModalState(() => currentGateway = 'esewa'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppSpacing.md12,
+                                horizontal: AppSpacing.sm8,
                               ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  currentGateway == 'esewa'
-                                      ? Icons.radio_button_checked
-                                      : Icons.radio_button_unchecked,
+                              decoration: BoxDecoration(
+                                color: currentGateway == 'esewa'
+                                    ? AppColors.sage
+                                    : AppColors.white,
+                                borderRadius: BorderRadius.circular(12.0),
+                                border: Border.all(
                                   color: currentGateway == 'esewa'
                                       ? AppColors.forest
-                                      : AppColors.disabledText,
-                                  size: 20,
+                                      : AppColors.borderSubtle,
+                                  width: 2,
                                 ),
-                                const SizedBox(width: AppSpacing.xs4),
-                                Text(
-                                  'eSewa Pay',
-                                  style: AppTypography.bodyMedium.copyWith(
-                                    fontWeight: FontWeight.bold,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    currentGateway == 'esewa'
+                                        ? Icons.radio_button_checked
+                                        : Icons.radio_button_unchecked,
                                     color: currentGateway == 'esewa'
                                         ? AppColors.forest
-                                        : AppColors.ink,
+                                        : AppColors.disabledText,
+                                    size: 20,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: AppSpacing.xs4),
+                                  Text(
+                                    'eSewa Pay',
+                                    style: AppTypography.bodyMedium.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: currentGateway == 'esewa'
+                                          ? AppColors.forest
+                                          : AppColors.ink,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: AppSpacing.xxl24),

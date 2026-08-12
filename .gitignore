@@ -53,5 +53,8 @@ env/*.json
 # Antigravity artifacts & tasks
 .gemini/
 
+# Claude Code local worktrees/config
+.claude/
+
 # Incoming raw external extracts
 _incoming/

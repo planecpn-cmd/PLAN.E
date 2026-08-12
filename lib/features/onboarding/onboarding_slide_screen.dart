@@ -1,6 +1,8 @@
 // PL-02 Onboarding Slide 1 / PL-03 Slide 2 / PL-04 Slide 3
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/widgets.dart';
 
@@ -18,7 +20,38 @@ class OnboardingSlideData {
   });
 }
 
-class OnboardingSlideScreen extends StatefulWidget {
+/// Overrides title/description from `remote_content.onboarding_slides` (a
+/// JSON array in the same order as [defaults]) when present. Icon and slide
+/// count stay fixed — only the copy is remote-editable, per
+/// docs/OTA_UPDATES_PLAN.md §1.5 (icons aren't a CMS-friendly slot; the page
+/// dots/pager logic assumes a fixed slide count). A missing entry, a short
+/// array, or a non-string field all fall back to the local default for that
+/// field individually — never blank, never a crash. Pulled out of the widget
+/// so this branching is testable without pumping a widget tree.
+List<OnboardingSlideData> resolveOnboardingSlides(
+  List<OnboardingSlideData> defaults,
+  dynamic remote,
+) {
+  if (remote is! List) return defaults;
+
+  return List.generate(defaults.length, (i) {
+    final base = defaults[i];
+    if (i >= remote.length || remote[i] is! Map) return base;
+    final entry = Map<String, dynamic>.from(remote[i] as Map);
+    final title = entry['title'] as String?;
+    final description = entry['description'] as String?;
+    return OnboardingSlideData(
+      screenId: base.screenId,
+      title: (title != null && title.isNotEmpty) ? title : base.title,
+      description: (description != null && description.isNotEmpty)
+          ? description
+          : base.description,
+      icon: base.icon,
+    );
+  });
+}
+
+class OnboardingSlideScreen extends ConsumerStatefulWidget {
   final int step;
 
   const OnboardingSlideScreen({
@@ -27,10 +60,10 @@ class OnboardingSlideScreen extends StatefulWidget {
   });
 
   @override
-  State<OnboardingSlideScreen> createState() => _OnboardingSlideScreenState();
+  ConsumerState<OnboardingSlideScreen> createState() => _OnboardingSlideScreenState();
 }
 
-class _OnboardingSlideScreenState extends State<OnboardingSlideScreen> {
+class _OnboardingSlideScreenState extends ConsumerState<OnboardingSlideScreen> {
   late PageController _pageController;
 
   static const List<OnboardingSlideData> _slides = [
@@ -56,6 +89,13 @@ class _OnboardingSlideScreenState extends State<OnboardingSlideScreen> {
       icon: Icons.volunteer_activism_outlined,
     ),
   ];
+
+  List<OnboardingSlideData> _effectiveSlides() {
+    return resolveOnboardingSlides(
+      _slides,
+      ref.watch(remoteContentProvider('onboarding_slides')),
+    );
+  }
 
   static const String _skipText = 'Skip';
   static const String _nextText = 'Next';
@@ -111,8 +151,9 @@ class _OnboardingSlideScreenState extends State<OnboardingSlideScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentIndex = (widget.step - 1).clamp(0, _slides.length - 1);
-    final isLastStep = currentIndex == _slides.length - 1;
+    final slides = _effectiveSlides();
+    final currentIndex = (widget.step - 1).clamp(0, slides.length - 1);
+    final isLastStep = currentIndex == slides.length - 1;
 
     return Scaffold(
       body: PlanEBackground(
@@ -140,9 +181,9 @@ class _OnboardingSlideScreenState extends State<OnboardingSlideScreen> {
               child: PageView.builder(
                 controller: _pageController,
                 onPageChanged: _onPageChanged,
-                itemCount: _slides.length,
+                itemCount: slides.length,
                 itemBuilder: (context, index) {
-                  final slide = _slides[index];
+                  final slide = slides[index];
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
@@ -190,7 +231,7 @@ class _OnboardingSlideScreenState extends State<OnboardingSlideScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
-                _slides.length,
+                slides.length,
                 (index) => AnimatedContainer(
                   duration: const Duration(milliseconds: 250),
                   margin: const EdgeInsets.symmetric(horizontal: 4),

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,20 +9,39 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/supabase_client.dart';
 import 'core/scaled_app_viewport.dart';
 import 'core/onboarding_preferences.dart';
+import 'core/app_version.dart';
+import 'core/device_identity.dart';
+import 'core/remote_config_service.dart';
 import 'l10n/app_localizations.dart';
 import 'providers/app_providers.dart';
 import 'theme/app_theme.dart';
+import 'widgets/version_gate.dart';
 import 'router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await OnboardingPreferences.initialize();
+  await AppVersionInfo.initialize();
+  await DeviceIdentity.initialize();
   await AppSupabaseClient.initialize();
   if (!OnboardingPreferences.isCompleted &&
       AppSupabaseClient.client.auth.currentUser != null) {
     await OnboardingPreferences.markCompleted();
   }
-  runApp(const ProviderScope(child: PlanEApp()));
+  // Cache-only read, no network wait — the first frame renders with
+  // last-known-good remote config. A real fetch happens right after, kicked
+  // off from PlanEApp.initState() below.
+  final cachedRemoteConfig = await RemoteConfigService.loadCached();
+  runApp(
+    ProviderScope(
+      overrides: [
+        cachedRemoteConfigSnapshotProvider.overrideWithValue(
+          cachedRemoteConfig,
+        ),
+      ],
+      child: const PlanEApp(),
+    ),
+  );
 }
 
 class PlanEApp extends ConsumerStatefulWidget {
@@ -33,6 +53,7 @@ class PlanEApp extends ConsumerStatefulWidget {
 
 class _PlanEAppState extends ConsumerState<PlanEApp> with WidgetsBindingObserver {
   StreamSubscription<AuthState>? _authSub;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
   DateTime? _pausedAt;
 
   // How long the app has to sit backgrounded before returning to it replays
@@ -47,6 +68,31 @@ class _PlanEAppState extends ConsumerState<PlanEApp> with WidgetsBindingObserver
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Fire-and-forget: the splash screen's ~3.1s runtime is where this
+    // completes in practice, invisibly, before the user reaches /home. On
+    // failure RemoteConfigNotifier.refresh() keeps the cached state loaded
+    // in main() — never blocks, never crashes a screen on a bad network.
+    unawaited(ref.read(remoteConfigProvider.notifier).refresh());
+    // Real connectivity, replacing the isOfflineProvider that used to be a
+    // manual toggle nothing ever set (docs/OFFLINE_CACHE_PLAN.md phase 1).
+    // `checkConnectivity()` gives the state at launch; `onConnectivityChanged`
+    // only fires on *changes* from here on, so both are needed. This reports
+    // connectivity *type*, not real internet reachability — wifi with no
+    // upstream still reads as "online" — it's a fast-path signal to skip a
+    // doomed network call, not the source of truth for whether a fetch will
+    // actually succeed.
+    Connectivity().checkConnectivity().then((results) {
+      if (mounted) {
+        ref.read(isOfflineProvider.notifier).setOffline(
+              results.every((r) => r == ConnectivityResult.none),
+            );
+      }
+    });
+    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
+      ref.read(isOfflineProvider.notifier).setOffline(
+            results.every((r) => r == ConnectivityResult.none),
+          );
+    });
     // Google/Apple sign-in returns from the system browser via a deep link
     // with no code path of its own to navigate onward — this is that path.
     // Gated on oauthInFlightProvider so it doesn't also fire for the OTP
@@ -79,6 +125,14 @@ class _PlanEAppState extends ConsumerState<PlanEApp> with WidgetsBindingObserver
       });
     }
 
+    // Realtime push isn't available yet (see docs/OTA_UPDATES_PLAN.md §1.3 —
+    // [realtime] is disabled in supabase/config.toml), so a foreground-resume
+    // refresh is the update path for config changes made while the app was
+    // backgrounded.
+    if (state == AppLifecycleState.resumed) {
+      unawaited(ref.read(remoteConfigProvider.notifier).refresh());
+    }
+
     // Splash as a boot identity, not just a one-time first-launch screen —
     // replay it whenever the app returns to the foreground after being
     // backgrounded for a while, not only on a genuine cold start. Any
@@ -101,6 +155,7 @@ class _PlanEAppState extends ConsumerState<PlanEApp> with WidgetsBindingObserver
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _authSub?.cancel();
+    _connectivitySub?.cancel();
     super.dispose();
   }
 
@@ -110,7 +165,8 @@ class _PlanEAppState extends ConsumerState<PlanEApp> with WidgetsBindingObserver
       title: 'PLAN E',
       theme: AppTheme.lightTheme,
       routerConfig: router,
-      builder: (context, child) => ScaledAppViewport(child: child!),
+      builder: (context, child) =>
+          ScaledAppViewport(child: VersionGate(child: child!)),
       debugShowCheckedModeBanner: false,
       localizationsDelegates: const [
         AppLocalizations.delegate,

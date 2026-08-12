@@ -21,6 +21,13 @@ class NativeIntents {
     return launchUrl(webUri, mode: LaunchMode.externalApplication);
   }
 
+  static Future<bool> openPlayStore(String packageName) {
+    final uri = Uri.parse(
+      'https://play.google.com/store/apps/details?id=$packageName',
+    );
+    return launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
   static Future<bool> call(String phoneNumber) {
     final uri = Uri(scheme: 'tel', path: phoneNumber);
     return launchUrl(uri);

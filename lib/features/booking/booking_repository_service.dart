@@ -12,41 +12,32 @@ class BookingFeatureRepository {
 
   /// Fetch departures for a given experience ID
   Future<List<ExperienceDeparture>> getDepartures(String experienceId) async {
-    try {
-      final response = await _client
-          .from('experience_departures')
-          .select()
-          .eq('experience_id', experienceId)
-          .gte('spots_left', 1)
-          .order('start_date', ascending: true);
+    final response = await _client
+        .from('experience_departures')
+        .select()
+        .eq('experience_id', experienceId)
+        .gte('spots_left', 1)
+        .order('start_date', ascending: true);
 
-      final List<dynamic> data = response as List<dynamic>;
-      return data
-          .map(
-            (json) =>
-                ExperienceDeparture.fromJson(json as Map<String, dynamic>),
-          )
-          .toList();
-    } catch (e) {
-      // Fallback: If table is empty or error occurs, return empty list or fallback departure
-      return [];
-    }
+    final List<dynamic> data = response as List<dynamic>;
+    return data
+        .map(
+          (json) =>
+              ExperienceDeparture.fromJson(json as Map<String, dynamic>),
+        )
+        .toList();
   }
 
   /// Fetch booking details by booking ID
   Future<Booking?> getBookingById(String bookingId) async {
-    try {
-      final response = await _client
-          .from('bookings')
-          .select('*, experiences(*), experience_departures(*)')
-          .eq('id', bookingId)
-          .maybeSingle();
+    final response = await _client
+        .from('bookings')
+        .select('*, experiences(*), experience_departures(*)')
+        .eq('id', bookingId)
+        .maybeSingle();
 
-      if (response == null) return null;
-      return Booking.fromJson(response);
-    } catch (e) {
-      return null;
-    }
+    if (response == null) return null;
+    return Booking.fromJson(response);
   }
 
   /// Create server booking intent with re-priced calculations and idempotency key

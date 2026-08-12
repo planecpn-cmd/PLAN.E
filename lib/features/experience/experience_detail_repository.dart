@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/offline_cache.dart';
 import '../../models/experience_departure.dart';
 import '../../models/itinerary_item.dart';
 import '../../models/review.dart';
@@ -10,6 +11,7 @@ class ExperienceDetailRepository {
   ExperienceDetailRepository(this._client);
 
   Future<List<ExperienceDeparture>> getDepartures(String experienceId) async {
+    final cacheKey = 'experience_departures:$experienceId';
     try {
       final response = await _client
           .from('experience_departures')
@@ -18,13 +20,25 @@ class ExperienceDetailRepository {
           .order('start_date', ascending: true);
 
       final List<dynamic> data = response as List<dynamic>;
-      return data.map((json) => ExperienceDeparture.fromJson(json as Map<String, dynamic>)).toList();
+      final departures = data
+          .map((json) => ExperienceDeparture.fromJson(json as Map<String, dynamic>))
+          .toList();
+      await OfflineCache.write(cacheKey, departures.map((d) => d.toJson()).toList());
+      return departures;
     } catch (_) {
-      return [];
+      final cached = await OfflineCache.read<List<ExperienceDeparture>>(
+        cacheKey,
+        (json) => (json as List)
+            .map((e) => ExperienceDeparture.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
+      if (cached != null) return cached;
+      rethrow;
     }
   }
 
   Future<List<ItineraryItem>> getItinerary(String experienceId) async {
+    final cacheKey = 'experience_itinerary:$experienceId';
     try {
       final response = await _client
           .from('itinerary_items')
@@ -33,13 +47,25 @@ class ExperienceDetailRepository {
           .order('day_number', ascending: true);
 
       final List<dynamic> data = response as List<dynamic>;
-      return data.map((json) => ItineraryItem.fromJson(json as Map<String, dynamic>)).toList();
+      final itinerary = data
+          .map((json) => ItineraryItem.fromJson(json as Map<String, dynamic>))
+          .toList();
+      await OfflineCache.write(cacheKey, itinerary.map((i) => i.toJson()).toList());
+      return itinerary;
     } catch (_) {
-      return [];
+      final cached = await OfflineCache.read<List<ItineraryItem>>(
+        cacheKey,
+        (json) => (json as List)
+            .map((e) => ItineraryItem.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
+      if (cached != null) return cached;
+      rethrow;
     }
   }
 
   Future<List<Review>> getReviews(String experienceId) async {
+    final cacheKey = 'experience_reviews:$experienceId';
     try {
       final response = await _client
           .from('reviews')
@@ -48,13 +74,24 @@ class ExperienceDetailRepository {
           .order('created_at', ascending: false);
 
       final List<dynamic> data = response as List<dynamic>;
-      return data.map((json) => Review.fromJson(json as Map<String, dynamic>)).toList();
+      final reviews =
+          data.map((json) => Review.fromJson(json as Map<String, dynamic>)).toList();
+      await OfflineCache.write(cacheKey, reviews.map((r) => r.toJson()).toList());
+      return reviews;
     } catch (_) {
-      return [];
+      final cached = await OfflineCache.read<List<Review>>(
+        cacheKey,
+        (json) => (json as List)
+            .map((e) => Review.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
+      if (cached != null) return cached;
+      rethrow;
     }
   }
 
   Future<Profile?> getHostProfile(String hostId) async {
+    final cacheKey = 'host_profile:$hostId';
     try {
       final response = await _client
           .from('profiles')
@@ -63,9 +100,16 @@ class ExperienceDetailRepository {
           .maybeSingle();
 
       if (response == null) return null;
-      return Profile.fromJson(response);
+      final profile = Profile.fromJson(response);
+      await OfflineCache.write(cacheKey, profile.toJson());
+      return profile;
     } catch (_) {
-      return null;
+      final cached = await OfflineCache.read<Profile>(
+        cacheKey,
+        (json) => Profile.fromJson(json as Map<String, dynamic>),
+      );
+      if (cached != null) return cached;
+      rethrow;
     }
   }
 }

@@ -23,5 +23,6 @@ export 'plan_e_logo.dart';
 export 'app_stub_sheet.dart';
 export 'offline_banner.dart';
 export 'brand_icons.dart';
+export 'version_gate.dart';
 
 

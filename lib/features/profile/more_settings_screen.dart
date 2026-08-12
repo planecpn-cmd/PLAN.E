@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/app_version.dart';
 import '../../theme/theme.dart';
 import '../../widgets/widgets.dart';
 
@@ -228,7 +229,7 @@ class _MoreSettingsScreenState extends ConsumerState<MoreSettingsScreen> {
                   ),
                   const SizedBox(height: AppSpacing.xs4),
                   Text(
-                    'Version 1.0.0 (Build 104)',
+                    AppVersionInfo.displayVersion,
                     style: AppTypography.caption.copyWith(color: AppColors.disabledText),
                   ),
                 ],

@@ -36,6 +36,7 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const OfflineBanner(),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
                 child: Text(
@@ -170,6 +171,7 @@ class _PlansScreenState extends ConsumerState<PlansScreen> {
             imageUrl: booking.experience?.coverImageUrl,
             height: 150,
             width: double.infinity,
+            imageRequestWidth: 800,
             radius: 14,
             overlay: Container(
               alignment: Alignment.bottomLeft,

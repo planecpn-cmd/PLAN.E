@@ -5,12 +5,18 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../core/format.dart';
+import '../../core/image_cache_manager.dart';
+import '../../core/image_url.dart';
+import '../../models/booking.dart';
 import '../../models/experience.dart';
+import '../../models/itinerary_item.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/async_value_view.dart';
 import '../../widgets/empty_state_view.dart';
+import '../booking/booking_providers.dart';
+import '../experience/experience_detail_providers.dart';
 
 class ItineraryScreen extends ConsumerWidget {
   final String bookingId;
@@ -22,7 +28,7 @@ class ItineraryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final experienceAsync = ref.watch(experienceDetailProvider(bookingId));
+    final bookingAsync = ref.watch(bookingDetailProvider(bookingId));
 
     return Scaffold(
       backgroundColor: AppColors.ivory,
@@ -39,8 +45,8 @@ class ItineraryScreen extends ConsumerWidget {
         ),
       ),
       body: SafeArea(
-        child: AsyncValueView<Experience?>(
-          value: experienceAsync,
+        child: AsyncValueView<Booking?>(
+          value: bookingAsync,
           isEmpty: (data) => data == null,
           emptyView: EmptyStateView(
             title: 'Itinerary Not Found',
@@ -48,10 +54,25 @@ class ItineraryScreen extends ConsumerWidget {
             actionLabel: 'Back to Plans',
             onActionPressed: () => context.go('/plans'),
           ),
-          onRetry: () => ref.invalidate(experienceDetailProvider(bookingId)),
-          data: (experience) {
-            final exp = experience!;
-            final int totalDays = (exp.durationHours / 24).ceil().clamp(1, 30);
+          onRetry: () => ref.invalidate(bookingDetailProvider(bookingId)),
+          data: (booking) {
+            final experienceId = booking!.experienceId;
+            final experienceAsync = ref.watch(experienceDetailProvider(experienceId));
+
+            return AsyncValueView<Experience?>(
+              value: experienceAsync,
+              isEmpty: (data) => data == null,
+              emptyView: EmptyStateView(
+                title: 'Itinerary Not Found',
+                description: 'We could not locate the itinerary details for this trip.',
+                actionLabel: 'Back to Plans',
+                onActionPressed: () => context.go('/plans'),
+              ),
+              onRetry: () => ref.invalidate(experienceDetailProvider(experienceId)),
+              data: (experience) {
+                final exp = experience!;
+                final int totalDays = (exp.durationHours / 24).ceil().clamp(1, 30);
+                final itineraryAsync = ref.watch(experienceItineraryProvider(experienceId));
 
             return SingleChildScrollView(
               padding: AppSpacing.screenPadding,
@@ -70,7 +91,11 @@ class ItineraryScreen extends ConsumerWidget {
                             width: double.infinity,
                             child: exp.coverImageUrl.isNotEmpty
                                 ? CachedNetworkImage(
-                                    imageUrl: exp.coverImageUrl,
+                                    imageUrl: resizedImageUrl(
+                                      exp.coverImageUrl,
+                                      width: 800,
+                                    ),
+                                    cacheManager: AppImageCacheManager.instance,
                                     fit: BoxFit.cover,
                                     errorWidget: (context, url, error) => Container(
                                       color: AppColors.sage,
@@ -183,19 +208,42 @@ class ItineraryScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: AppSpacing.md12),
 
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: totalDays,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: AppSpacing.md12),
-                    itemBuilder: (context, index) {
-                      final int dayNum = index + 1;
-                      return _buildDayCard(
-                        dayNum: dayNum,
-                        title: 'Day $dayNum: Trail Segment & Exploration',
-                        description: exp.summary ??
-                            'Experience local hospitality, scenic mountain vistas, and culture along the trail route.',
+                  AsyncValueView<List<ItineraryItem>>(
+                    value: itineraryAsync,
+                    onRetry: () => ref.invalidate(experienceItineraryProvider(experienceId)),
+                    data: (items) {
+                      final List<ItineraryItem> sortedItems = List.of(items)
+                        ..sort((a, b) {
+                          final dayCompare = a.dayNumber.compareTo(b.dayNumber);
+                          return dayCompare != 0 ? dayCompare : a.sortOrder.compareTo(b.sortOrder);
+                        });
+
+                      final int itemCount = sortedItems.isNotEmpty ? sortedItems.length : totalDays;
+
+                      return ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: itemCount,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: AppSpacing.md12),
+                        itemBuilder: (context, index) {
+                          if (sortedItems.isNotEmpty) {
+                            final item = sortedItems[index];
+                            return _buildDayCard(
+                              dayNum: item.dayNumber,
+                              title: item.title,
+                              description: item.description ??
+                                  'Experience local hospitality, scenic mountain vistas, and culture along the trail route.',
+                            );
+                          }
+                          final int dayNum = index + 1;
+                          return _buildDayCard(
+                            dayNum: dayNum,
+                            title: 'Day $dayNum: Trail Segment & Exploration',
+                            description: exp.summary ??
+                                'Experience local hospitality, scenic mountain vistas, and culture along the trail route.',
+                          );
+                        },
                       );
                     },
                   ),
@@ -240,6 +288,8 @@ class ItineraryScreen extends ConsumerWidget {
                   const SizedBox(height: AppSpacing.xxl24),
                 ],
               ),
+            );
+              },
             );
           },
         ),
@@ -364,5 +414,3 @@ class ItineraryScreen extends ConsumerWidget {
     );
   }
 }
-
-

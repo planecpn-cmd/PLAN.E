@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/offline_cache.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/app_button.dart';
@@ -48,7 +49,17 @@ class LogoutDialog extends ConsumerWidget {
                 onPressed: () async {
                   try {
                     final client = ref.read(supabaseClientProvider);
+                    // Captured before signOut() — currentUser is null right
+                    // after, and every user-scoped cache key carries this id
+                    // (see docs/OFFLINE_CACHE_PLAN.md §2.5). A shared/reused
+                    // device must never let the next person who logs in see
+                    // this user's cached bookings/profile because a fetch
+                    // happened to fail right after they signed in.
+                    final userId = client.auth.currentUser?.id;
                     await client.auth.signOut();
+                    if (userId != null) {
+                      await OfflineCache.clearWhere((key) => key.contains(':$userId'));
+                    }
                     ref.invalidate(profileProvider);
                   } catch (_) {
                     // Fallback for offline mode
