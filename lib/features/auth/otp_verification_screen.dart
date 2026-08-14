@@ -10,11 +10,9 @@ import '../../widgets/app_text_field.dart';
 import '../../widgets/app_toast.dart';
 import 'auth_repository.dart';
 
-/// Shared 6-digit email OTP screen for both the signup confirmation flow
-/// and the forgot-password recovery flow. Supabase's default confirmation/
-/// recovery link points at `site_url`, which has no real domain to land on
-/// yet — the OTP code embedded in the same email works regardless, so it's
-/// the flow used for both cases until a domain exists to host the link.
+/// Shared six-digit OTP screen for signup confirmation and password recovery.
+/// Hosted email templates must include `{{ .Token }}` so users can enter the
+/// token here; recovery links remain supported as a fallback.
 class OtpVerificationScreen extends ConsumerStatefulWidget {
   final String email;
   final bool isRecovery;
@@ -67,7 +65,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
   Future<void> _handleVerify() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final success = await ref.read(authNotifierProvider.notifier).verifyOtp(
+    final success = await ref
+        .read(authNotifierProvider.notifier)
+        .verifyOtp(
           email: widget.email,
           token: _codeController.text.trim(),
           isRecovery: widget.isRecovery,
@@ -79,7 +79,8 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
       final state = ref.read(authNotifierProvider);
       AppToast.show(
         context,
-        message: state.errorMessage ?? 'Invalid or expired code. Please try again.',
+        message:
+            state.errorMessage ?? 'Invalid or expired code. Please try again.',
         variant: AppToastVariant.error,
       );
       return;
@@ -90,25 +91,33 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
       return;
     }
 
-    AppToast.show(context, message: 'Email verified!', variant: AppToastVariant.success);
+    AppToast.show(
+      context,
+      message: 'Email verified!',
+      variant: AppToastVariant.success,
+    );
     final deferred = ref.read(deferredActionProvider);
+    final destination = deferredActionDestination(deferred);
     if (deferred != null) {
       ref.read(deferredActionProvider.notifier).clear();
     }
-    context.go('/home');
+    context.go(destination);
   }
 
   Future<void> _handleResend() async {
     if (_resendCooldown > 0) return;
-    final success = await ref.read(authNotifierProvider.notifier).resendOtp(
-          email: widget.email,
-          isRecovery: widget.isRecovery,
-        );
+    final success = await ref
+        .read(authNotifierProvider.notifier)
+        .resendOtp(email: widget.email, isRecovery: widget.isRecovery);
 
     if (!mounted) return;
 
     if (success) {
-      AppToast.show(context, message: 'Code resent to ${widget.email}', variant: AppToastVariant.success);
+      AppToast.show(
+        context,
+        message: 'Code resent to ${widget.email}',
+        variant: AppToastVariant.success,
+      );
       _startCooldown();
     } else {
       final state = ref.read(authNotifierProvider);
@@ -143,13 +152,19 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.isRecovery ? 'Reset Your Password' : 'Verify Your Email',
-                  style: AppTypography.headingLarge.copyWith(color: AppColors.deep),
+                  widget.isRecovery
+                      ? 'Reset Your Password'
+                      : 'Verify Your Email',
+                  style: AppTypography.headingLarge.copyWith(
+                    color: AppColors.deep,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.sm8),
                 Text(
                   'Enter the 6-digit code we sent to ${widget.email}.',
-                  style: AppTypography.bodyMedium.copyWith(color: AppColors.ink),
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.ink,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.xxl24),
 
@@ -160,7 +175,10 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                   keyboardType: TextInputType.number,
                   textInputAction: TextInputAction.done,
                   onSubmitted: (_) => _handleVerify(),
-                  prefixIcon: const Icon(Icons.password_outlined, color: AppColors.forest),
+                  prefixIcon: const Icon(
+                    Icons.password_outlined,
+                    color: AppColors.forest,
+                  ),
                   validator: (val) {
                     final code = val?.trim() ?? '';
                     if (code.length != 6 || int.tryParse(code) == null) {

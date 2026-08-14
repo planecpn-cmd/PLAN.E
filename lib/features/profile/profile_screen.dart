@@ -8,6 +8,7 @@ import '../../models/profile.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/widgets.dart';
+import '../host/presentation/host_mode_providers.dart';
 import 'logout_dialog.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -19,6 +20,7 @@ class ProfileScreen extends ConsumerWidget {
     final profileAsync = ref.watch(profileProvider);
     final savedAsync = ref.watch(savedExperiencesProvider);
     final bookingsAsync = ref.watch(bookingsProvider('all'));
+    final hostAccess = ref.watch(hostAccessProvider).asData?.value;
 
     return Scaffold(
       body: PlanEBackground(
@@ -258,7 +260,12 @@ class ProfileScreen extends ConsumerWidget {
                           const SizedBox(height: 16),
 
                           // Host Action
-                          _buildHostButton(context, role, l10n),
+                          _buildHostButton(
+                            context,
+                            role,
+                            l10n,
+                            hostAccess?.canEnterHostMode == true,
+                          ),
                           const SizedBox(height: 16),
 
                           // Logout Button
@@ -299,6 +306,7 @@ class ProfileScreen extends ConsumerWidget {
     BuildContext context,
     UserRole role,
     AppLocalizations l10n,
+    bool hasApprovedHostAccess,
   ) {
     if (role == UserRole.hostApplicant) {
       return GestureDetector(
@@ -330,29 +338,32 @@ class ProfileScreen extends ConsumerWidget {
       );
     }
 
-    if (role == UserRole.host) {
-      return Container(
-        height: 52,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: AppColors.successContainer,
-          borderRadius: BorderRadius.circular(25),
-          border: Border.all(color: AppColors.success),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.verified, color: AppColors.success),
-            const SizedBox(width: 10),
-            Text(
-              l10n.hostVerifiedTitle.toUpperCase(),
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: AppColors.success,
+    if (role == UserRole.host || hasApprovedHostAccess) {
+      return GestureDetector(
+        onTap: () => context.push('/host/dashboard'),
+        child: Container(
+          height: 52,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppColors.successContainer,
+            borderRadius: BorderRadius.circular(25),
+            border: Border.all(color: AppColors.success),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.verified, color: AppColors.success),
+              const SizedBox(width: 10),
+              Text(
+                l10n.hostVerifiedTitle.toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.success,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }

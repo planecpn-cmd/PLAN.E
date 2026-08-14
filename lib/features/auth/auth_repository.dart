@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/supabase_client.dart';
@@ -7,7 +8,8 @@ import '../../providers/app_providers.dart';
 /// Sign in with Apple only makes sense — and is only enabled — on Apple's
 /// own platforms; Android has no Apple account integration to offer.
 bool get isApplePlatform =>
-    defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS;
+    defaultTargetPlatform == TargetPlatform.iOS ||
+    defaultTargetPlatform == TargetPlatform.macOS;
 
 class AuthRepository {
   final SupabaseClient _client;
@@ -31,17 +33,10 @@ class AuthRepository {
         if (phone != null && phone.isNotEmpty) 'phone': phone.trim(),
       },
     );
-
-    if (response.user != null) {
-      // Upsert profile record
-      await _client.from('profiles').upsert({
-        'id': response.user!.id,
-        'full_name': fullName.trim(),
-        if (phone != null && phone.isNotEmpty) 'phone': phone.trim(),
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      });
-    }
-
+    // public.handle_new_user() creates the profile inside the database. Do
+    // not perform a client upsert here: with email confirmation enabled there
+    // is no authenticated session until OTP verification, so that write must
+    // remain unavailable under RLS.
     return response;
   }
 
@@ -66,7 +61,10 @@ class AuthRepository {
   Future<void> sendPasswordReset(String emailOrPhone) async {
     final input = emailOrPhone.trim();
     if (input.contains('@')) {
-      await _client.auth.resetPasswordForEmail(input);
+      await _client.auth.resetPasswordForEmail(
+        input,
+        redirectTo: AppSupabaseClient.authRedirectUrl,
+      );
     } else {
       // For phone reset OTP if needed
       await _client.auth.signInWithOtp(phone: input);
@@ -119,11 +117,45 @@ class AuthRepository {
   Future<void> updatePassword(String newPassword) async {
     await _client.auth.updateUser(UserAttributes(password: newPassword));
   }
+
+  /// A recovery session is intentionally short-lived. Clearing it after the
+  /// password update prevents the recovery auth event from being replayed on
+  /// resume and sending the user back to verification.
+  Future<void> completePasswordRecovery(String newPassword) async {
+    await updatePassword(newPassword);
+    await _client.auth.signOut(scope: SignOutScope.local);
+  }
 }
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(ref.watch(supabaseClientProvider));
 });
+
+/// Converts provider/network failures into messages that are useful to an app
+/// user without exposing transport implementation details.
+String friendlyAuthError(Object error) {
+  final raw = error is AuthException ? error.message : error.toString();
+  final normalized = raw.toLowerCase();
+  if (normalized.contains('error sending confirmation email') ||
+      normalized.contains('could not send email')) {
+    return 'We couldn’t send the verification email. Please try again later or contact support.';
+  }
+  if (normalized.contains('invalid login credentials')) {
+    return 'Invalid email or password. Please try again.';
+  }
+  if (normalized.contains('email rate limit exceeded') ||
+      normalized.contains('over_email_send_rate_limit')) {
+    return 'Too many verification emails were requested. Please wait before trying again.';
+  }
+  if (normalized.contains('socketexception') ||
+      normalized.contains('connection refused') ||
+      normalized.contains('failed host lookup') ||
+      normalized.contains('network is unreachable') ||
+      normalized.contains('connection timed out')) {
+    return 'We couldn’t connect to the server. Check your connection and try again.';
+  }
+  return raw;
+}
 
 class AuthState {
   final bool isLoading;
@@ -136,11 +168,7 @@ class AuthState {
     this.isSuccess = false,
   });
 
-  AuthState copyWith({
-    bool? isLoading,
-    String? errorMessage,
-    bool? isSuccess,
-  }) {
+  AuthState copyWith({bool? isLoading, String? errorMessage, bool? isSuccess}) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
@@ -164,7 +192,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String fullName,
     String? phone,
   }) async {
-    state = state.copyWith(isLoading: true, errorMessage: null, isSuccess: false);
+    state = state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      isSuccess: false,
+    );
     try {
       await _repository.signUpWithEmail(
         email: email,
@@ -175,7 +207,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(isLoading: false, isSuccess: true);
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: friendlyAuthError(e),
+      );
       return false;
     }
   }
@@ -184,7 +219,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String emailOrPhone,
     required String password,
   }) async {
-    state = state.copyWith(isLoading: true, errorMessage: null, isSuccess: false);
+    state = state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      isSuccess: false,
+    );
     try {
       await _repository.signInWithEmail(
         emailOrPhone: emailOrPhone,
@@ -193,19 +232,29 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(isLoading: false, isSuccess: true);
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: friendlyAuthError(e),
+      );
       return false;
     }
   }
 
   Future<bool> resetPassword(String emailOrPhone) async {
-    state = state.copyWith(isLoading: true, errorMessage: null, isSuccess: false);
+    state = state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      isSuccess: false,
+    );
     try {
       await _repository.sendPasswordReset(emailOrPhone);
       state = state.copyWith(isLoading: false, isSuccess: true);
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: friendlyAuthError(e),
+      );
       return false;
     }
   }
@@ -215,7 +264,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       await _repository.signInWithOAuth(provider);
     } catch (e) {
-      state = state.copyWith(errorMessage: e.toString());
+      state = state.copyWith(errorMessage: friendlyAuthError(e));
     }
   }
 
@@ -224,7 +273,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String token,
     required bool isRecovery,
   }) async {
-    state = state.copyWith(isLoading: true, errorMessage: null, isSuccess: false);
+    state = state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      isSuccess: false,
+    );
     try {
       if (isRecovery) {
         await _repository.verifyRecoveryOtp(email: email, token: token);
@@ -234,12 +287,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(isLoading: false, isSuccess: true);
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: friendlyAuthError(e),
+      );
       return false;
     }
   }
 
-  Future<bool> resendOtp({required String email, required bool isRecovery}) async {
+  Future<bool> resendOtp({
+    required String email,
+    required bool isRecovery,
+  }) async {
     state = state.copyWith(errorMessage: null);
     try {
       if (isRecovery) {
@@ -249,24 +308,33 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
       return true;
     } catch (e) {
-      state = state.copyWith(errorMessage: e.toString());
+      state = state.copyWith(errorMessage: friendlyAuthError(e));
       return false;
     }
   }
 
   Future<bool> updatePassword(String newPassword) async {
-    state = state.copyWith(isLoading: true, errorMessage: null, isSuccess: false);
+    state = state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      isSuccess: false,
+    );
     try {
-      await _repository.updatePassword(newPassword);
+      await _repository.completePasswordRecovery(newPassword);
       state = state.copyWith(isLoading: false, isSuccess: true);
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: friendlyAuthError(e),
+      );
       return false;
     }
   }
 }
 
-final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((
+  ref,
+) {
   return AuthNotifier(ref.watch(authRepositoryProvider));
 });

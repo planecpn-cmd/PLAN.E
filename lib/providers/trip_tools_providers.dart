@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
+import '../core/chat_ordering.dart';
 import '../models/budget_entry.dart';
 import '../models/gear_checklist_item.dart';
 import '../models/trip_message.dart';
@@ -13,7 +15,9 @@ final tripChatRepositoryProvider = Provider<TripChatRepository>((ref) {
   return TripChatRepository(ref.watch(supabaseClientProvider));
 });
 
-final gearChecklistRepositoryProvider = Provider<GearChecklistRepository>((ref) {
+final gearChecklistRepositoryProvider = Provider<GearChecklistRepository>((
+  ref,
+) {
   return GearChecklistRepository(ref.watch(supabaseClientProvider));
 });
 
@@ -28,16 +32,17 @@ class TripChatNotifier extends StateNotifier<AsyncValue<List<TripMessage>>> {
   StreamSubscription<List<TripMessage>>? _realtimeSubscription;
   final List<TripMessage> _outboxMessages = [];
   List<TripMessage> _remoteMessages = [];
+  static const _uuid = Uuid();
 
   TripChatNotifier(this._repository, this.bookingId)
-      : super(const AsyncValue.loading()) {
+    : super(const AsyncValue.loading()) {
     _initChat();
   }
 
   void _initChat() async {
     try {
       final initialMessages = await _repository.getMessages(bookingId);
-      _remoteMessages = initialMessages;
+      _remoteMessages = mergeTripMessagesChronologically(initialMessages);
       _updateMergedState();
     } catch (err, stack) {
       if (mounted) {
@@ -45,36 +50,38 @@ class TripChatNotifier extends StateNotifier<AsyncValue<List<TripMessage>>> {
       }
     }
 
-    _realtimeSubscription = _repository.streamMessages(bookingId).listen(
-      (realtimeList) {
-        _remoteMessages = realtimeList;
-        _updateMergedState();
-      },
-      onError: (err, stack) {
-        // Keep existing merged state if stream emits error
-      },
-    );
+    _realtimeSubscription = _repository
+        .streamMessages(bookingId)
+        .listen(
+          (realtimeList) {
+            _remoteMessages = mergeTripMessagesChronologically([
+              ..._remoteMessages,
+              ...realtimeList,
+            ]);
+            _updateMergedState();
+          },
+          onError: (err, stack) {
+            // Keep existing merged state if stream emits error
+          },
+        );
   }
 
   void _updateMergedState() {
     if (!mounted) return;
-    final List<TripMessage> combined = List.from(_remoteMessages);
-
-    // Append pending/failed local outbox messages if not already in remote list
-    for (final outboxMsg in _outboxMessages) {
-      if (!combined.any((m) => m.id == outboxMsg.id)) {
-        combined.add(outboxMsg);
-      }
-    }
-
-    combined.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-    state = AsyncValue.data(combined);
+    state = AsyncValue.data(
+      mergeTripMessagesChronologically([
+        ..._outboxMessages,
+        ..._remoteMessages,
+      ]),
+    );
   }
 
   Future<void> sendMessage(String text) async {
     if (text.trim().isEmpty) return;
 
-    final String tempId = 'outbox_${DateTime.now().millisecondsSinceEpoch}';
+    // The optimistic row and Postgres insert share an ID, so a realtime echo
+    // replaces it instead of briefly rendering a duplicate.
+    final String tempId = _uuid.v4();
     final String currentUserId = _repository.currentUserId ?? 'local-user';
 
     final pendingMsg = TripMessage(
@@ -95,11 +102,13 @@ class TripChatNotifier extends StateNotifier<AsyncValue<List<TripMessage>>> {
       final sentMsg = await _repository.sendMessage(
         bookingId: bookingId,
         body: text.trim(),
+        messageId: tempId,
       );
       _outboxMessages.removeWhere((m) => m.id == tempId);
-      if (!_remoteMessages.any((m) => m.id == sentMsg.id)) {
-        _remoteMessages.add(sentMsg);
-      }
+      _remoteMessages = mergeTripMessagesChronologically([
+        ..._remoteMessages,
+        sentMsg,
+      ]);
       _updateMergedState();
     } catch (e) {
       final index = _outboxMessages.indexWhere((m) => m.id == tempId);
@@ -116,10 +125,7 @@ class TripChatNotifier extends StateNotifier<AsyncValue<List<TripMessage>>> {
   Future<void> retryMessage(TripMessage msg) async {
     final index = _outboxMessages.indexWhere((m) => m.id == msg.id);
     if (index != -1) {
-      _outboxMessages[index] = msg.copyWith(
-        isPending: true,
-        isFailed: false,
-      );
+      _outboxMessages[index] = msg.copyWith(isPending: true, isFailed: false);
       _updateMergedState();
     }
 
@@ -127,19 +133,18 @@ class TripChatNotifier extends StateNotifier<AsyncValue<List<TripMessage>>> {
       final sentMsg = await _repository.sendMessage(
         bookingId: bookingId,
         body: msg.body,
+        messageId: msg.id,
       );
       _outboxMessages.removeWhere((m) => m.id == msg.id);
-      if (!_remoteMessages.any((m) => m.id == sentMsg.id)) {
-        _remoteMessages.add(sentMsg);
-      }
+      _remoteMessages = mergeTripMessagesChronologically([
+        ..._remoteMessages,
+        sentMsg,
+      ]);
       _updateMergedState();
     } catch (e) {
       final idx = _outboxMessages.indexWhere((m) => m.id == msg.id);
       if (idx != -1) {
-        _outboxMessages[idx] = msg.copyWith(
-          isPending: false,
-          isFailed: true,
-        );
+        _outboxMessages[idx] = msg.copyWith(isPending: false, isFailed: true);
       }
       _updateMergedState();
     }
@@ -152,21 +157,24 @@ class TripChatNotifier extends StateNotifier<AsyncValue<List<TripMessage>>> {
   }
 }
 
-final tripChatProvider = StateNotifierProvider.family<
-    TripChatNotifier,
-    AsyncValue<List<TripMessage>>,
-    String>((ref, bookingId) {
-  final repo = ref.watch(tripChatRepositoryProvider);
-  return TripChatNotifier(repo, bookingId);
-});
+final tripChatProvider =
+    StateNotifierProvider.family<
+      TripChatNotifier,
+      AsyncValue<List<TripMessage>>,
+      String
+    >((ref, bookingId) {
+      final repo = ref.watch(tripChatRepositoryProvider);
+      return TripChatNotifier(repo, bookingId);
+    });
 
 // Interactive Gear Checklist Provider & StateNotifier
-class GearChecklistNotifier extends StateNotifier<AsyncValue<List<GearChecklistItem>>> {
+class GearChecklistNotifier
+    extends StateNotifier<AsyncValue<List<GearChecklistItem>>> {
   final GearChecklistRepository _repository;
   final String bookingId;
 
   GearChecklistNotifier(this._repository, this.bookingId)
-      : super(const AsyncValue.loading()) {
+    : super(const AsyncValue.loading()) {
     loadItems();
   }
 
@@ -227,21 +235,24 @@ class GearChecklistNotifier extends StateNotifier<AsyncValue<List<GearChecklistI
   }
 }
 
-final gearChecklistProvider = StateNotifierProvider.family<
-    GearChecklistNotifier,
-    AsyncValue<List<GearChecklistItem>>,
-    String>((ref, bookingId) {
-  final repo = ref.watch(gearChecklistRepositoryProvider);
-  return GearChecklistNotifier(repo, bookingId);
-});
+final gearChecklistProvider =
+    StateNotifierProvider.family<
+      GearChecklistNotifier,
+      AsyncValue<List<GearChecklistItem>>,
+      String
+    >((ref, bookingId) {
+      final repo = ref.watch(gearChecklistRepositoryProvider);
+      return GearChecklistNotifier(repo, bookingId);
+    });
 
 // Interactive Budget Tracker Provider & StateNotifier
-class BudgetTrackerNotifier extends StateNotifier<AsyncValue<List<BudgetEntry>>> {
+class BudgetTrackerNotifier
+    extends StateNotifier<AsyncValue<List<BudgetEntry>>> {
   final BudgetRepository _repository;
   final String bookingId;
 
   BudgetTrackerNotifier(this._repository, this.bookingId)
-      : super(const AsyncValue.loading()) {
+    : super(const AsyncValue.loading()) {
     loadEntries();
   }
 
@@ -281,7 +292,9 @@ class BudgetTrackerNotifier extends StateNotifier<AsyncValue<List<BudgetEntry>>>
 
   Future<void> deleteExpense(String entryId) async {
     final currentList = state.valueOrNull ?? [];
-    final updatedList = currentList.where((entry) => entry.id != entryId).toList();
+    final updatedList = currentList
+        .where((entry) => entry.id != entryId)
+        .toList();
     state = AsyncValue.data(updatedList);
 
     try {
@@ -292,10 +305,12 @@ class BudgetTrackerNotifier extends StateNotifier<AsyncValue<List<BudgetEntry>>>
   }
 }
 
-final budgetTrackerProvider = StateNotifierProvider.family<
-    BudgetTrackerNotifier,
-    AsyncValue<List<BudgetEntry>>,
-    String>((ref, bookingId) {
-  final repo = ref.watch(budgetRepositoryProvider);
-  return BudgetTrackerNotifier(repo, bookingId);
-});
+final budgetTrackerProvider =
+    StateNotifierProvider.family<
+      BudgetTrackerNotifier,
+      AsyncValue<List<BudgetEntry>>,
+      String
+    >((ref, bookingId) {
+      final repo = ref.watch(budgetRepositoryProvider);
+      return BudgetTrackerNotifier(repo, bookingId);
+    });

@@ -29,7 +29,10 @@ void main() {
       expect(app.status, equals(HostAppStatus.submitted));
       expect(app.currentStep, equals(4));
       expect(app.title, equals('High Altitude Mountain Trek Guide'));
-      expect(app.verificationDocPath, equals('host-documents/user-123/id_doc.png'));
+      expect(
+        app.verificationDocPath,
+        equals('host-documents/user-123/id_doc.png'),
+      );
       expect(app.submittedAt, isNotNull);
 
       final map = app.toJson();
@@ -39,11 +42,26 @@ void main() {
 
     test('HostAppStatus enum handles all values correctly', () {
       expect(HostAppStatus.fromString('draft'), equals(HostAppStatus.draft));
-      expect(HostAppStatus.fromString('submitted'), equals(HostAppStatus.submitted));
-      expect(HostAppStatus.fromString('under_review'), equals(HostAppStatus.underReview));
-      expect(HostAppStatus.fromString('verification'), equals(HostAppStatus.verification));
-      expect(HostAppStatus.fromString('approved'), equals(HostAppStatus.approved));
-      expect(HostAppStatus.fromString('rejected'), equals(HostAppStatus.rejected));
+      expect(
+        HostAppStatus.fromString('submitted'),
+        equals(HostAppStatus.submitted),
+      );
+      expect(
+        HostAppStatus.fromString('under_review'),
+        equals(HostAppStatus.underReview),
+      );
+      expect(
+        HostAppStatus.fromString('verification'),
+        equals(HostAppStatus.verification),
+      );
+      expect(
+        HostAppStatus.fromString('approved'),
+        equals(HostAppStatus.approved),
+      );
+      expect(
+        HostAppStatus.fromString('rejected'),
+        equals(HostAppStatus.rejected),
+      );
       expect(HostAppStatus.fromString(null), equals(HostAppStatus.draft));
 
       expect(HostAppStatus.submitted.toJson(), equals('submitted'));
@@ -91,7 +109,10 @@ void main() {
       data = container.read(hostApplicationProvider);
       expect(data.idNumber, equals('12-34-56-78901'));
       expect(data.idImageUploaded, isTrue);
-      expect(data.verificationDocPath, equals('host-documents/user-123/doc.png'));
+      expect(
+        data.verificationDocPath,
+        equals('host-documents/user-123/doc.png'),
+      );
 
       notifier.updateStep4(
         bankName: 'Nabil Bank Ltd.',

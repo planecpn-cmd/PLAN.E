@@ -43,7 +43,9 @@ class _HostStep2ScreenState extends ConsumerState<HostStep2Screen> {
           : 'Kathmandu Valley Heritage Village Walk & Organic Lunch',
     );
     final int rupees = data.pricePaisa ~/ 100;
-    _priceRupeesController = TextEditingController(text: rupees > 0 ? '$rupees' : '3500');
+    _priceRupeesController = TextEditingController(
+      text: rupees > 0 ? '$rupees' : '3500',
+    );
     _descController = TextEditingController(
       text: data.description.isNotEmpty
           ? data.description
@@ -72,7 +74,9 @@ class _HostStep2ScreenState extends ConsumerState<HostStep2Screen> {
   void _onNext() {
     if (!_formKey.currentState!.validate()) return;
 
-    ref.read(hostApplicationProvider.notifier).updateStep2(
+    ref
+        .read(hostApplicationProvider.notifier)
+        .updateStep2(
           experienceTitle: _titleController.text.trim(),
           category: _selectedCategory,
           durationHours: _durationHours,
@@ -115,14 +119,21 @@ class _HostStep2ScreenState extends ConsumerState<HostStep2Screen> {
                 ),
                 const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.sage,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: const Text(
                     'Step 2 of 4',
-                    style: TextStyle(fontSize: 12, color: AppColors.forest, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.forest,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -137,7 +148,12 @@ class _HostStep2ScreenState extends ConsumerState<HostStep2Screen> {
                 ),
                 const SizedBox(height: 16),
                 const ProgressSteps(
-                  steps: ['Basic Info', 'Experience', 'ID Verify', 'Bank Details'],
+                  steps: [
+                    'Basic Info',
+                    'Experience',
+                    'ID Verify',
+                    'Bank Details',
+                  ],
                   currentStep: 1,
                 ),
                 const SizedBox(height: 20),
@@ -162,7 +178,11 @@ class _HostStep2ScreenState extends ConsumerState<HostStep2Screen> {
 
                       const Text(
                         'Category',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.forest),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.forest,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       DropdownButtonFormField<String>(
@@ -170,20 +190,30 @@ class _HostStep2ScreenState extends ConsumerState<HostStep2Screen> {
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: AppColors.white,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(color: AppColors.border),
+                            borderSide: const BorderSide(
+                              color: AppColors.border,
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(color: AppColors.border),
+                            borderSide: const BorderSide(
+                              color: AppColors.border,
+                            ),
                           ),
                         ),
                         items: _categories.map((c) {
                           return DropdownMenuItem(
                             value: c,
-                            child: Text(c, style: const TextStyle(fontSize: 14)),
+                            child: Text(
+                              c,
+                              style: const TextStyle(fontSize: 14),
+                            ),
                           );
                         }).toList(),
                         onChanged: (val) {
@@ -202,7 +232,8 @@ class _HostStep2ScreenState extends ConsumerState<HostStep2Screen> {
                               value: _durationHours,
                               min: 1,
                               max: 72,
-                              onChanged: (val) => setState(() => _durationHours = val),
+                              onChanged: (val) =>
+                                  setState(() => _durationHours = val),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -212,7 +243,8 @@ class _HostStep2ScreenState extends ConsumerState<HostStep2Screen> {
                               value: _maxGroupSize,
                               min: 1,
                               max: 30,
-                              onChanged: (val) => setState(() => _maxGroupSize = val),
+                              onChanged: (val) =>
+                                  setState(() => _maxGroupSize = val),
                             ),
                           ),
                         ],
@@ -248,7 +280,8 @@ class _HostStep2ScreenState extends ConsumerState<HostStep2Screen> {
                       AppTextField(
                         controller: _descController,
                         label: 'Full Description',
-                        hint: 'Explain what is included, schedule, guidelines...',
+                        hint:
+                            'Explain what is included, schedule, guidelines...',
                         prefixIcon: const Icon(Icons.description_outlined),
                         maxLines: 4,
                       ),

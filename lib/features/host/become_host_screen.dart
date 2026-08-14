@@ -70,7 +70,10 @@ class BecomeHostScreen extends ConsumerWidget {
                     Text(
                       'Turn your local knowledge into experiences travelers will remember.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 13, color: AppColors.disabledText),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.disabledText,
+                      ),
                     ),
                   ],
                 ),
@@ -91,9 +94,14 @@ class BecomeHostScreen extends ConsumerWidget {
                   final benefit = benefits[index];
                   return Expanded(
                     child: Padding(
-                      padding: EdgeInsets.only(right: index == benefits.length - 1 ? 0 : 6),
+                      padding: EdgeInsets.only(
+                        right: index == benefits.length - 1 ? 0 : 6,
+                      ),
                       child: PlanECard(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 12,
+                        ),
                         child: Column(
                           children: [
                             Icon(benefit.$1, size: 26, color: AppColors.forest),
@@ -101,7 +109,11 @@ class BecomeHostScreen extends ConsumerWidget {
                             Text(
                               benefit.$2,
                               textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 11, height: 1.2, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                height: 1.2,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
@@ -123,13 +135,21 @@ class BecomeHostScreen extends ConsumerWidget {
               const SizedBox(height: 10),
               const Row(
                 children: [
-                  Expanded(child: _ProcessStep(number: '1', label: 'Apply')),
+                  Expanded(
+                    child: _ProcessStep(number: '1', label: 'Apply'),
+                  ),
                   _StepLine(),
-                  Expanded(child: _ProcessStep(number: '2', label: 'Get verified')),
+                  Expanded(
+                    child: _ProcessStep(number: '2', label: 'Get verified'),
+                  ),
                   _StepLine(),
-                  Expanded(child: _ProcessStep(number: '3', label: 'List experience')),
+                  Expanded(
+                    child: _ProcessStep(number: '3', label: 'List experience'),
+                  ),
                   _StepLine(),
-                  Expanded(child: _ProcessStep(number: '4', label: 'Start hosting')),
+                  Expanded(
+                    child: _ProcessStep(number: '4', label: 'Start hosting'),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -140,7 +160,11 @@ class BecomeHostScreen extends ConsumerWidget {
                     CircleAvatar(
                       radius: 28,
                       backgroundColor: AppColors.sage,
-                      child: Icon(Icons.landscape_outlined, color: AppColors.forest, size: 28),
+                      child: Icon(
+                        Icons.landscape_outlined,
+                        color: AppColors.forest,
+                        size: 28,
+                      ),
                     ),
                     SizedBox(width: 12),
                     Expanded(
@@ -159,7 +183,11 @@ class BecomeHostScreen extends ConsumerWidget {
                           SizedBox(height: 4),
                           Text(
                             '— Pemba, Trekking Guide in Solukhumbu',
-                            style: TextStyle(color: AppColors.disabledText, fontSize: 11, fontStyle: FontStyle.italic),
+                            style: TextStyle(
+                              color: AppColors.disabledText,
+                              fontSize: 11,
+                              fontStyle: FontStyle.italic,
+                            ),
                           ),
                         ],
                       ),
@@ -175,7 +203,21 @@ class BecomeHostScreen extends ConsumerWidget {
                 icon: Icons.arrow_forward,
                 isFullWidth: true,
                 onPressed: () {
-                  if (profile?.role.name == 'hostApplicant' || hostData.status == 'under_review') {
+                  if (ref.read(supabaseClientProvider).auth.currentUser ==
+                      null) {
+                    ref
+                        .read(deferredActionProvider.notifier)
+                        .setPending(
+                          const DeferredAction(
+                            screenId: 'HOST_APPLICATION',
+                            action: 'register as a PLAN E host',
+                          ),
+                        );
+                    context.push('/auth/required');
+                    return;
+                  }
+                  if (profile?.role.name == 'hostApplicant' ||
+                      hostData.status == 'under_review') {
                     context.push('/host/submitted');
                   } else {
                     context.push('/host/step-1');
@@ -211,14 +253,22 @@ class _ProcessStep extends StatelessWidget {
           ),
           child: Text(
             number,
-            style: const TextStyle(fontSize: 16, color: AppColors.gold, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: 16,
+              color: AppColors.gold,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         const SizedBox(height: 6),
         Text(
           label,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 11, height: 1.1, color: AppColors.ink),
+          style: const TextStyle(
+            fontSize: 11,
+            height: 1.1,
+            color: AppColors.ink,
+          ),
         ),
       ],
     );

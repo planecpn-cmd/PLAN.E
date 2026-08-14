@@ -13,7 +13,8 @@ import '../../theme/tokens.dart';
 // Total duration: ~2 800 ms + a 350 ms hold on the final frame, then
 // auth-aware navigation. Same hero photo as the welcome screen (bundled
 // asset, not fetched) so the two screens read as one continuous identity.
-//   - Session exists  →  /home
+//   - Verified host  →  /host/dashboard
+//   - Other session  →  /home
 //   - No session      →  /welcome
 //
 // Animation phases (normalized 0.0–1.0 over 2 800 ms):
@@ -49,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   // ── Phase 2: A → mountain crossfade ──────────────────────────────────────
   late final Animation<double> _letterAFade; // letter 'A' fades OUT
-  late final Animation<double> _iconFade;    // mountain icon fades IN
+  late final Animation<double> _iconFade; // mountain icon fades IN
 
   // ── Phase 3: settle ───────────────────────────────────────────────────────
   // No wordmark fade/swap here anymore — see _LetterRow doc comment for why.
@@ -158,20 +159,44 @@ class _SplashScreenState extends State<SplashScreen>
     }
   }
 
-  void _navigate() {
+  Future<void> _navigate() async {
     if (_navigationFired || !mounted) return;
     _navigationFired = true;
-    final session = Supabase.instance.client.auth.currentSession;
+    final client = Supabase.instance.client;
+    final session = client.auth.currentSession;
     // Supabase.initialize() is awaited in main() before runApp(), so this
     // synchronous read is safe — no race condition possible.
     // Guest users never hold a Supabase session — only OnboardingPreferences
     // marks them as done — so session-only was routing them to /welcome
     // (i.e. login) on every replay instead of /home.
-    if (session != null || OnboardingPreferences.isCompleted) {
-      context.go('/home');
-    } else {
-      context.go('/welcome');
+    if (session == null) {
+      if (OnboardingPreferences.isCompleted) {
+        context.go('/home');
+      } else {
+        context.go('/welcome');
+      }
+      return;
     }
+
+    // Host access is derived by the backend instead of trusting profile role
+    // metadata. If the access check is unavailable, fail safely into traveler
+    // mode; the guarded host routes will never be exposed accidentally.
+    try {
+      final response = await client.rpc('current_host_access');
+      final rows = response is List ? response : const [];
+      final row = rows.isNotEmpty && rows.first is Map
+          ? Map<String, dynamic>.from(rows.first as Map)
+          : const <String, dynamic>{};
+      if (!mounted) return;
+      if (row['is_approved'] == true && row['is_active'] == true) {
+        context.go('/host/dashboard');
+        return;
+      }
+    } catch (_) {
+      // A temporary network/backend error must not block app startup.
+    }
+
+    if (mounted) context.go('/home');
   }
 
   @override
@@ -343,104 +368,107 @@ class _LetterRow extends StatelessWidget {
   static const double _fontSize = 42.0;
 
   TextStyle get _letterStyle => const TextStyle(
-        fontFamily: 'serif',
-        fontSize: _fontSize,
-        fontWeight: FontWeight.w700,
-        letterSpacing: _fontSize * 0.16,
-        color: AppColors.forest,
-      );
+    fontFamily: 'serif',
+    fontSize: _fontSize,
+    fontWeight: FontWeight.w700,
+    letterSpacing: _fontSize * 0.16,
+    color: AppColors.forest,
+  );
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
       label: 'NEPAL',
       child: LayoutBuilder(
-      builder: (context, constraints) {
-        final w = constraints.maxWidth;
+        builder: (context, constraints) {
+          final w = constraints.maxWidth;
 
-        return SizedBox(
-          width: w,
-          height: _fontSize * 1.4,
-          child: Stack(
-            children: [
-              ...List.generate(5, (i) {
-              final srcX = _sourceX[i] * w;
-              final tgtX = _targetSlotX[_slotMap[i]] * w;
-              final t = xMorphs[i].value;
-              final currentX = srcX + (tgtX - srcX) * t;
+          return SizedBox(
+            width: w,
+            height: _fontSize * 1.4,
+            child: Stack(
+              children: [
+                ...List.generate(5, (i) {
+                  final srcX = _sourceX[i] * w;
+                  final tgtX = _targetSlotX[_slotMap[i]] * w;
+                  final t = xMorphs[i].value;
+                  final currentX = srcX + (tgtX - srcX) * t;
 
-              // Slot 3 = 'A' → crossfade to mountain icon
-              if (i == 3) {
-                return Positioned(
-                  left: currentX - _fontSize * 0.5,
-                  top: 0,
-                  child: Opacity(
-                    opacity: letterFades[i].value,
-                    child: SizedBox(
-                      width: _fontSize,
-                      height: _fontSize * 1.4,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // 'A' fades out
-                          Opacity(
-                            opacity: letterAFade.value,
-                            child: Text('A', style: _letterStyle),
+                  // Slot 3 = 'A' → crossfade to mountain icon
+                  if (i == 3) {
+                    return Positioned(
+                      left: currentX - _fontSize * 0.5,
+                      top: 0,
+                      child: Opacity(
+                        opacity: letterFades[i].value,
+                        child: SizedBox(
+                          width: _fontSize,
+                          height: _fontSize * 1.4,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // 'A' fades out
+                              Opacity(
+                                opacity: letterAFade.value,
+                                child: Text('A', style: _letterStyle),
+                              ),
+                              // Mountain icon fades in
+                              Opacity(
+                                opacity: iconFade.value,
+                                child: const Icon(
+                                  Icons.landscape_outlined,
+                                  size: _fontSize * 0.9,
+                                  color: AppColors.forest,
+                                ),
+                              ),
+                            ],
                           ),
-                          // Mountain icon fades in
-                          Opacity(
-                            opacity: iconFade.value,
-                            child: const Icon(
-                              Icons.landscape_outlined,
-                              size: _fontSize * 0.9,
-                              color: AppColors.forest,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
-                );
-              }
+                    );
+                  }
 
-              // All other letters: fade in, then slide to position
-              return Positioned(
-                left: currentX - _fontSize * 0.35,
-                top: 0,
-                child: Opacity(
-                  opacity: letterFades[i].value,
-                  child: Text(_labels[i], style: _letterStyle),
-                ),
-              );
-              }),
-              // Nepal flag — sits just right of the settled 'E', same
-              // cap-height as the wordmark letters. Anchored off the same
-              // morph math as source-index 1 ('E') so it tracks alongside
-              // it instead of being pinned to a hardcoded position.
-              Builder(builder: (context) {
-                const int eSourceIndex = 1;
-                final eSrcX = _sourceX[eSourceIndex] * w;
-                final eTgtX = _targetSlotX[_slotMap[eSourceIndex]] * w;
-                final eCurrentX = eSrcX + (eTgtX - eSrcX) * xMorphs[eSourceIndex].value;
-                return Positioned(
-                  left: eCurrentX + _fontSize * 0.5,
-                  top: _fontSize * 0.2,
-                  child: Opacity(
-                    opacity: flagFade.value,
-                    child: const Text(
-                      // Emoji glyphs fill much more of their em-box than a
-                      // serif capital does at the same fontSize — 0.62x is
-                      // what actually matches the letters' visible size.
-                      '🇳🇵',
-                      style: TextStyle(fontSize: _fontSize * 0.62),
+                  // All other letters: fade in, then slide to position
+                  return Positioned(
+                    left: currentX - _fontSize * 0.35,
+                    top: 0,
+                    child: Opacity(
+                      opacity: letterFades[i].value,
+                      child: Text(_labels[i], style: _letterStyle),
                     ),
-                  ),
-                );
-              }),
-            ],
-          ),
-        );
-      },
+                  );
+                }),
+                // Nepal flag — sits just right of the settled 'E', same
+                // cap-height as the wordmark letters. Anchored off the same
+                // morph math as source-index 1 ('E') so it tracks alongside
+                // it instead of being pinned to a hardcoded position.
+                Builder(
+                  builder: (context) {
+                    const int eSourceIndex = 1;
+                    final eSrcX = _sourceX[eSourceIndex] * w;
+                    final eTgtX = _targetSlotX[_slotMap[eSourceIndex]] * w;
+                    final eCurrentX =
+                        eSrcX + (eTgtX - eSrcX) * xMorphs[eSourceIndex].value;
+                    return Positioned(
+                      left: eCurrentX + _fontSize * 0.5,
+                      top: _fontSize * 0.2,
+                      child: Opacity(
+                        opacity: flagFade.value,
+                        child: const Text(
+                          // Emoji glyphs fill much more of their em-box than a
+                          // serif capital does at the same fontSize — 0.62x is
+                          // what actually matches the letters' visible size.
+                          '🇳🇵',
+                          style: TextStyle(fontSize: _fontSize * 0.62),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

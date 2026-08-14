@@ -35,7 +35,7 @@ class TripMessage {
       body: json['body'] as String? ?? '',
       attachmentUrl: json['attachment_url'] as String?,
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
+          ? DateTime.parse(json['created_at'] as String).toUtc()
           : DateTime.now().toUtc(),
       isPending: json['is_pending'] as bool? ?? false,
       isFailed: json['is_failed'] as bool? ?? false,

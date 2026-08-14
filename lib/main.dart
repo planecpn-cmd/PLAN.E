@@ -7,8 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/supabase_client.dart';
-import 'core/scaled_app_viewport.dart';
 import 'core/onboarding_preferences.dart';
+import 'core/scaled_app_viewport.dart';
 import 'core/app_version.dart';
 import 'core/device_identity.dart';
 import 'core/remote_config_service.dart';
@@ -51,7 +51,8 @@ class PlanEApp extends ConsumerStatefulWidget {
   ConsumerState<PlanEApp> createState() => _PlanEAppState();
 }
 
-class _PlanEAppState extends ConsumerState<PlanEApp> with WidgetsBindingObserver {
+class _PlanEAppState extends ConsumerState<PlanEApp>
+    with WidgetsBindingObserver {
   StreamSubscription<AuthState>? _authSub;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
   DateTime? _pausedAt;
@@ -83,29 +84,34 @@ class _PlanEAppState extends ConsumerState<PlanEApp> with WidgetsBindingObserver
     // actually succeed.
     Connectivity().checkConnectivity().then((results) {
       if (mounted) {
-        ref.read(isOfflineProvider.notifier).setOffline(
-              results.every((r) => r == ConnectivityResult.none),
-            );
+        ref
+            .read(isOfflineProvider.notifier)
+            .setOffline(results.every((r) => r == ConnectivityResult.none));
       }
     });
     _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
-      ref.read(isOfflineProvider.notifier).setOffline(
-            results.every((r) => r == ConnectivityResult.none),
-          );
+      ref
+          .read(isOfflineProvider.notifier)
+          .setOffline(results.every((r) => r == ConnectivityResult.none));
     });
     // Google/Apple sign-in returns from the system browser via a deep link
     // with no code path of its own to navigate onward — this is that path.
     // Gated on oauthInFlightProvider so it doesn't also fire for the OTP
     // screens' own signedIn events, which navigate themselves.
     _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (data.event == AuthChangeEvent.passwordRecovery) {
+        router.go('/auth/set-new-password');
+        return;
+      }
       if (data.event == AuthChangeEvent.signedIn &&
           ref.read(oauthInFlightProvider)) {
         ref.read(oauthInFlightProvider.notifier).state = false;
         final deferred = ref.read(deferredActionProvider);
+        final destination = deferredActionDestination(deferred);
         if (deferred != null) {
           ref.read(deferredActionProvider.notifier).clear();
         }
-        router.go('/home');
+        router.go(destination);
       }
     });
   }
@@ -125,10 +131,9 @@ class _PlanEAppState extends ConsumerState<PlanEApp> with WidgetsBindingObserver
       });
     }
 
-    // Realtime push isn't available yet (see docs/OTA_UPDATES_PLAN.md §1.3 —
-    // [realtime] is disabled in supabase/config.toml), so a foreground-resume
-    // refresh is the update path for config changes made while the app was
-    // backgrounded.
+    // Remote config does not subscribe to Realtime, so foreground-resume is
+    // its update path for changes made while the app was backgrounded. Chat
+    // uses its own table-scoped Realtime stream.
     if (state == AppLifecycleState.resumed) {
       unawaited(ref.read(remoteConfigProvider.notifier).refresh());
     }
@@ -145,7 +150,8 @@ class _PlanEAppState extends ConsumerState<PlanEApp> with WidgetsBindingObserver
     } else {
       final pausedAt = _pausedAt;
       _pausedAt = null;
-      if (pausedAt != null && DateTime.now().difference(pausedAt) >= _splashReplayThreshold) {
+      if (pausedAt != null &&
+          DateTime.now().difference(pausedAt) >= _splashReplayThreshold) {
         router.go('/');
       }
     }

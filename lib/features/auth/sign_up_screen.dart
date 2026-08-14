@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/format.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
@@ -43,45 +42,46 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final name = _nameController.text.trim();
-    final emailOrPhone = _emailPhoneController.text.trim();
+    final email = _emailPhoneController.text.trim();
     final password = _passwordController.text;
 
-    final isEmail = emailOrPhone.contains('@');
-    final email = isEmail ? emailOrPhone : '';
-    final phone = isEmail ? null : emailOrPhone;
-
-    final success = await ref.read(authNotifierProvider.notifier).signUp(
-          email: email,
-          password: password,
-          fullName: name,
-          phone: phone,
-        );
+    final success = await ref
+        .read(authNotifierProvider.notifier)
+        .signUp(email: email, password: password, fullName: name);
 
     if (!mounted) return;
 
     if (success) {
       // Email confirmation is required (supabase/config.toml auth.email
       // .enable_confirmations), so signUp() succeeding does not yet mean a
-      // session exists — verify the OTP that was just emailed before
-      // treating the account as usable. Phone-only signups have no email to
-      // send a code to, so they go straight through as before.
+      // session exists. Verify the emailed OTP before treating the account as
+      // usable.
       final hasSession =
           ref.read(supabaseClientProvider).auth.currentSession != null;
-      if (isEmail && !hasSession) {
-        context.go('/auth/otp-verify', extra: {'email': email, 'purpose': 'signup'});
+      if (!hasSession) {
+        context.go(
+          '/auth/otp-verify',
+          extra: {'email': email, 'purpose': 'signup'},
+        );
         return;
       }
-      AppToast.show(context, message: l10n.accountCreatedSuccess, variant: AppToastVariant.success);
+      AppToast.show(
+        context,
+        message: l10n.accountCreatedSuccess,
+        variant: AppToastVariant.success,
+      );
       final deferred = ref.read(deferredActionProvider);
+      final destination = deferredActionDestination(deferred);
       if (deferred != null) {
         ref.read(deferredActionProvider.notifier).clear();
       }
-      context.go('/home');
+      context.go(destination);
     } else {
       final state = ref.read(authNotifierProvider);
       AppToast.show(
         context,
-        message: state.errorMessage ?? 'Failed to create account. Please try again.',
+        message:
+            state.errorMessage ?? 'Failed to create account. Please try again.',
         variant: AppToastVariant.error,
       );
     }
@@ -94,7 +94,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     } catch (e) {
       ref.read(oauthInFlightProvider.notifier).state = false;
       if (!mounted) return;
-      AppToast.show(context, message: 'Could not open sign-in. Please try again.', variant: AppToastVariant.error);
+      AppToast.show(
+        context,
+        message: 'Could not open sign-in. Please try again.',
+        variant: AppToastVariant.error,
+      );
     }
   }
 
@@ -142,12 +146,16 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 ],
                 Text(
                   'Create Your Account',
-                  style: AppTypography.headingLarge.copyWith(color: AppColors.deep),
+                  style: AppTypography.headingLarge.copyWith(
+                    color: AppColors.deep,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.sm8),
                 Text(
                   l10n.signUpSubtitle,
-                  style: AppTypography.bodyMedium.copyWith(color: AppColors.ink),
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.ink,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.xxl24),
 
@@ -156,7 +164,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   label: l10n.fullName,
                   hint: 'Enter your full name',
                   controller: _nameController,
-                  prefixIcon: const Icon(Icons.person_outline, color: AppColors.forest),
+                  prefixIcon: const Icon(
+                    Icons.person_outline,
+                    color: AppColors.forest,
+                  ),
                   validator: (val) {
                     if (val == null || val.trim().isEmpty) {
                       return 'Please enter your name';
@@ -166,20 +177,25 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 ),
                 const SizedBox(height: AppSpacing.lg16),
 
-                // Email / Phone input
+                // Email input. Phone auth is disabled in the linked project.
                 AppTextField(
-                  label: l10n.emailOrPhoneLabel,
-                  hint: 'e.g. name@example.com or 98XXXXXXXX',
+                  label: 'Email Address',
+                  hint: 'e.g. name@example.com',
                   controller: _emailPhoneController,
                   keyboardType: TextInputType.emailAddress,
-                  prefixIcon: const Icon(Icons.contact_mail_outlined, color: AppColors.forest),
+                  prefixIcon: const Icon(
+                    Icons.contact_mail_outlined,
+                    color: AppColors.forest,
+                  ),
                   validator: (val) {
                     if (val == null || val.trim().isEmpty) {
-                      return 'Please enter an email or phone number';
+                      return 'Please enter your email address';
                     }
                     final input = val.trim();
-                    if (!input.contains('@') && !AppFormatters.isNepaliPhone(input)) {
-                      return 'Enter a valid email or Nepali phone number (98XXXXXXXX)';
+                    if (!RegExp(
+                      r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
+                    ).hasMatch(input)) {
+                      return 'Enter a valid email address';
                     }
                     return null;
                   },
@@ -192,11 +208,16 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   hint: 'At least 6 characters',
                   controller: _passwordController,
                   obscureText: _obscurePassword,
-                  prefixIcon: const Icon(Icons.lock_outline, color: AppColors.forest),
+                  prefixIcon: const Icon(
+                    Icons.lock_outline,
+                    color: AppColors.forest,
+                  ),
                   suffixIcon: IconButton(
                     constraints: AppTouchTarget.minConstraints,
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                       color: AppColors.forest,
                     ),
                     onPressed: () {
@@ -220,11 +241,16 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   hint: 'Re-enter your password',
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
-                  prefixIcon: const Icon(Icons.lock_outline, color: AppColors.forest),
+                  prefixIcon: const Icon(
+                    Icons.lock_outline,
+                    color: AppColors.forest,
+                  ),
                   suffixIcon: IconButton(
                     constraints: AppTouchTarget.minConstraints,
                     icon: Icon(
-                      _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                      _obscureConfirmPassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                       color: AppColors.forest,
                     ),
                     onPressed: () {
@@ -254,15 +280,23 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
                 Row(
                   children: [
-                    const Expanded(child: Divider(color: AppColors.borderSubtle)),
+                    const Expanded(
+                      child: Divider(color: AppColors.borderSubtle),
+                    ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md12,
+                      ),
                       child: Text(
                         'OR',
-                        style: AppTypography.bodyMedium.copyWith(color: AppColors.ink),
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.ink,
+                        ),
                       ),
                     ),
-                    const Expanded(child: Divider(color: AppColors.borderSubtle)),
+                    const Expanded(
+                      child: Divider(color: AppColors.borderSubtle),
+                    ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.lg16),
@@ -280,7 +314,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     label: 'Continue with Apple',
                     // iconWidget, not icon: Apple's mark must stay black
                     // regardless of button variant, not tinted to match text.
-                    iconWidget: const Icon(Icons.apple, size: 20.0, color: Colors.black),
+                    iconWidget: const Icon(
+                      Icons.apple,
+                      size: 20.0,
+                      color: Colors.black,
+                    ),
                     isFullWidth: true,
                     minHeight: AppTouchTarget.minSize,
                     onPressed: () => _handleOAuthSignIn(OAuthProvider.apple),
@@ -293,7 +331,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   children: [
                     Text(
                       'Already have an account?',
-                      style: AppTypography.bodyMedium.copyWith(color: AppColors.ink),
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.ink,
+                      ),
                     ),
                     ConstrainedBox(
                       constraints: const BoxConstraints(

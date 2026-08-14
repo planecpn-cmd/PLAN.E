@@ -40,25 +40,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final emailOrPhone = _emailPhoneController.text.trim();
     final password = _passwordController.text;
 
-    final success = await ref.read(authNotifierProvider.notifier).signIn(
-          emailOrPhone: emailOrPhone,
-          password: password,
-        );
+    final success = await ref
+        .read(authNotifierProvider.notifier)
+        .signIn(emailOrPhone: emailOrPhone, password: password);
 
     if (!mounted) return;
 
     if (success) {
-      AppToast.show(context, message: l10n.loggedInSuccess, variant: AppToastVariant.success);
+      AppToast.show(
+        context,
+        message: l10n.loggedInSuccess,
+        variant: AppToastVariant.success,
+      );
       final deferred = ref.read(deferredActionProvider);
+      final destination = deferredActionDestination(deferred);
       if (deferred != null) {
         ref.read(deferredActionProvider.notifier).clear();
       }
-      context.go('/home');
+      context.go(destination);
     } else {
       final state = ref.read(authNotifierProvider);
       AppToast.show(
         context,
-        message: state.errorMessage ?? 'Invalid email/phone or password. Please try again.',
+        message:
+            state.errorMessage ??
+            'Invalid email/phone or password. Please try again.',
         variant: AppToastVariant.error,
       );
     }
@@ -71,7 +77,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } catch (e) {
       ref.read(oauthInFlightProvider.notifier).state = false;
       if (!mounted) return;
-      AppToast.show(context, message: 'Could not open sign-in. Please try again.', variant: AppToastVariant.error);
+      AppToast.show(
+        context,
+        message: 'Could not open sign-in. Please try again.',
+        variant: AppToastVariant.error,
+      );
     }
   }
 
@@ -119,12 +129,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ],
                 Text(
                   l10n.welcomeBack,
-                  style: AppTypography.headingLarge.copyWith(color: AppColors.deep),
+                  style: AppTypography.headingLarge.copyWith(
+                    color: AppColors.deep,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.sm8),
                 Text(
                   l10n.loginSubtitle,
-                  style: AppTypography.bodyMedium.copyWith(color: AppColors.ink),
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.ink,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.xxl24),
 
@@ -134,13 +148,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   hint: 'e.g. name@example.com or 98XXXXXXXX',
                   controller: _emailPhoneController,
                   keyboardType: TextInputType.emailAddress,
-                  prefixIcon: const Icon(Icons.contact_mail_outlined, color: AppColors.forest),
+                  prefixIcon: const Icon(
+                    Icons.contact_mail_outlined,
+                    color: AppColors.forest,
+                  ),
                   validator: (val) {
                     if (val == null || val.trim().isEmpty) {
                       return 'Please enter an email or phone number';
                     }
                     final input = val.trim();
-                    if (!input.contains('@') && !AppFormatters.isNepaliPhone(input)) {
+                    if (!input.contains('@') &&
+                        !AppFormatters.isNepaliPhone(input)) {
                       return 'Enter a valid email or Nepali phone number (98XXXXXXXX)';
                     }
                     return null;
@@ -154,11 +172,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   hint: 'Enter your password',
                   controller: _passwordController,
                   obscureText: _obscurePassword,
-                  prefixIcon: const Icon(Icons.lock_outline, color: AppColors.forest),
+                  prefixIcon: const Icon(
+                    Icons.lock_outline,
+                    color: AppColors.forest,
+                  ),
                   suffixIcon: IconButton(
                     constraints: AppTouchTarget.minConstraints,
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                       color: AppColors.forest,
                     ),
                     onPressed: () {
@@ -210,15 +233,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 Row(
                   children: [
-                    const Expanded(child: Divider(color: AppColors.borderSubtle)),
+                    const Expanded(
+                      child: Divider(color: AppColors.borderSubtle),
+                    ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md12,
+                      ),
                       child: Text(
                         'OR',
-                        style: AppTypography.bodyMedium.copyWith(color: AppColors.ink),
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.ink,
+                        ),
                       ),
                     ),
-                    const Expanded(child: Divider(color: AppColors.borderSubtle)),
+                    const Expanded(
+                      child: Divider(color: AppColors.borderSubtle),
+                    ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.lg16),
@@ -236,7 +267,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     label: 'Continue with Apple',
                     // iconWidget, not icon: Apple's mark must stay black
                     // regardless of button variant, not tinted to match text.
-                    iconWidget: const Icon(Icons.apple, size: 20.0, color: Colors.black),
+                    iconWidget: const Icon(
+                      Icons.apple,
+                      size: 20.0,
+                      color: Colors.black,
+                    ),
                     isFullWidth: true,
                     minHeight: AppTouchTarget.minSize,
                     onPressed: () => _handleOAuthSignIn(OAuthProvider.apple),
@@ -250,7 +285,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   children: [
                     Text(
                       l10n.dontHaveAccount,
-                      style: AppTypography.bodyMedium.copyWith(color: AppColors.ink),
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.ink,
+                      ),
                     ),
                     ConstrainedBox(
                       constraints: const BoxConstraints(

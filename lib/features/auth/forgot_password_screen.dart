@@ -14,7 +14,8 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() =>
+      _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
@@ -31,17 +32,21 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final input = _emailPhoneController.text.trim();
-    final success = await ref.read(authNotifierProvider.notifier).resetPassword(input);
+    final success = await ref
+        .read(authNotifierProvider.notifier)
+        .resetPassword(input);
 
     if (!mounted) return;
 
     if (success) {
-      // Email carries a 6-digit OTP (supabase/templates/recovery.html) —
-      // works without a domain to host a reset link on. Phone reset has no
-      // OTP-entry screen wired up yet, so it falls back to the static
-      // "check your messages" screen.
+      // Email recovery uses the six-digit token exposed by the hosted
+      // Supabase recovery template. Phone recovery keeps the generic result
+      // screen until an SMS verification screen is available.
       if (input.contains('@')) {
-        context.go('/auth/otp-verify', extra: {'email': input, 'purpose': 'recovery'});
+        context.go(
+          '/auth/otp-verify',
+          extra: {'email': input, 'purpose': 'recovery'},
+        );
       } else {
         context.go('/auth/reset-result');
       }
@@ -49,7 +54,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       final state = ref.read(authNotifierProvider);
       AppToast.show(
         context,
-        message: state.errorMessage ?? 'Failed to send reset link. Please verify your email/phone.',
+        message:
+            state.errorMessage ??
+            'Failed to send reset link. Please verify your email/phone.',
         variant: AppToastVariant.error,
       );
     }
@@ -80,12 +87,16 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               children: [
                 Text(
                   l10n.forgotPassword,
-                  style: AppTypography.headingLarge.copyWith(color: AppColors.deep),
+                  style: AppTypography.headingLarge.copyWith(
+                    color: AppColors.deep,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.sm8),
                 Text(
                   l10n.forgotPasswordSubtitle,
-                  style: AppTypography.bodyMedium.copyWith(color: AppColors.ink),
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.ink,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.xxl24),
 
@@ -94,13 +105,17 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   hint: 'e.g. name@example.com or 98XXXXXXXX',
                   controller: _emailPhoneController,
                   keyboardType: TextInputType.emailAddress,
-                  prefixIcon: const Icon(Icons.mark_email_read_outlined, color: AppColors.forest),
+                  prefixIcon: const Icon(
+                    Icons.mark_email_read_outlined,
+                    color: AppColors.forest,
+                  ),
                   validator: (val) {
                     if (val == null || val.trim().isEmpty) {
                       return 'Please enter an email or phone number';
                     }
                     final input = val.trim();
-                    if (!input.contains('@') && !AppFormatters.isNepaliPhone(input)) {
+                    if (!input.contains('@') &&
+                        !AppFormatters.isNepaliPhone(input)) {
                       return 'Enter a valid email or Nepali phone number (98XXXXXXXX)';
                     }
                     return null;

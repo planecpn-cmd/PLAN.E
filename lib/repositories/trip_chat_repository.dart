@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/chat_ordering.dart';
 import '../core/offline_cache.dart';
 import '../models/trip_message.dart';
 
@@ -29,7 +30,9 @@ class TripChatRepository {
       // message's sender name. The raw data is already exactly the shape
       // fromJson expects.
       await OfflineCache.write(cacheKey, data);
-      return data.map((json) => TripMessage.fromJson(json as Map<String, dynamic>)).toList();
+      return mergeTripMessagesChronologically(
+        data.map((json) => TripMessage.fromJson(json as Map<String, dynamic>)),
+      );
     } catch (_) {
       final cached = await OfflineCache.read<List<TripMessage>>(
         cacheKey,
@@ -37,7 +40,7 @@ class TripChatRepository {
             .map((e) => TripMessage.fromJson(e as Map<String, dynamic>))
             .toList(),
       );
-      if (cached != null) return cached;
+      if (cached != null) return mergeTripMessagesChronologically(cached);
       rethrow;
     }
   }
@@ -49,21 +52,28 @@ class TripChatRepository {
         .stream(primaryKey: ['id'])
         .eq('booking_id', bookingId)
         .order('created_at', ascending: true)
-        .map((data) => data.map((json) => TripMessage.fromJson(json)).toList());
+        .map(
+          (data) => mergeTripMessagesChronologically(
+            data.map((json) => TripMessage.fromJson(json)),
+          ),
+        );
   }
 
   /// Insert message into Supabase database
   Future<TripMessage> sendMessage({
     required String bookingId,
     required String body,
+    required String messageId,
     String? attachmentUrl,
   }) async {
     final currentUser = _client.auth.currentUser;
-    final String senderId = currentUser?.id ?? '00000000-0000-0000-0000-000000000000';
+    final String senderId =
+        currentUser?.id ?? '00000000-0000-0000-0000-000000000000';
 
     final response = await _client
         .from('trip_messages')
         .insert({
+          'id': messageId,
           'booking_id': bookingId,
           'sender_id': senderId,
           'body': body,

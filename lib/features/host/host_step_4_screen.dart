@@ -40,7 +40,9 @@ class _HostStep4ScreenState extends ConsumerState<HostStep4Screen> {
       text: data.accountName.isNotEmpty ? data.accountName : 'Siddharth Gurung',
     );
     _accountNoController = TextEditingController(
-      text: data.accountNumber.isNotEmpty ? data.accountNumber : '01901010023849',
+      text: data.accountNumber.isNotEmpty
+          ? data.accountNumber
+          : '01901010023849',
     );
     _branchController = TextEditingController(
       text: data.branch.isNotEmpty ? data.branch : 'Kantipath Main Branch',
@@ -126,14 +128,21 @@ class _HostStep4ScreenState extends ConsumerState<HostStep4Screen> {
                 ),
                 const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.sage,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: const Text(
                     'Step 4 of 4',
-                    style: TextStyle(fontSize: 12, color: AppColors.forest, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.forest,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -148,7 +157,12 @@ class _HostStep4ScreenState extends ConsumerState<HostStep4Screen> {
                 ),
                 const SizedBox(height: 16),
                 const ProgressSteps(
-                  steps: ['Basic Info', 'Experience', 'ID Verify', 'Bank Details'],
+                  steps: [
+                    'Basic Info',
+                    'Experience',
+                    'ID Verify',
+                    'Bank Details',
+                  ],
                   currentStep: 3,
                 ),
                 const SizedBox(height: 20),
@@ -159,7 +173,11 @@ class _HostStep4ScreenState extends ConsumerState<HostStep4Screen> {
                     children: [
                       const Text(
                         'Bank / Payout Partner',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.forest),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.forest,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       DropdownButtonFormField<String>(
@@ -167,20 +185,30 @@ class _HostStep4ScreenState extends ConsumerState<HostStep4Screen> {
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: AppColors.white,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(color: AppColors.border),
+                            borderSide: const BorderSide(
+                              color: AppColors.border,
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(color: AppColors.border),
+                            borderSide: const BorderSide(
+                              color: AppColors.border,
+                            ),
                           ),
                         ),
                         items: _banks.map((b) {
                           return DropdownMenuItem(
                             value: b,
-                            child: Text(b, style: const TextStyle(fontSize: 14)),
+                            child: Text(
+                              b,
+                              style: const TextStyle(fontSize: 14),
+                            ),
                           );
                         }).toList(),
                         onChanged: (val) {

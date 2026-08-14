@@ -22,9 +22,6 @@ class AppSupabaseClient {
 
     String url = const String.fromEnvironment('SUPABASE_URL');
     String anonKey = const String.fromEnvironment('SUPABASE_ANON_KEY');
-    String demoEmail = '';
-    String demoPassword = '';
-
     // Load any missing value from env/local.json. A --dart-define can override
     // either setting independently without discarding the other local value.
     if (url.isEmpty || anonKey.isEmpty) {
@@ -38,8 +35,6 @@ class AppSupabaseClient {
         if (anonKey.isEmpty) {
           anonKey = config['SUPABASE_ANON_KEY'] as String? ?? '';
         }
-        demoEmail = config['DEMO_EMAIL'] as String? ?? '';
-        demoPassword = config['DEMO_PASSWORD'] as String? ?? '';
       } catch (e) {
         throw StateError(
           'Failed to load Supabase configuration from env/local.json or --dart-define: $e',
@@ -62,14 +57,6 @@ class AppSupabaseClient {
       ),
     );
     _url = url;
-    if (Supabase.instance.client.auth.currentUser == null &&
-        demoEmail.isNotEmpty &&
-        demoPassword.isNotEmpty) {
-      await Supabase.instance.client.auth.signInWithPassword(
-        email: demoEmail,
-        password: demoPassword,
-      );
-    }
     _initialized = true;
   }
 

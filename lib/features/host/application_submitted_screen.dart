@@ -25,15 +25,19 @@ class ApplicationSubmittedScreen extends ConsumerWidget {
           value: asyncApp,
           onRetry: () => ref.refresh(myHostApplicationProvider),
           data: (realApp) {
-            final HostAppStatus appStatus = realApp?.status ??
-                HostAppStatus.fromString(hostData.status);
+            final HostAppStatus appStatus =
+                realApp?.status ?? HostAppStatus.fromString(hostData.status);
 
             final String hostName = hostData.fullName.isNotEmpty
                 ? hostData.fullName
                 : 'Siddharth Gurung';
-            final String district = realApp?.location ??
-                (hostData.district.isNotEmpty ? hostData.district : 'Kathmandu');
-            final String listingTitle = realApp?.title ??
+            final String district =
+                realApp?.location ??
+                (hostData.district.isNotEmpty
+                    ? hostData.district
+                    : 'Kathmandu');
+            final String listingTitle =
+                realApp?.title ??
                 (hostData.experienceTitle.isNotEmpty
                     ? hostData.experienceTitle
                     : 'Kathmandu Valley Heritage Village Walk');
@@ -56,7 +60,11 @@ class ApplicationSubmittedScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.check, color: AppColors.white, size: 40),
+                    child: const Icon(
+                      Icons.check,
+                      color: AppColors.white,
+                      size: 40,
+                    ),
                   ),
                   const SizedBox(height: 18),
                   const Text(
@@ -99,18 +107,9 @@ class ApplicationSubmittedScreen extends ConsumerWidget {
                         const SizedBox(height: 16),
                         _LiveStatusTimeline(status: appStatus),
                         const Divider(height: 24),
-                        _DetailRow(
-                          label: 'Host Name',
-                          value: hostName,
-                        ),
-                        _DetailRow(
-                          label: 'District',
-                          value: district,
-                        ),
-                        _DetailRow(
-                          label: 'Listing Title',
-                          value: listingTitle,
-                        ),
+                        _DetailRow(label: 'Host Name', value: hostName),
+                        _DetailRow(label: 'District', value: district),
+                        _DetailRow(label: 'Listing Title', value: listingTitle),
                         _DetailRow(
                           label: 'Price',
                           value: AppFormatters.formatNpr(pricePaisa),
@@ -118,7 +117,9 @@ class ApplicationSubmittedScreen extends ConsumerWidget {
                         if (realApp?.submittedAt != null)
                           _DetailRow(
                             label: 'Submitted On',
-                            value: AppFormatters.formatTripDate(realApp!.submittedAt!),
+                            value: AppFormatters.formatTripDate(
+                              realApp!.submittedAt!,
+                            ),
                           ),
                       ],
                     ),
@@ -128,7 +129,11 @@ class ApplicationSubmittedScreen extends ConsumerWidget {
                   const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.eco_outlined, size: 36, color: AppColors.forest),
+                      Icon(
+                        Icons.eco_outlined,
+                        size: 36,
+                        color: AppColors.forest,
+                      ),
                       SizedBox(width: 12),
                       Flexible(
                         child: Text(
@@ -256,10 +261,18 @@ class _LiveStatusTimeline extends StatelessWidget {
                     ),
                   ),
                   child: isPassed
-                      ? const Icon(Icons.check, color: AppColors.white, size: 14)
+                      ? const Icon(
+                          Icons.check,
+                          color: AppColors.white,
+                          size: 14,
+                        )
                       : isCurrent
-                          ? const Icon(Icons.circle, color: AppColors.white, size: 10)
-                          : null,
+                      ? const Icon(
+                          Icons.circle,
+                          color: AppColors.white,
+                          size: 10,
+                        )
+                      : null,
                 ),
                 if (!isLast)
                   Container(
@@ -280,8 +293,9 @@ class _LiveStatusTimeline extends StatelessWidget {
                       steps[index]['title']!,
                       style: TextStyle(
                         fontSize: 14,
-                        fontWeight:
-                            (isPassed || isCurrent) ? FontWeight.bold : FontWeight.normal,
+                        fontWeight: (isPassed || isCurrent)
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                         color: stepColor,
                       ),
                     ),
@@ -310,10 +324,7 @@ class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _DetailRow({
-    required this.label,
-    required this.value,
-  });
+  const _DetailRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -326,7 +337,10 @@ class _DetailRow extends StatelessWidget {
             width: 110,
             child: Text(
               label,
-              style: const TextStyle(fontSize: 12, color: AppColors.disabledText),
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.disabledText,
+              ),
             ),
           ),
           Expanded(

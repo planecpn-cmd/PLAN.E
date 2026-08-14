@@ -38,7 +38,9 @@ final oauthInFlightProvider = StateProvider<bool>((ref) => false);
 /// Home screen's location label — starts as a static default and is
 /// overwritten with a reverse-geocoded city once the user taps it to use
 /// their real GPS location (see HomeScreen's location row).
-final homeLocationLabelProvider = StateProvider<String>((ref) => 'Kathmandu, Nepal');
+final homeLocationLabelProvider = StateProvider<String>(
+  (ref) => 'Kathmandu, Nepal',
+);
 final homeLocationLoadingProvider = StateProvider<bool>((ref) => false);
 
 final experienceRepositoryProvider = Provider<ExperienceRepository>((ref) {
@@ -164,7 +166,9 @@ final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
   return NotificationRepository(ref.watch(supabaseClientProvider));
 });
 
-final notificationsProvider = FutureProvider<List<AppNotification>>((ref) async {
+final notificationsProvider = FutureProvider<List<AppNotification>>((
+  ref,
+) async {
   final repo = ref.watch(notificationRepositoryProvider);
   return repo.getNotifications();
 });
@@ -183,7 +187,11 @@ class AiItineraryState {
   final String? errorMessage;
   final GeneratedItinerary? result;
 
-  const AiItineraryState({this.isLoading = false, this.errorMessage, this.result});
+  const AiItineraryState({
+    this.isLoading = false,
+    this.errorMessage,
+    this.result,
+  });
 
   AiItineraryState copyWith({
     bool? isLoading,
@@ -296,6 +304,15 @@ final deferredActionProvider =
       return DeferredActionNotifier();
     });
 
+/// Returns the safe post-authentication destination for a deferred action.
+/// Entity identifiers are not interpreted as authorization claims.
+String deferredActionDestination(DeferredAction? action) {
+  return switch (action?.screenId) {
+    'HOST_APPLICATION' => '/host',
+    _ => '/home',
+  };
+}
+
 class NetworkStateNotifier extends StateNotifier<bool> {
   NetworkStateNotifier() : super(false);
 
@@ -308,8 +325,8 @@ class NetworkStateNotifier extends StateNotifier<bool> {
   }
 }
 
-final isOfflineProvider =
-    StateNotifierProvider<NetworkStateNotifier, bool>((ref) {
-      return NetworkStateNotifier();
-    });
-
+final isOfflineProvider = StateNotifierProvider<NetworkStateNotifier, bool>((
+  ref,
+) {
+  return NetworkStateNotifier();
+});

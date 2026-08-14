@@ -42,13 +42,19 @@ class _SetNewPasswordScreenState extends ConsumerState<SetNewPasswordScreen> {
     if (!mounted) return;
 
     if (success) {
-      AppToast.show(context, message: 'Password updated!', variant: AppToastVariant.success);
-      context.go('/home');
+      AppToast.show(
+        context,
+        message: 'Password updated. Sign in with your new password.',
+        variant: AppToastVariant.success,
+      );
+      context.go('/auth/login');
     } else {
       final state = ref.read(authNotifierProvider);
       AppToast.show(
         context,
-        message: state.errorMessage ?? 'Failed to update password. Please try again.',
+        message:
+            state.errorMessage ??
+            'Failed to update password. Please try again.',
         variant: AppToastVariant.error,
       );
     }
@@ -78,12 +84,16 @@ class _SetNewPasswordScreenState extends ConsumerState<SetNewPasswordScreen> {
               children: [
                 Text(
                   'Set a New Password',
-                  style: AppTypography.headingLarge.copyWith(color: AppColors.deep),
+                  style: AppTypography.headingLarge.copyWith(
+                    color: AppColors.deep,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.sm8),
                 Text(
                   'Your new password must be different from your previous one.',
-                  style: AppTypography.bodyMedium.copyWith(color: AppColors.ink),
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.ink,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.xxl24),
 
@@ -92,14 +102,20 @@ class _SetNewPasswordScreenState extends ConsumerState<SetNewPasswordScreen> {
                   hint: 'At least 6 characters',
                   controller: _passwordController,
                   obscureText: _obscurePassword,
-                  prefixIcon: const Icon(Icons.lock_outline, color: AppColors.forest),
+                  prefixIcon: const Icon(
+                    Icons.lock_outline,
+                    color: AppColors.forest,
+                  ),
                   suffixIcon: IconButton(
                     constraints: AppTouchTarget.minConstraints,
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                       color: AppColors.forest,
                     ),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
                   validator: (val) {
                     if (val == null || val.length < 6) {
@@ -115,11 +131,16 @@ class _SetNewPasswordScreenState extends ConsumerState<SetNewPasswordScreen> {
                   hint: 'Re-enter your password',
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
-                  prefixIcon: const Icon(Icons.lock_outline, color: AppColors.forest),
+                  prefixIcon: const Icon(
+                    Icons.lock_outline,
+                    color: AppColors.forest,
+                  ),
                   suffixIcon: IconButton(
                     constraints: AppTouchTarget.minConstraints,
                     icon: Icon(
-                      _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                      _obscureConfirmPassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                       color: AppColors.forest,
                     ),
                     onPressed: () => setState(

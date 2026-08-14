@@ -14,10 +14,7 @@ import 'trip_tools_strings.dart';
 class TripChatScreen extends ConsumerStatefulWidget {
   final String bookingId;
 
-  const TripChatScreen({
-    super.key,
-    required this.bookingId,
-  });
+  const TripChatScreen({super.key, required this.bookingId});
 
   @override
   ConsumerState<TripChatScreen> createState() => _TripChatScreenState();
@@ -26,6 +23,9 @@ class TripChatScreen extends ConsumerStatefulWidget {
 class _TripChatScreenState extends ConsumerState<TripChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  String? _lastNewestMessageId;
+  bool _didInitialScroll = false;
+  bool _forceScrollToBottom = false;
 
   @override
   void dispose() {
@@ -39,16 +39,37 @@ class _TripChatScreenState extends ConsumerState<TripChatScreen> {
     if (text.trim().isEmpty) return;
 
     _messageController.clear();
+    _forceScrollToBottom = true;
     ref.read(tripChatProvider(widget.bookingId).notifier).sendMessage(text);
-
-    _scrollToBottom();
   }
 
-  void _scrollToBottom() {
+  void _positionForMessages(List<TripMessage> messages) {
+    if (messages.isEmpty) return;
+    final newestId = messages.last.id;
+    if (_didInitialScroll && newestId == _lastNewestMessageId) return;
+
+    final wasNearBottom =
+        !_scrollController.hasClients ||
+        _scrollController.position.maxScrollExtent -
+                _scrollController.position.pixels <=
+            96;
+    final shouldScroll =
+        !_didInitialScroll || _forceScrollToBottom || wasNearBottom;
+    _lastNewestMessageId = newestId;
+    _didInitialScroll = true;
+    _forceScrollToBottom = false;
+    if (!shouldScroll) return;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
+      if (!mounted || !_scrollController.hasClients) return;
+      final bottom = _scrollController.position.maxScrollExtent;
+      if (_scrollController.position.pixels == bottom) return;
+      if (_scrollController.position.pixels == 0 &&
+          _lastNewestMessageId == messages.last.id) {
+        _scrollController.jumpTo(bottom);
+      } else {
         _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
+          bottom,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
@@ -88,21 +109,26 @@ class _TripChatScreenState extends ConsumerState<TripChatScreen> {
                   description: TripToolsStrings.chatEmptyDesc,
                   actionLabel: null,
                 ),
-                onRetry: () => ref.invalidate(tripChatProvider(widget.bookingId)),
+                onRetry: () =>
+                    ref.invalidate(tripChatProvider(widget.bookingId)),
                 data: (messages) {
+                  _positionForMessages(messages);
                   return ListView.builder(
                     controller: _scrollController,
                     padding: AppSpacing.screenPadding,
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
                       final message = messages[index];
-                      final bool isMe = message.senderId == currentUserId ||
-                          message.senderName == TripToolsStrings.meSenderLabel ||
+                      final bool isMe =
+                          message.senderId == currentUserId ||
+                          message.senderName ==
+                              TripToolsStrings.meSenderLabel ||
                           message.isPending ||
                           message.isFailed;
 
                       return _buildMessageBubble(
                         context,
+                        key: ValueKey('trip-message-${message.id}'),
                         message: message,
                         isMe: isMe,
                       );
@@ -120,6 +146,7 @@ class _TripChatScreenState extends ConsumerState<TripChatScreen> {
 
   Widget _buildMessageBubble(
     BuildContext context, {
+    required Key key,
     required TripMessage message,
     required bool isMe,
   }) {
@@ -129,6 +156,7 @@ class _TripChatScreenState extends ConsumerState<TripChatScreen> {
     );
 
     return Align(
+      key: key,
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs4),
@@ -157,8 +185,9 @@ class _TripChatScreenState extends ConsumerState<TripChatScreen> {
           ],
         ),
         child: Column(
-          crossAxisAlignment:
-              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment: isMe
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
           children: [
             if (!isMe && message.senderName != null) ...[
               Text(
@@ -196,7 +225,9 @@ class _TripChatScreenState extends ConsumerState<TripChatScreen> {
                     height: 10,
                     child: CircularProgressIndicator(
                       strokeWidth: 1.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.ivory),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.ivory,
+                      ),
                     ),
                   ),
                 ],
@@ -246,9 +277,7 @@ class _TripChatScreenState extends ConsumerState<TripChatScreen> {
       ),
       decoration: const BoxDecoration(
         color: AppColors.cardBackground,
-        border: Border(
-          top: BorderSide(color: AppColors.borderSubtle),
-        ),
+        border: Border(top: BorderSide(color: AppColors.borderSubtle)),
       ),
       child: SafeArea(
         child: Row(

@@ -14,32 +14,51 @@ class HostRepository {
     required Uint8List bytes,
     required String fileName,
   }) async {
-    final userId = _client.auth.currentUser?.id ?? 'anonymous';
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final path = '$userId/${timestamp}_$fileName';
-
-    try {
-      await _client.storage.from('host-documents').uploadBinary(
-            path,
-            bytes,
-            fileOptions: const FileOptions(
-              upsert: true,
-              contentType: 'image/png',
-            ),
-          );
-      return path;
-    } catch (_) {
-      // Return generated relative path for mock/offline testing
-      return path;
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      throw const AuthException(
+        'Authentication is required to upload host documents.',
+      );
     }
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final normalizedName = fileName.trim().replaceAll(
+      RegExp(r'[^A-Za-z0-9._-]'),
+      '_',
+    );
+    if (normalizedName.isEmpty) {
+      throw ArgumentError.value(
+        fileName,
+        'fileName',
+        'A valid file name is required.',
+      );
+    }
+    final path = '$userId/${timestamp}_$normalizedName';
+    final lowerName = normalizedName.toLowerCase();
+    final contentType = lowerName.endsWith('.pdf')
+        ? 'application/pdf'
+        : lowerName.endsWith('.png')
+        ? 'image/png'
+        : 'image/jpeg';
+
+    await _client.storage
+        .from('host-documents')
+        .uploadBinary(
+          path,
+          bytes,
+          fileOptions: FileOptions(upsert: false, contentType: contentType),
+        );
+    return path;
   }
 
   /// Submit host application via Edge Function 'submit-host-application'.
   Future<bool> submitHostApplication(HostApplicationData data) async {
-    final userId = _client.auth.currentUser?.id;
+    if (_client.auth.currentUser == null) {
+      throw const AuthException(
+        'Authentication is required to submit a host application.',
+      );
+    }
 
     final payload = {
-      'user_id': userId,
       'fullName': data.fullName,
       'phone': data.phone,
       'district': data.district,
@@ -52,28 +71,25 @@ class HostRepository {
       'description': data.description,
       'idType': data.idType,
       'idNumber': data.idNumber,
-      'verificationDocPath': data.verificationDocPath.isNotEmpty
-          ? data.verificationDocPath
-          : 'host-documents/${userId ?? "user"}/id_doc.png',
+      'verificationDocPath': data.verificationDocPath,
       'bankName': data.bankName,
       'accountName': data.accountName,
       'accountNumber': data.accountNumber,
       'branch': data.branch,
     };
 
-    try {
-      final res = await _client.functions.invoke(
-        'submit-host-application',
-        body: payload,
-      );
-
-      if (res.status == 200 || res.status == 201) {
-        return true;
-      }
-      return true; // Fallback for mock server environment
-    } catch (_) {
-      return true; // Fallback for offline/mock testing
+    final response = await _client.functions.invoke(
+      'submit-host-application',
+      body: payload,
+    );
+    if (response.status != 200 && response.status != 201) {
+      final data = response.data;
+      final message = data is Map<String, dynamic>
+          ? data['error']?.toString()
+          : null;
+      throw StateError(message ?? 'Host application submission failed.');
     }
+    return true;
   }
 
   /// Fetch host application for the logged-in user.

@@ -1,7 +1,5 @@
 import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/supabase_client.dart';
-import '../../models/profile.dart';
 import '../../providers/app_providers.dart';
 
 class HostApplicationData {
@@ -148,11 +146,11 @@ class HostApplicationNotifier extends StateNotifier<HostApplicationData> {
     required String fileName,
   }) async {
     final repo = _ref.read(hostRepositoryProvider);
-    final docPath = await repo.uploadHostDocument(bytes: bytes, fileName: fileName);
-    state = state.copyWith(
-      idImageUploaded: true,
-      verificationDocPath: docPath,
+    final docPath = await repo.uploadHostDocument(
+      bytes: bytes,
+      fileName: fileName,
     );
+    state = state.copyWith(idImageUploaded: true, verificationDocPath: docPath);
     return docPath;
   }
 
@@ -171,31 +169,18 @@ class HostApplicationNotifier extends StateNotifier<HostApplicationData> {
   }
 
   Future<bool> submitApplication() async {
-    try {
-      final repo = _ref.read(hostRepositoryProvider);
-      final success = await repo.submitHostApplication(state);
-
-      final client = AppSupabaseClient.client;
-      final userId = client.auth.currentUser?.id;
-      if (userId != null) {
-        await client.from('profiles').update({
-          'role': UserRole.hostApplicant.toJson(),
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        }).eq('id', userId);
-      }
-
+    final repo = _ref.read(hostRepositoryProvider);
+    final success = await repo.submitHostApplication(state);
+    if (success) {
       state = state.copyWith(status: 'submitted');
       _ref.invalidate(myHostApplicationProvider);
       _ref.invalidate(profileProvider);
-      return success;
-    } catch (_) {
-      state = state.copyWith(status: 'submitted');
-      return true;
     }
+    return success;
   }
 }
 
 final hostApplicationProvider =
     StateNotifierProvider<HostApplicationNotifier, HostApplicationData>((ref) {
-  return HostApplicationNotifier(ref);
-});
+      return HostApplicationNotifier(ref);
+    });

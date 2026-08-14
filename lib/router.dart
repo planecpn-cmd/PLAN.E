@@ -51,6 +51,27 @@ import 'features/host/host_step_2_screen.dart';
 import 'features/host/host_step_3_screen.dart';
 import 'features/host/host_step_4_screen.dart';
 import 'features/host/application_submitted_screen.dart';
+import 'features/host/host_dashboard_screen.dart';
+import 'features/host/presentation/host_experiences_screen.dart';
+import 'features/host/presentation/host_experience_detail_screen.dart';
+import 'features/host/presentation/create_host_experience_screen.dart';
+import 'features/host/presentation/host_bookings_screen.dart';
+import 'features/host/presentation/host_booking_detail_screen.dart';
+import 'features/host/presentation/host_messages_screen.dart';
+import 'features/host/presentation/host_profile_screen.dart';
+import 'features/host/presentation/host_experience_preview_screen.dart';
+import 'features/host/presentation/host_experience_submitted_screen.dart';
+import 'features/host/presentation/host_listing_preview_screen.dart';
+import 'features/host/presentation/host_availability_screen.dart';
+import 'features/host/presentation/host_conversation_screen.dart';
+import 'features/host/presentation/host_guest_list_screen.dart';
+import 'features/host/presentation/host_traveler_detail_screen.dart';
+import 'features/host/presentation/widgets/host_mode_access_gate.dart';
+import 'features/host/presentation/widgets/host_application_auth_gate.dart';
+import 'features/host/presentation/host_business_screen.dart';
+import 'features/host/presentation/edit_host_profile_screen.dart';
+import 'features/host/presentation/host_departure_detail_screen.dart';
+import 'features/host/domain/host_mode_models.dart';
 
 import 'features/dev/routes_screen.dart';
 import 'features/notifications/notification_feed_screen.dart';
@@ -222,9 +243,8 @@ final GoRouter router = GoRouter(
         GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
         GoRoute(
           path: '/explore',
-          builder: (context, state) => ExploreScreen(
-            initialQuery: state.uri.queryParameters['query'],
-          ),
+          builder: (context, state) =>
+              ExploreScreen(initialQuery: state.uri.queryParameters['query']),
         ),
         GoRoute(
           path: '/search',
@@ -343,27 +363,206 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: '/host',
-      builder: (context, state) => const BecomeHostScreen(),
+      builder: (context, state) =>
+          const HostApplicationAuthGate(child: BecomeHostScreen()),
+    ),
+    GoRoute(
+      path: '/host/dashboard',
+      builder: (context, state) =>
+          const HostModeAccessGate(child: HostDashboardScreen()),
+    ),
+    GoRoute(
+      path: '/host/experiences',
+      builder: (context, state) => HostModeAccessGate(
+        child: HostExperiencesScreen(
+          initialFilter: _hostExperienceStatus(
+            state.uri.queryParameters['status'],
+          ),
+          hasInitialFilter: state.uri.queryParameters.containsKey('status'),
+        ),
+      ),
+    ),
+    GoRoute(
+      path: '/host/experiences/create',
+      builder: (context, state) =>
+          _hostModePage(const CreateHostExperienceScreen()),
+    ),
+    GoRoute(
+      path: '/host/experiences/create/preview',
+      builder: (context, state) =>
+          _hostModePage(const HostExperiencePreviewScreen()),
+    ),
+    GoRoute(
+      path: '/host/experiences/submitted',
+      builder: (context, state) =>
+          _hostModePage(const HostExperienceSubmittedScreen()),
+    ),
+    GoRoute(
+      path: '/host/experiences/:id/preview',
+      builder: (context, state) => _hostModePage(
+        HostListingPreviewScreen(id: state.pathParameters['id'] ?? ''),
+      ),
+    ),
+    GoRoute(
+      path: '/host/experiences/:id/edit',
+      builder: (context, state) => _hostModePage(
+        CreateHostExperienceScreen(experienceId: state.pathParameters['id']),
+      ),
+    ),
+    GoRoute(
+      path: '/host/experiences/:id/availability',
+      builder: (context, state) => _hostModePage(
+        HostAvailabilityScreen(id: state.pathParameters['id'] ?? ''),
+      ),
+    ),
+    GoRoute(
+      path: '/host/experiences/:id',
+      builder: (context, state) => _hostModePage(
+        HostExperienceDetailScreen(id: state.pathParameters['id'] ?? ''),
+      ),
+    ),
+    GoRoute(
+      path: '/host/bookings',
+      builder: (context, state) => HostModeAccessGate(
+        child: HostBookingsScreen(
+          initialFilter: _hostBookingStatus(
+            state.uri.queryParameters['status'],
+          ),
+          hasInitialFilter: state.uri.queryParameters.containsKey('status'),
+          experienceId: state.uri.queryParameters['experience'],
+        ),
+      ),
+    ),
+    GoRoute(
+      path: '/host/bookings/:id',
+      builder: (context, state) => _hostModePage(
+        HostBookingDetailScreen(id: state.pathParameters['id'] ?? ''),
+      ),
+    ),
+    GoRoute(
+      path: '/host/messages',
+      builder: (context, state) => HostModeAccessGate(
+        child: HostMessagesScreen(
+          initialQuery: state.uri.queryParameters['q'] ?? '',
+        ),
+      ),
+    ),
+    GoRoute(
+      path: '/host/messages/:id',
+      builder: (context, state) => _hostModePage(
+        HostConversationScreen(id: state.pathParameters['id'] ?? ''),
+      ),
+    ),
+    GoRoute(
+      path: '/host/departures/:experienceId',
+      builder: (context, state) => _hostModePage(
+        HostDepartureDetailScreen(
+          experienceId: state.pathParameters['experienceId'] ?? '',
+        ),
+      ),
+    ),
+    GoRoute(
+      path: '/host/departures/:experienceId/guests',
+      builder: (context, state) => _hostModePage(
+        HostGuestListScreen(
+          experienceId: state.pathParameters['experienceId'] ?? '',
+        ),
+      ),
+    ),
+    GoRoute(
+      path: '/host/bookings/:bookingId/travelers/:travelerId',
+      builder: (context, state) => _hostModePage(
+        HostTravelerDetailScreen(
+          bookingId: state.pathParameters['bookingId'] ?? '',
+          travelerId: state.pathParameters['travelerId'] ?? '',
+        ),
+      ),
+    ),
+    GoRoute(
+      path: '/host/profile',
+      builder: (context, state) =>
+          const HostModeAccessGate(child: HostProfileScreen()),
+    ),
+    GoRoute(
+      path: '/host/profile/public',
+      builder: (context, state) => _hostModePage(
+        const HostBusinessScreen(page: HostBusinessPage.publicProfile),
+      ),
+    ),
+    GoRoute(
+      path: '/host/profile/edit',
+      builder: (context, state) => _hostModePage(const EditHostProfileScreen()),
+    ),
+    GoRoute(
+      path: '/host/profile/verification',
+      builder: (context, state) => _hostModePage(
+        const HostBusinessScreen(page: HostBusinessPage.verification),
+      ),
+    ),
+    GoRoute(
+      path: '/host/profile/earnings',
+      builder: (context, state) => _hostModePage(
+        const HostBusinessScreen(page: HostBusinessPage.earnings),
+      ),
+    ),
+    GoRoute(
+      path: '/host/profile/reviews',
+      builder: (context, state) => _hostModePage(
+        const HostBusinessScreen(page: HostBusinessPage.reviews),
+      ),
+    ),
+    GoRoute(
+      path: '/host/profile/history',
+      builder: (context, state) => _hostModePage(
+        const HostBusinessScreen(page: HostBusinessPage.history),
+      ),
+    ),
+    GoRoute(
+      path: '/host/profile/notifications',
+      builder: (context, state) => _hostModePage(
+        const HostBusinessScreen(page: HostBusinessPage.notifications),
+      ),
+    ),
+    GoRoute(
+      path: '/host/profile/help',
+      builder: (context, state) =>
+          _hostModePage(const HostBusinessScreen(page: HostBusinessPage.help)),
+    ),
+    GoRoute(
+      path: '/host/profile/guidelines',
+      builder: (context, state) => _hostModePage(
+        const HostBusinessScreen(page: HostBusinessPage.guidelines),
+      ),
+    ),
+    GoRoute(
+      path: '/host/profile/terms',
+      builder: (context, state) =>
+          _hostModePage(const HostBusinessScreen(page: HostBusinessPage.terms)),
     ),
     GoRoute(
       path: '/host/step-1',
-      builder: (context, state) => const HostStep1Screen(),
+      builder: (context, state) =>
+          const HostApplicationAuthGate(child: HostStep1Screen()),
     ),
     GoRoute(
       path: '/host/step-2',
-      builder: (context, state) => const HostStep2Screen(),
+      builder: (context, state) =>
+          const HostApplicationAuthGate(child: HostStep2Screen()),
     ),
     GoRoute(
       path: '/host/step-3',
-      builder: (context, state) => const HostStep3Screen(),
+      builder: (context, state) =>
+          const HostApplicationAuthGate(child: HostStep3Screen()),
     ),
     GoRoute(
       path: '/host/step-4',
-      builder: (context, state) => const HostStep4Screen(),
+      builder: (context, state) =>
+          const HostApplicationAuthGate(child: HostStep4Screen()),
     ),
     GoRoute(
       path: '/host/submitted',
-      builder: (context, state) => const ApplicationSubmittedScreen(),
+      builder: (context, state) =>
+          const HostApplicationAuthGate(child: ApplicationSubmittedScreen()),
     ),
   ],
 );
@@ -377,6 +576,24 @@ int _calculateSelectedIndex(String location) {
   if (location.startsWith('/profile')) return 4;
   return 0;
 }
+
+HostExperienceStatus? _hostExperienceStatus(String? value) => switch (value) {
+  'active' => HostExperienceStatus.active,
+  'draft' => HostExperienceStatus.draft,
+  'pendingReview' => HostExperienceStatus.pendingReview,
+  'paused' => HostExperienceStatus.paused,
+  _ => null,
+};
+
+HostBookingStatus? _hostBookingStatus(String? value) => switch (value) {
+  'requested' => HostBookingStatus.requested,
+  'confirmed' => HostBookingStatus.confirmed,
+  'completed' => HostBookingStatus.completed,
+  'cancelled' => HostBookingStatus.cancelled,
+  _ => null,
+};
+
+Widget _hostModePage(Widget child) => HostModeAccessGate(child: child);
 
 /// Double-back-to-exit for the bottom-nav tabs.
 ///
