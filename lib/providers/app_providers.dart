@@ -201,6 +201,10 @@ class AiItineraryState {
 class AiItineraryNotifier extends StateNotifier<AiItineraryState> {
   final AiItineraryRepository _repository;
 
+  // Replays the last request with confirmed:true once the traveler accepts
+  // a suggested substitute — set by generate()/generateFromPrompt().
+  Future<GeneratedItinerary> Function(bool confirmed)? _lastRequest;
+
   AiItineraryNotifier(this._repository) : super(const AiItineraryState());
 
   Future<void> generate({
@@ -210,24 +214,43 @@ class AiItineraryNotifier extends StateNotifier<AiItineraryState> {
     int? budgetNpr,
     String? interests,
     String? groupType,
-  }) async {
+  }) {
+    _lastRequest = (confirmed) => _repository.generate(
+          tripType: tripType,
+          durationDays: durationDays,
+          pace: pace,
+          budgetNpr: budgetNpr,
+          interests: interests,
+          groupType: groupType,
+          confirmed: confirmed,
+        );
+    return _run(_lastRequest!(false));
+  }
+
+  Future<void> generateFromPrompt(String prompt) {
+    _lastRequest = (confirmed) => _repository.generateFromPrompt(prompt, confirmed: confirmed);
+    return _run(_lastRequest!(false));
+  }
+
+  Future<void> confirmSubstitute() {
+    final request = _lastRequest;
+    if (request == null) return Future.value();
+    return _run(request(true));
+  }
+
+  Future<void> _run(Future<GeneratedItinerary> future) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final result = await _repository.generate(
-        tripType: tripType,
-        durationDays: durationDays,
-        pace: pace,
-        budgetNpr: budgetNpr,
-        interests: interests,
-        groupType: groupType,
-      );
+      final result = await future;
       state = state.copyWith(isLoading: false, result: result);
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      final message = e.toString().replaceFirst('Exception: ', '');
+      state = state.copyWith(isLoading: false, errorMessage: message);
     }
   }
 
   void reset() {
+    _lastRequest = null;
     state = const AiItineraryState();
   }
 }
