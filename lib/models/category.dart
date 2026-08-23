@@ -5,6 +5,7 @@ class Category {
   final String nameNe;
   final String? icon;
   final String? coverImageUrl;
+  final String? familyId;
   final int sortOrder;
   final DateTime createdAt;
 
@@ -15,6 +16,7 @@ class Category {
     required this.nameNe,
     this.icon,
     this.coverImageUrl,
+    this.familyId,
     this.sortOrder = 0,
     required this.createdAt,
   });
@@ -27,6 +29,7 @@ class Category {
       nameNe: json['name_ne'] as String,
       icon: json['icon'] as String?,
       coverImageUrl: json['cover_image_url'] as String?,
+      familyId: json['family_id'] as String?,
       sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
@@ -42,6 +45,7 @@ class Category {
       'name_ne': nameNe,
       'icon': icon,
       'cover_image_url': coverImageUrl,
+      'family_id': familyId,
       'sort_order': sortOrder,
       'created_at': createdAt.toIso8601String(),
     };
@@ -54,6 +58,7 @@ class Category {
     String? nameNe,
     String? icon,
     String? coverImageUrl,
+    String? familyId,
     int? sortOrder,
     DateTime? createdAt,
   }) {
@@ -64,6 +69,7 @@ class Category {
       nameNe: nameNe ?? this.nameNe,
       icon: icon ?? this.icon,
       coverImageUrl: coverImageUrl ?? this.coverImageUrl,
+      familyId: familyId ?? this.familyId,
       sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
     );

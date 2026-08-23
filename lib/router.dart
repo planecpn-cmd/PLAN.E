@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'core/onboarding_preferences.dart';
@@ -32,7 +33,6 @@ import 'features/plans/trip_chat_screen.dart';
 import 'features/plans/gear_checklist_screen.dart';
 import 'features/plans/budget_tracker_screen.dart';
 
-import 'features/trips/trips_screen.dart';
 import 'features/trips/leave_review_screen.dart';
 import 'features/trips/review_submitted_screen.dart';
 
@@ -44,6 +44,7 @@ import 'features/profile/language_region_screen.dart';
 import 'features/profile/help_support_screen.dart';
 import 'features/profile/more_settings_screen.dart';
 import 'features/profile/my_reviews_screen.dart';
+import 'features/profile/moderation_queue_screen.dart';
 
 import 'features/host/become_host_screen.dart';
 import 'features/host/host_step_1_screen.dart';
@@ -104,13 +105,18 @@ final GoRouter router = GoRouter(
   routes: [
     GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
     GoRoute(
+      path: '/admin/message-moderation',
+      builder: (context, state) => const ModerationQueueScreen(),
+    ),
+    GoRoute(
       path: '/welcome',
       builder: (context, state) => const WelcomeScreen(),
     ),
-    GoRoute(
-      path: '/dev/routes',
-      builder: (context, state) => const DevRoutesScreen(),
-    ),
+    if (kDebugMode)
+      GoRoute(
+        path: '/dev/routes',
+        builder: (context, state) => const DevRoutesScreen(),
+      ),
     GoRoute(
       path: '/onboarding/1',
       builder: (context, state) => const OnboardingSlideScreen(step: 1),
@@ -208,27 +214,27 @@ final GoRouter router = GoRouter(
                         BottomNavigationBarItem(
                           icon: Icon(Icons.home_outlined),
                           activeIcon: Icon(Icons.home),
-                          label: '',
+                          label: 'Home',
                         ),
                         BottomNavigationBarItem(
                           icon: Icon(Icons.explore_outlined),
                           activeIcon: Icon(Icons.explore),
-                          label: '',
+                          label: 'Explore',
                         ),
                         BottomNavigationBarItem(
                           icon: Icon(Icons.event_note_outlined),
                           activeIcon: Icon(Icons.event_note),
-                          label: '',
+                          label: 'Plans',
                         ),
                         BottomNavigationBarItem(
-                          icon: Icon(Icons.card_travel_outlined),
-                          activeIcon: Icon(Icons.card_travel),
-                          label: '',
+                          icon: Icon(Icons.bookmark_outline),
+                          activeIcon: Icon(Icons.bookmark),
+                          label: 'Saved',
                         ),
                         BottomNavigationBarItem(
                           icon: Icon(Icons.person_outline),
                           activeIcon: Icon(Icons.person),
-                          label: '',
+                          label: 'Profile',
                         ),
                       ],
                     ),
@@ -251,18 +257,28 @@ final GoRouter router = GoRouter(
           builder: (context, state) => SearchResultsScreen(
             initialQuery: state.uri.queryParameters['query'],
             initialCategoryId: state.uri.queryParameters['category_id'],
+            initialFamilySlug: state.uri.queryParameters['family'],
             initialRegionId: state.uri.queryParameters['region_id'],
             initialDifficulty: state.uri.queryParameters['difficulty'],
+            initialMaxDurationHours: int.tryParse(
+              state.uri.queryParameters['max_duration_hours'] ?? '',
+            ),
             initialSortBy: state.uri.queryParameters['sort_by'],
           ),
         ),
         GoRoute(
           path: '/plans',
-          builder: (context, state) => const PlansScreen(),
+          builder: (context, state) => PlansScreen(
+            initialTab: planTabFromQuery(state.uri.queryParameters['tab']),
+          ),
         ),
         GoRoute(
           path: '/trips',
-          builder: (context, state) => const TripsScreen(),
+          redirect: (context, state) => '/plans?tab=past',
+        ),
+        GoRoute(
+          path: '/saved',
+          builder: (context, state) => const SavedScreen(),
         ),
         GoRoute(
           path: '/profile',
@@ -293,7 +309,6 @@ final GoRouter router = GoRouter(
         bookingId: state.pathParameters['bookingId'] ?? '',
       ),
     ),
-    GoRoute(path: '/saved', builder: (context, state) => const SavedScreen()),
     GoRoute(
       path: '/itinerary/:bookingId',
       builder: (context, state) =>
@@ -572,7 +587,8 @@ int _calculateSelectedIndex(String location) {
     return 1;
   }
   if (location.startsWith('/plans')) return 2;
-  if (location.startsWith('/trips')) return 3;
+  if (location.startsWith('/trips')) return 2;
+  if (location.startsWith('/saved')) return 3;
   if (location.startsWith('/profile')) return 4;
   return 0;
 }
@@ -666,7 +682,7 @@ void _onItemTapped(int index, BuildContext context) {
       context.go('/plans');
       break;
     case 3:
-      context.go('/trips');
+      context.go('/saved');
       break;
     case 4:
       context.go('/profile');

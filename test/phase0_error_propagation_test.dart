@@ -6,8 +6,8 @@
 // the fix actually throws now, against a connection that's guaranteed to
 // fail (no live Supabase needed for this).
 import 'package:flutter_test/flutter_test.dart';
-import 'package:plan_e/features/booking/booking_repository_service.dart';
-import 'package:plan_e/features/experience/experience_detail_repository.dart';
+import 'package:plan_e/repositories/booking_repository.dart';
+import 'package:plan_e/repositories/experience_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
@@ -18,8 +18,8 @@ void main() {
     'test-anon-key',
   );
 
-  group('ExperienceDetailRepository propagates errors (was: swallowed)', () {
-    final repo = ExperienceDetailRepository(unreachableClient);
+  group('ExperienceRepository propagates detail errors (was: swallowed)', () {
+    final repo = ExperienceRepository(unreachableClient);
 
     test('getDepartures throws instead of returning []', () {
       expect(() => repo.getDepartures('exp-1'), throwsA(anything));
@@ -38,8 +38,8 @@ void main() {
     });
   });
 
-  group('BookingFeatureRepository propagates errors (was: swallowed)', () {
-    final repo = BookingFeatureRepository(unreachableClient);
+  group('BookingRepository propagates errors (was: swallowed)', () {
+    final repo = BookingRepository(unreachableClient);
 
     test('getDepartures throws instead of returning []', () {
       expect(() => repo.getDepartures('exp-1'), throwsA(anything));

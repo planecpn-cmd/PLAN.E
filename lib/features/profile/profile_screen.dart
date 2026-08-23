@@ -168,10 +168,10 @@ class ProfileScreen extends ConsumerWidget {
                               children: [
                                 Expanded(
                                   child: GestureDetector(
-                                    onTap: () => context.go('/trips'),
+                                    onTap: () => context.go('/plans?tab=past'),
                                     child: _StatTile(
                                       number: '$tripsCount',
-                                      label: 'Trips',
+                                      label: 'History',
                                     ),
                                   ),
                                 ),
@@ -210,8 +210,8 @@ class ProfileScreen extends ConsumerWidget {
                               children: [
                                 _ProfileRow(
                                   icon: Icons.work_outline,
-                                  label: l10n.myTrips,
-                                  onTap: () => context.go('/trips'),
+                                  label: 'My Plans',
+                                  onTap: () => context.go('/plans'),
                                 ),
                                 const Divider(height: 1),
                                 _ProfileRow(
@@ -254,6 +254,16 @@ class ProfileScreen extends ConsumerWidget {
                                   onTap: () =>
                                       context.push('/profile/settings'),
                                 ),
+                                if (role == UserRole.admin) ...[
+                                  const Divider(height: 1),
+                                  _ProfileRow(
+                                    icon: Icons.admin_panel_settings_outlined,
+                                    label: 'Message moderation',
+                                    onTap: () => context.push(
+                                      '/admin/message-moderation',
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           ),

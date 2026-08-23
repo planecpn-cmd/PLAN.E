@@ -14,6 +14,7 @@ declare
   v_dep_id uuid := 'd0000000-0000-0000-0000-000000000001';
   v_book_b1 uuid := '11111111-0000-0000-0000-000000000001';
   v_book_b2 uuid := '22222222-0000-0000-0000-000000000002';
+  v_message_b1 uuid := '33333333-0000-0000-0000-000000000003';
 begin
   -- Setup auth users
   insert into auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role, aud)
@@ -55,6 +56,10 @@ begin
     (v_book_b2, 'REF-B2', v_user_b, v_exp_id, v_dep_id, 1, 'User B', '9800000000', 500000, 500000, 'completed')
   on conflict (id) do nothing;
 
+  insert into public.trip_messages (id, booking_id, sender_id, body)
+  values (v_message_b1, v_book_b1, v_user_b, 'RLS read-state fixture')
+  on conflict (id) do nothing;
+
   -- Setup host application for User A
   insert into public.host_applications (id, user_id, status, title)
   values ('80000000-0000-0000-0000-000000000001', v_user_a, 'draft', 'Host App A')
@@ -74,7 +79,9 @@ begin
   select count(*) into v_no_policy
   from pg_tables t
   where t.schemaname = 'public'
-    and t.tablename <> 'payments'
+    -- These service-only tables intentionally use RLS with zero client
+    -- policies (default deny).
+    and t.tablename not in ('payments', 'ai_rate_limits')
     and not exists (
       select 1 from pg_policies p where p.schemaname = 'public' and p.tablename = t.tablename
     );
@@ -274,6 +281,46 @@ begin
 
   if not (not v_failed) then
     raise exception 'FAIL: Assertion 10 - payments allowed duplicate idempotency_key';
+  end if;
+end $$;
+
+-- Assertion 11: a non-member cannot read or create another trip's read state
+do $$
+declare
+  v_count int;
+  v_inserted boolean := false;
+begin
+  set local role postgres;
+  insert into public.trip_message_reads (
+    conversation_id,
+    user_id,
+    last_read_message_id
+  ) values (
+    '11111111-0000-0000-0000-000000000001',
+    'b0000000-0000-0000-0000-000000000002',
+    '33333333-0000-0000-0000-000000000003'
+  );
+
+  set local role authenticated;
+  perform set_config('request.jwt.claims', json_build_object('sub', 'a0000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
+
+  select count(*) into v_count
+  from public.trip_message_reads
+  where conversation_id = '11111111-0000-0000-0000-000000000001';
+
+  begin
+    insert into public.trip_message_reads (conversation_id, user_id)
+    values (
+      '11111111-0000-0000-0000-000000000001',
+      'a0000000-0000-0000-0000-000000000001'
+    );
+    v_inserted := true;
+  exception when others then
+    v_inserted := false;
+  end;
+
+  if v_count <> 0 or v_inserted then
+    raise exception 'FAIL: Assertion 11 - non-member accessed another trip read state';
   end if;
 end $$;
 

@@ -68,57 +68,62 @@ void main() {
         ),
         GoRoute(
           path: '/experience/:id',
-          builder: (context, state) => Scaffold(
-            body: Text('Detail for ${state.pathParameters['id']}'),
-          ),
+          builder: (context, state) =>
+              Scaffold(body: Text('Detail for ${state.pathParameters['id']}')),
         ),
       ],
     );
 
     return ProviderScope(
       overrides: [
-        experiencesProvider(const {}).overrideWith(
-          (ref) async => experiences ?? mockExperiences,
-        ),
+        experiencesProvider(
+          const {},
+        ).overrideWith((ref) async => experiences ?? mockExperiences),
       ],
-      child: MaterialApp.router(
-        routerConfig: router,
-      ),
+      child: MaterialApp.router(routerConfig: router),
     );
   }
 
   group('Phase 6 - MapScreen (RM-08) Tests', () {
-    testWidgets('MapScreen renders title, map controls, and meeting point details', (tester) async {
-      await tester.pumpWidget(createMapScreenWidget());
-      await tester.pumpAndSettle();
+    testWidgets(
+      'MapScreen renders title, map controls, and meeting point details',
+      (tester) async {
+        await tester.pumpWidget(createMapScreenWidget());
+        await tester.pumpAndSettle();
 
-      expect(find.text(MapStrings.pageTitle), findsOneWidget);
-      expect(find.text(MapStrings.meetingPointHeader), findsOneWidget);
-      expect(find.text(MapStrings.copyAddress), findsOneWidget);
-      expect(find.text(MapStrings.openExternalMaps), findsOneWidget);
+        expect(find.text(MapStrings.pageTitle), findsOneWidget);
+        expect(find.text(MapStrings.meetingPointHeader), findsOneWidget);
+        expect(find.text(MapStrings.copyAddress), findsOneWidget);
+        expect(find.text(MapStrings.openExternalMaps), findsOneWidget);
 
-      // Verify zoom indicator and style pill
-      expect(find.textContaining(MapStrings.styleTopographic), findsWidgets);
-    });
+        // Verify zoom indicator and style pill
+        expect(find.textContaining(MapStrings.styleTopographic), findsWidgets);
+      },
+    );
 
-    testWidgets('MapScreen pin markers render and tapping pin shows preview card overlay', (tester) async {
-      await tester.pumpWidget(createMapScreenWidget());
-      await tester.pumpAndSettle();
+    testWidgets(
+      'MapScreen pin markers render and tapping pin shows preview card overlay',
+      (tester) async {
+        await tester.pumpWidget(createMapScreenWidget());
+        await tester.pumpAndSettle();
 
-      // Check pin marker text
-      final expTitleFinder = find.text('Kathmandu Heritage Walk');
-      expect(expTitleFinder, findsWidgets);
+        // Check pin marker text
+        final expTitleFinder = find.text('Kathmandu Heritage Walk');
+        expect(expTitleFinder, findsWidgets);
 
-      // Tap on pin marker
-      await tester.tap(expTitleFinder.first);
-      await tester.pumpAndSettle();
+        // Tap on pin marker
+        await tester.tap(expTitleFinder.first);
+        await tester.pumpAndSettle();
 
-      // Verify Experience Preview Card Overlay appears
-      expect(find.text(MapStrings.viewExperience), findsOneWidget);
-      expect(find.text('Rs. 2,500'), findsWidgets);
-    });
+        // Verify Experience Preview Card Overlay appears
+        expect(find.text(MapStrings.viewExperience), findsOneWidget);
+        expect(find.text('Rs. 2,500'), findsWidgets);
+      },
+    );
 
-    testWidgets('MapScreen control buttons (Zoom, Recenter, Style) trigger properly', (tester) async {
+    testWidgets('MapScreen zoom and recenter controls trigger properly', (
+      tester,
+    ) async {
       await tester.pumpWidget(createMapScreenWidget());
       await tester.pumpAndSettle();
 
@@ -129,22 +134,25 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('15x'), findsOneWidget);
 
-      // Map Style Toggle button
-      final styleToggleFinder = find.byTooltip('Map Style Toggle');
-      expect(styleToggleFinder, findsOneWidget);
-      await tester.tap(styleToggleFinder);
+      final recenterFinder = find.byTooltip(MapStrings.recenterMap);
+      expect(recenterFinder, findsOneWidget);
+      await tester.tap(recenterFinder);
       await tester.pumpAndSettle();
-      expect(find.textContaining(MapStrings.styleSatellite), findsWidgets);
+      expect(find.textContaining('14x'), findsOneWidget);
+      expect(find.text(MapStrings.recenterKathmandu), findsOneWidget);
     });
 
-    testWidgets('MapScreen fallback renders gracefully when no experiences are returned', (tester) async {
-      await tester.pumpWidget(createMapScreenWidget(experiences: []));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'MapScreen fallback renders gracefully when no experiences are returned',
+      (tester) async {
+        await tester.pumpWidget(createMapScreenWidget(experiences: []));
+        await tester.pumpAndSettle();
 
-      expect(find.text(MapStrings.pageTitle), findsOneWidget);
-      expect(find.text(MapStrings.meetingPointHeader), findsOneWidget);
-      expect(find.text(MapStrings.defaultMeetingPoint), findsOneWidget);
-      expect(find.text(MapStrings.defaultLandmark), findsOneWidget);
-    });
+        expect(find.text(MapStrings.pageTitle), findsOneWidget);
+        expect(find.text(MapStrings.meetingPointHeader), findsOneWidget);
+        expect(find.text(MapStrings.defaultMeetingPoint), findsOneWidget);
+        expect(find.text(MapStrings.defaultLandmark), findsOneWidget);
+      },
+    );
   });
 }

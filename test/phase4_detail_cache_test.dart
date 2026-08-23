@@ -1,17 +1,16 @@
 // Phase 4 of docs/OFFLINE_CACHE_PLAN.md: experience detail + its
 // departures/itinerary/reviews/host-profile now go through OfflineCache.
 // This is the phase that depends on phase 0's fix actually holding — these
-// four ExperienceDetailRepository methods used to swallow every exception
+// four ExperienceRepository detail methods used to swallow every exception
 // and return []/null, which would have made the cache fallback below
 // unreachable dead code.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plan_e/core/offline_cache.dart';
-import 'package:plan_e/features/experience/experience_detail_repository.dart';
+import 'package:plan_e/repositories/experience_repository.dart';
 import 'package:plan_e/models/experience_departure.dart';
 import 'package:plan_e/models/itinerary_item.dart';
 import 'package:plan_e/models/profile.dart';
 import 'package:plan_e/models/review.dart';
-import 'package:plan_e/repositories/experience_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -31,23 +30,26 @@ void main() {
   });
 
   group('ExperienceRepository.getExperienceById', () {
-    test('network fails, cache has data → returns the cached experience', () async {
-      await OfflineCache.write('experience_detail:exp-1', {
-        'id': 'exp-1',
-        'title': 'Everest Base Camp Trek',
-        'slug': 'ebc-trek',
-        'cover_image_url': 'https://example.com/x.jpg',
-        'price_paisa': 500000,
-        'created_at': _now.toIso8601String(),
-        'updated_at': _now.toIso8601String(),
-      });
+    test(
+      'network fails, cache has data → returns the cached experience',
+      () async {
+        await OfflineCache.write('experience_detail:exp-1', {
+          'id': 'exp-1',
+          'title': 'Everest Base Camp Trek',
+          'slug': 'ebc-trek',
+          'cover_image_url': 'https://example.com/x.jpg',
+          'price_paisa': 500000,
+          'created_at': _now.toIso8601String(),
+          'updated_at': _now.toIso8601String(),
+        });
 
-      final repo = ExperienceRepository(unreachableClient());
-      final experience = await repo.getExperienceById('exp-1');
+        final repo = ExperienceRepository(unreachableClient());
+        final experience = await repo.getExperienceById('exp-1');
 
-      expect(experience, isNotNull);
-      expect(experience!.title, 'Everest Base Camp Trek');
-    });
+        expect(experience, isNotNull);
+        expect(experience!.title, 'Everest Base Camp Trek');
+      },
+    );
 
     test('network fails, no cache → rethrows', () async {
       final repo = ExperienceRepository(unreachableClient());
@@ -55,108 +57,132 @@ void main() {
     });
   });
 
-  group('ExperienceDetailRepository.getDepartures', () {
-    test('network fails, cache has data → returns the cached departures', () async {
-      await OfflineCache.write('experience_departures:exp-1', [
-        ExperienceDeparture(
-          id: 'dep-1',
-          experienceId: 'exp-1',
-          startDate: _now,
-          endDate: _now.add(const Duration(days: 5)),
-          totalSpots: 10,
-          spotsLeft: 3,
-          createdAt: _now,
-        ).toJson(),
-      ]);
+  group('ExperienceRepository.getDepartures', () {
+    test(
+      'network fails, cache has data → returns the cached departures',
+      () async {
+        await OfflineCache.write('experience_departures:exp-1', [
+          ExperienceDeparture(
+            id: 'dep-1',
+            experienceId: 'exp-1',
+            startDate: _now,
+            endDate: _now.add(const Duration(days: 5)),
+            totalSpots: 10,
+            spotsLeft: 3,
+            createdAt: _now,
+          ).toJson(),
+        ]);
 
-      final repo = ExperienceDetailRepository(unreachableClient());
-      final departures = await repo.getDepartures('exp-1');
+        final repo = ExperienceRepository(unreachableClient());
+        final departures = await repo.getDepartures('exp-1');
 
-      expect(departures, hasLength(1));
-      expect(departures.first.spotsLeft, 3);
-    });
+        expect(departures, hasLength(1));
+        expect(departures.first.spotsLeft, 3);
+      },
+    );
 
-    test('network fails, no cache → rethrows (phase 0 fix must hold)', () async {
-      final repo = ExperienceDetailRepository(unreachableClient());
-      expect(() => repo.getDepartures('exp-1'), throwsA(anything));
-    });
+    test(
+      'network fails, no cache → rethrows (phase 0 fix must hold)',
+      () async {
+        final repo = ExperienceRepository(unreachableClient());
+        expect(() => repo.getDepartures('exp-1'), throwsA(anything));
+      },
+    );
   });
 
-  group('ExperienceDetailRepository.getItinerary', () {
-    test('network fails, cache has data → returns the cached itinerary', () async {
-      await OfflineCache.write('experience_itinerary:exp-1', [
-        ItineraryItem(
-          id: 'day-1',
-          experienceId: 'exp-1',
-          dayNumber: 1,
-          title: 'Fly to Lukla, trek to Phakding',
-          createdAt: _now,
-        ).toJson(),
-      ]);
+  group('ExperienceRepository.getItinerary', () {
+    test(
+      'network fails, cache has data → returns the cached itinerary',
+      () async {
+        await OfflineCache.write('experience_itinerary:exp-1', [
+          ItineraryItem(
+            id: 'day-1',
+            experienceId: 'exp-1',
+            dayNumber: 1,
+            title: 'Fly to Lukla, trek to Phakding',
+            createdAt: _now,
+          ).toJson(),
+        ]);
 
-      final repo = ExperienceDetailRepository(unreachableClient());
-      final itinerary = await repo.getItinerary('exp-1');
+        final repo = ExperienceRepository(unreachableClient());
+        final itinerary = await repo.getItinerary('exp-1');
 
-      expect(itinerary, hasLength(1));
-      expect(itinerary.first.title, 'Fly to Lukla, trek to Phakding');
-    });
+        expect(itinerary, hasLength(1));
+        expect(itinerary.first.title, 'Fly to Lukla, trek to Phakding');
+      },
+    );
 
-    test('network fails, no cache → rethrows (phase 0 fix must hold)', () async {
-      final repo = ExperienceDetailRepository(unreachableClient());
-      expect(() => repo.getItinerary('exp-1'), throwsA(anything));
-    });
+    test(
+      'network fails, no cache → rethrows (phase 0 fix must hold)',
+      () async {
+        final repo = ExperienceRepository(unreachableClient());
+        expect(() => repo.getItinerary('exp-1'), throwsA(anything));
+      },
+    );
   });
 
-  group('ExperienceDetailRepository.getReviews', () {
-    test('network fails, cache has data → returns the cached reviews', () async {
-      await OfflineCache.write('experience_reviews:exp-1', [
-        Review(
-          id: 'rev-1',
-          bookingId: 'bk-1',
-          experienceId: 'exp-1',
-          userId: 'user-1',
-          rating: 5,
-          body: 'Incredible trek, highly recommend.',
-          createdAt: _now,
-          updatedAt: _now,
-        ).toJson(),
-      ]);
+  group('ExperienceRepository.getReviews', () {
+    test(
+      'network fails, cache has data → returns the cached reviews',
+      () async {
+        await OfflineCache.write('experience_reviews:exp-1', [
+          Review(
+            id: 'rev-1',
+            bookingId: 'bk-1',
+            experienceId: 'exp-1',
+            userId: 'user-1',
+            rating: 5,
+            body: 'Incredible trek, highly recommend.',
+            createdAt: _now,
+            updatedAt: _now,
+          ).toJson(),
+        ]);
 
-      final repo = ExperienceDetailRepository(unreachableClient());
-      final reviews = await repo.getReviews('exp-1');
+        final repo = ExperienceRepository(unreachableClient());
+        final reviews = await repo.getReviews('exp-1');
 
-      expect(reviews, hasLength(1));
-      expect(reviews.first.rating, 5);
-    });
+        expect(reviews, hasLength(1));
+        expect(reviews.first.rating, 5);
+      },
+    );
 
-    test('network fails, no cache → rethrows (phase 0 fix must hold)', () async {
-      final repo = ExperienceDetailRepository(unreachableClient());
-      expect(() => repo.getReviews('exp-1'), throwsA(anything));
-    });
+    test(
+      'network fails, no cache → rethrows (phase 0 fix must hold)',
+      () async {
+        final repo = ExperienceRepository(unreachableClient());
+        expect(() => repo.getReviews('exp-1'), throwsA(anything));
+      },
+    );
   });
 
-  group('ExperienceDetailRepository.getHostProfile', () {
-    test('network fails, cache has data → returns the cached host profile', () async {
-      await OfflineCache.write(
-        'host_profile:host-1',
-        Profile(
-          id: 'host-1',
-          fullName: 'Siddharth Gurung',
-          createdAt: _now,
-          updatedAt: _now,
-        ).toJson(),
-      );
+  group('ExperienceRepository.getHostProfile', () {
+    test(
+      'network fails, cache has data → returns the cached host profile',
+      () async {
+        await OfflineCache.write(
+          'host_profile:host-1',
+          Profile(
+            id: 'host-1',
+            fullName: 'Siddharth Gurung',
+            createdAt: _now,
+            updatedAt: _now,
+          ).toJson(),
+        );
 
-      final repo = ExperienceDetailRepository(unreachableClient());
-      final profile = await repo.getHostProfile('host-1');
+        final repo = ExperienceRepository(unreachableClient());
+        final profile = await repo.getHostProfile('host-1');
 
-      expect(profile, isNotNull);
-      expect(profile!.fullName, 'Siddharth Gurung');
-    });
+        expect(profile, isNotNull);
+        expect(profile!.fullName, 'Siddharth Gurung');
+      },
+    );
 
-    test('network fails, no cache → rethrows (phase 0 fix must hold)', () async {
-      final repo = ExperienceDetailRepository(unreachableClient());
-      expect(() => repo.getHostProfile('host-1'), throwsA(anything));
-    });
+    test(
+      'network fails, no cache → rethrows (phase 0 fix must hold)',
+      () async {
+        final repo = ExperienceRepository(unreachableClient());
+        expect(() => repo.getHostProfile('host-1'), throwsA(anything));
+      },
+    );
   });
 }

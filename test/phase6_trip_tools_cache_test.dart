@@ -2,7 +2,7 @@
 // chat history now go through OfflineCache. Gear checklist is deliberately
 // NOT wired here — per the plan's §3.1 decision, ticking a checkbox is a
 // write, and offline writes are out of scope until phase 10's queue exists.
-// The trail itinerary (ExperienceDetailRepository.getItinerary) was already
+// The trail itinerary (ExperienceRepository.getItinerary) was already
 // cached in phase 4; a real ItineraryScreen bug (bookingId passed where an
 // experienceId is expected) means that screen doesn't actually use it in
 // practice — flagged separately, out of scope for this caching work.
@@ -28,26 +28,29 @@ void main() {
   });
 
   group('BudgetRepository.getBudgetEntries', () {
-    test('network fails, cache has data → returns the cached entries', () async {
-      await OfflineCache.write('budget_entries:booking-1', [
-        BudgetEntry(
-          id: 'entry-1',
-          bookingId: 'booking-1',
-          label: 'Permit fees',
-          amountPaisa: 500000,
-          category: 'Permits',
-          spentOn: _now,
-          createdAt: _now,
-        ).toJson(),
-      ]);
+    test(
+      'network fails, cache has data → returns the cached entries',
+      () async {
+        await OfflineCache.write('budget_entries:booking-1', [
+          BudgetEntry(
+            id: 'entry-1',
+            bookingId: 'booking-1',
+            label: 'Permit fees',
+            amountPaisa: 500000,
+            category: 'Permits',
+            spentOn: _now,
+            createdAt: _now,
+          ).toJson(),
+        ]);
 
-      final repo = BudgetRepository(unreachableClient());
-      final entries = await repo.getBudgetEntries('booking-1');
+        final repo = BudgetRepository(unreachableClient());
+        final entries = await repo.getBudgetEntries('booking-1');
 
-      expect(entries, hasLength(1));
-      expect(entries.first.label, 'Permit fees');
-      expect(entries.first.amountPaisa, 500000);
-    });
+        expect(entries, hasLength(1));
+        expect(entries.first.label, 'Permit fees');
+        expect(entries.first.amountPaisa, 500000);
+      },
+    );
 
     test('network fails, no cache → rethrows', () async {
       final repo = BudgetRepository(unreachableClient());
@@ -56,26 +59,29 @@ void main() {
   });
 
   group('TripChatRepository.getMessages', () {
-    test('network fails, cache has data → returns the cached messages', () async {
-      // Raw server-shaped JSON, not TripMessage.toJson() — matches what the
-      // repository actually caches (see the comment in the repo itself).
-      await OfflineCache.write('trip_messages:booking-1', [
-        {
-          'id': 'msg-1',
-          'booking_id': 'booking-1',
-          'sender_id': 'user-1',
-          'body': 'See you at the trailhead at 6am!',
-          'created_at': _now.toIso8601String(),
-          'profiles': {'full_name': 'Sherpa Guide Pemba'},
-        },
-      ]);
+    test(
+      'network fails, cache has data → returns the cached messages',
+      () async {
+        // Raw server-shaped JSON, not TripMessage.toJson() — matches what the
+        // repository actually caches (see the comment in the repo itself).
+        await OfflineCache.write('trip_messages:booking-1', [
+          {
+            'id': 'msg-1',
+            'booking_id': 'booking-1',
+            'sender_id': 'user-1',
+            'body': 'See you at the trailhead at 6am!',
+            'created_at': _now.toIso8601String(),
+            'profiles': {'full_name': 'Sherpa Guide Pemba'},
+          },
+        ]);
 
-      final repo = TripChatRepository(unreachableClient());
-      final messages = await repo.getMessages('booking-1');
+        final repo = TripChatRepository(unreachableClient());
+        final messages = await repo.getMessages('booking-1');
 
-      expect(messages, hasLength(1));
-      expect(messages.first.body, 'See you at the trailhead at 6am!');
-    });
+        expect(messages, hasLength(1));
+        expect(messages.first.body, 'See you at the trailhead at 6am!');
+      },
+    );
 
     test(
       'regression: sender_name survives a real cache round-trip (the bug caught while building this phase)',

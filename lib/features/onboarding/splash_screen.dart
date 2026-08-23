@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/onboarding_preferences.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/tokens.dart';
+import '../../widgets/plan_e_logo.dart';
 
 // ---------------------------------------------------------------------------
 // SplashScreen
@@ -324,10 +325,10 @@ class _SplashScreenState extends State<SplashScreen>
 // Source word: N(0) E(1) P(2) A(3) L(4) — wide letter-spacing
 // Target word: P(2) L(4) [▲](3) N(0) E(1) — compact wordmark spacing
 //
-// Font metrics (size, letterSpacing) match PlanELogo's own formula
-// (letterSpacing = fontSize * .16) by construction, since this widget
-// stands in for it for the entire animation rather than being replaced by
-// a real PlanELogo instance partway through.
+// Letter spacing is controlled entirely by optical slot positions rather than
+// TextStyle letterSpacing, so every glyph is centred from the same geometry.
+// This widget stands in for PlanELogo throughout the animation rather than
+// being replaced by a separate widget partway through.
 //
 // Each letter is placed absolutely using fractional x-positions resolved
 // from the LayoutBuilder width.
@@ -353,10 +354,11 @@ class _LetterRow extends StatelessWidget {
   // evenly spaced and symmetric around 0.5, not left-shifted.
   static const List<double> _sourceX = [0.17, 0.335, 0.5, 0.665, 0.83];
 
-  // Target x-positions for the settled wordmark — centered on 0.5, spaced
-  // wider than the source to fit PlanELogo's letterSpacing (fontSize * .16,
-  // considerably wider than phase 1's tight NEPAL tracking).
-  static const List<double> _targetSlotX = [0.315, 0.39, 0.49, 0.59, 0.665];
+  // Optical centres for P L [mountain A] N E, measured from the supplied
+  // artwork's visible glyph edges. The A is fixed to the exact visual centre;
+  // the unequal centre-to-centre distances compensate for the different glyph
+  // widths and produce equal visible gaps between every pair of letters.
+  static const List<double> _targetSlotX = [0.292, 0.383, 0.5, 0.627, 0.726];
 
   // Map each source slot (N E P A L) to a target slot index (P L ▲ N E)
   //   N → target slot 3,  E → 4,  P → 0,  A → 2,  L → 1
@@ -371,7 +373,6 @@ class _LetterRow extends StatelessWidget {
     fontFamily: 'serif',
     fontSize: _fontSize,
     fontWeight: FontWeight.w700,
-    letterSpacing: _fontSize * 0.16,
     color: AppColors.forest,
   );
 
@@ -397,12 +398,12 @@ class _LetterRow extends StatelessWidget {
                   // Slot 3 = 'A' → crossfade to mountain icon
                   if (i == 3) {
                     return Positioned(
-                      left: currentX - _fontSize * 0.5,
+                      left: currentX - _fontSize * 0.775,
                       top: 0,
                       child: Opacity(
                         opacity: letterFades[i].value,
                         child: SizedBox(
-                          width: _fontSize,
+                          width: _fontSize * 1.55,
                           height: _fontSize * 1.4,
                           child: Stack(
                             alignment: Alignment.center,
@@ -412,12 +413,11 @@ class _LetterRow extends StatelessWidget {
                                 opacity: letterAFade.value,
                                 child: Text('A', style: _letterStyle),
                               ),
-                              // Mountain icon fades in
+                              // Branded mountain "A" fades in
                               Opacity(
                                 opacity: iconFade.value,
-                                child: const Icon(
-                                  Icons.landscape_outlined,
-                                  size: _fontSize * 0.9,
+                                child: const MountainALetter(
+                                  size: _fontSize,
                                   color: AppColors.forest,
                                 ),
                               ),
@@ -430,11 +430,17 @@ class _LetterRow extends StatelessWidget {
 
                   // All other letters: fade in, then slide to position
                   return Positioned(
-                    left: currentX - _fontSize * 0.35,
+                    left: currentX - _fontSize * 0.5,
                     top: 0,
                     child: Opacity(
                       opacity: letterFades[i].value,
-                      child: Text(_labels[i], style: _letterStyle),
+                      child: SizedBox(
+                        width: _fontSize,
+                        height: _fontSize * 1.4,
+                        child: Center(
+                          child: Text(_labels[i], style: _letterStyle),
+                        ),
+                      ),
                     ),
                   );
                 }),

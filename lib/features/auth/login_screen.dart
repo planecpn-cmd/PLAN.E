@@ -53,7 +53,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         variant: AppToastVariant.success,
       );
       final deferred = ref.read(deferredActionProvider);
-      final destination = deferredActionDestination(deferred);
+      final destination = await authenticatedDestination(
+        ref.read(supabaseClientProvider),
+        deferred,
+      );
+      if (!mounted) return;
       if (deferred != null) {
         ref.read(deferredActionProvider.notifier).clear();
       }

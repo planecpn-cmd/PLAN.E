@@ -8,8 +8,10 @@ import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/format.dart';
+import '../../core/experience_presentation.dart';
 import '../../core/native_intents.dart';
 import '../../models/experience.dart';
+import '../../models/experience_family.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/widgets.dart';
@@ -110,13 +112,20 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   @override
   Widget build(BuildContext context) {
     final extra = GoRouterState.of(context).extra as Map<String, dynamic>?;
-    final double initialLat = widget.lat ?? (extra?['lat'] as num?)?.toDouble() ?? _defaultKathmanduLat;
-    final double initialLng = widget.lng ?? (extra?['lng'] as num?)?.toDouble() ?? _defaultKathmanduLng;
+    final double initialLat =
+        widget.lat ??
+        (extra?['lat'] as num?)?.toDouble() ??
+        _defaultKathmanduLat;
+    final double initialLng =
+        widget.lng ??
+        (extra?['lng'] as num?)?.toDouble() ??
+        _defaultKathmanduLng;
 
     _centerLat ??= initialLat;
     _centerLng ??= initialLng;
 
     final experiencesAsync = ref.watch(experiencesProvider(const {}));
+    final taxonomy = ref.watch(experienceTaxonomyProvider).valueOrNull;
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -141,12 +150,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             experiences: const [],
             initialLat: initialLat,
             initialLng: initialLng,
+            taxonomy: taxonomy,
           ),
           data: (experiences) => _buildMapBody(
             context,
             experiences: experiences,
             initialLat: initialLat,
             initialLng: initialLng,
+            taxonomy: taxonomy,
           ),
         ),
       ),
@@ -158,16 +169,24 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     required List<Experience> experiences,
     required double initialLat,
     required double initialLng,
+    required ExperienceTaxonomy? taxonomy,
   }) {
     final extra = GoRouterState.of(context).extra as Map<String, dynamic>?;
-    final String experienceTitle = widget.title ?? extra?['title'] as String? ?? (_selectedExperience?.title ?? MapStrings.mapShellTitle);
-    final String meetingText = _selectedExperience?.meetingPoint ??
+    final String experienceTitle =
+        widget.title ??
+        extra?['title'] as String? ??
+        (_selectedExperience?.title ?? MapStrings.mapShellTitle);
+    final String meetingText =
+        _selectedExperience?.meetingPoint ??
         widget.meetingPoint ??
         (extra?['meetingPoint'] as String?) ??
         MapStrings.defaultMeetingPoint;
 
     final publishedExperiences = experiences
-        .where((e) => e.status == ExperienceStatus.published || experiences.length <= 3)
+        .where(
+          (e) =>
+              e.status == ExperienceStatus.published || experiences.length <= 3,
+        )
         .toList();
 
     return Column(
@@ -193,7 +212,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 ),
                 children: [
                   TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.plane.plan_e',
                     maxZoom: 19,
                   ),
@@ -208,7 +228,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                             decoration: BoxDecoration(
                               color: AppColors.forest,
                               shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.white, width: 3),
+                              border: Border.all(
+                                color: AppColors.white,
+                                width: 3,
+                              ),
                               boxShadow: const [
                                 BoxShadow(
                                   color: AppColors.overlay,
@@ -219,13 +242,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                             ),
                           ),
                         ),
-                      if (publishedExperiences.isEmpty || _selectedExperience == null)
+                      if (publishedExperiences.isEmpty ||
+                          _selectedExperience == null)
                         Marker(
                           point: LatLng(initialLat, initialLng),
                           width: 200,
                           height: 96,
                           alignment: Alignment.bottomCenter,
-                          child: _buildDefaultCenterMarker(title: experienceTitle),
+                          child: _buildDefaultCenterMarker(
+                            title: experienceTitle,
+                          ),
                         ),
                       ...publishedExperiences.map((exp) {
                         final double expLat = exp.lat ?? _defaultKathmanduLat;
@@ -235,7 +261,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                           width: 160,
                           height: 72,
                           alignment: Alignment.bottomCenter,
-                          child: _buildExperienceMarker(context, experience: exp),
+                          child: _buildExperienceMarker(
+                            context,
+                            experience: exp,
+                          ),
                         );
                       }),
                     ],
@@ -279,7 +308,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     ),
                     const SizedBox(height: AppSpacing.sm8),
                     _buildControlButton(
-                      icon: _locatingMe ? Icons.gps_not_fixed : Icons.my_location,
+                      icon: _locatingMe
+                          ? Icons.gps_not_fixed
+                          : Icons.my_location,
                       tooltip: 'My Location',
                       onPressed: _locatingMe ? () {} : _goToMyLocation,
                     ),
@@ -288,7 +319,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       icon: Icons.place_outlined,
                       tooltip: MapStrings.recenterMap,
                       onPressed: () {
-                        _mapController.move(LatLng(initialLat, initialLng), _initialZoom);
+                        _mapController.move(
+                          LatLng(initialLat, initialLng),
+                          _initialZoom,
+                        );
                         setState(() {
                           _centerLat = initialLat;
                           _centerLng = initialLng;
@@ -309,7 +343,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 left: AppSpacing.lg16,
                 top: AppSpacing.lg16,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.white.withValues(alpha: 0.9),
                     borderRadius: AppRadii.borderPill,
@@ -318,7 +355,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.map_outlined, size: 14, color: AppColors.forest),
+                      const Icon(
+                        Icons.map_outlined,
+                        size: 14,
+                        color: AppColors.forest,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         '${_currentZoom.toInt()}x',
@@ -338,7 +379,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   left: AppSpacing.lg16,
                   right: AppSpacing.lg16,
                   bottom: AppSpacing.lg16,
-                  child: _buildExperienceCardPreview(context, _selectedExperience!),
+                  child: _buildExperienceCardPreview(
+                    context,
+                    _selectedExperience!,
+                    taxonomy,
+                  ),
                 ),
             ],
           ),
@@ -350,7 +395,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           padding: AppSpacing.paddingXl20,
           decoration: const BoxDecoration(
             color: AppColors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadii.lg24)),
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(AppRadii.lg24),
+            ),
             boxShadow: [
               BoxShadow(
                 color: AppColors.overlay,
@@ -375,19 +422,25 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   ),
                   Text(
                     '${(_centerLat ?? initialLat).toStringAsFixed(3)}° N, ${(_centerLng ?? initialLng).toStringAsFixed(3)}° E',
-                    style: AppTypography.caption.copyWith(color: AppColors.disabledText),
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.disabledText,
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: AppSpacing.sm8),
               Text(
                 meetingText,
-                style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w600),
+                style: AppTypography.bodyLarge.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: AppSpacing.md12),
               Text(
                 MapStrings.landmarkHeader,
-                style: AppTypography.caption.copyWith(color: AppColors.disabledText),
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.disabledText,
+                ),
               ),
               const SizedBox(height: AppSpacing.xs4),
               const Text(
@@ -402,7 +455,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       label: MapStrings.copyAddress,
                       icon: Icons.copy,
                       onPressed: () {
-                        Clipboard.setData(ClipboardData(text: '$meetingText\n${MapStrings.defaultLandmark}'));
+                        Clipboard.setData(
+                          ClipboardData(
+                            text: '$meetingText\n${MapStrings.defaultLandmark}',
+                          ),
+                        );
                         AppToast.show(
                           context,
                           message: MapStrings.addressCopied,
@@ -480,7 +537,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     overflow: TextOverflow.ellipsis,
                     style: AppTypography.caption.copyWith(
                       color: AppColors.ivory,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w600,
                     ),
                   ),
                 ),
@@ -555,7 +614,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
-  Widget _buildExperienceCardPreview(BuildContext context, Experience exp) {
+  Widget _buildExperienceCardPreview(
+    BuildContext context,
+    Experience exp,
+    ExperienceTaxonomy? taxonomy,
+  ) {
+    final presentation = ExperiencePresentation.from(exp, taxonomy);
     return Card(
       elevation: 8,
       shadowColor: AppColors.overlay,
@@ -588,32 +652,72 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (presentation.familyLabel != null) ...[
+                        Text(
+                          presentation.familyLabel!.toUpperCase(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.gold,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 10,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                      ],
                       Text(
                         exp.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+                        style: AppTypography.bodyLarge.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        [
+                          if (presentation.typeLabel != null)
+                            presentation.typeLabel!,
+                          presentation.detailText,
+                        ].join(' • '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.caption.copyWith(
+                          color: AppColors.forest,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         exp.locationName ?? MapStrings.defaultMeetingPoint,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.caption.copyWith(color: AppColors.disabledText),
+                        style: AppTypography.caption.copyWith(
+                          color: AppColors.disabledText,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.star, size: 14, color: AppColors.gold),
+                          const Icon(
+                            Icons.star,
+                            size: 14,
+                            color: AppColors.gold,
+                          ),
                           const SizedBox(width: 2),
                           Text(
                             exp.ratingAvg.toStringAsFixed(1),
-                            style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold),
+                            style: AppTypography.caption.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '(${exp.ratingCount})',
-                            style: AppTypography.caption.copyWith(color: AppColors.disabledText),
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.disabledText,
+                            ),
                           ),
                           const Spacer(),
                           Text(
@@ -629,7 +733,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close, color: AppColors.disabledText, size: 20),
+                  icon: const Icon(
+                    Icons.close,
+                    color: AppColors.disabledText,
+                    size: 20,
+                  ),
                   onPressed: () {
                     setState(() {
                       _selectedExperience = null;

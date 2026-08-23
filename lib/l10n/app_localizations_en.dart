@@ -74,7 +74,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get seeAll => 'See All';
 
   @override
-  String get searchHint => 'Search by keyword, location, trek...';
+  String get searchHint => 'Search experiences, places or activities';
 
   @override
   String get searchResults => 'Search Results';
@@ -374,25 +374,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmPasswordLabel => 'Confirm Password';
 
   @override
-  String get onboardingSlide1Title => 'Discover Local Culture';
+  String get onboardingSlide1Title => 'Explore Nepal Differently';
 
   @override
   String get onboardingSlide1Desc =>
-      'Authentic Nepal experiences hosted by passionate locals';
+      'Discover trips, food, culture, adventure, and experiences across Nepal.';
 
   @override
-  String get onboardingSlide2Title => 'Trek Off the Beaten Path';
+  String get onboardingSlide2Title => 'Find Your Kind of Experience';
 
   @override
   String get onboardingSlide2Desc =>
-      'Explore hidden trails, sacred mountain valleys, and ancient villages';
+      'Adventure, relax, learn something new, meet people, or live like a local.';
 
   @override
-  String get onboardingSlide3Title => 'Support Local Communities';
+  String get onboardingSlide3Title => 'Make Your Time Meaningful';
 
   @override
   String get onboardingSlide3Desc =>
-      'Every booking directly empowers rural families and artisans';
+      'Join local hosts, communities, and experiences you will actually remember.';
 
   @override
   String get skipText => 'Skip';
@@ -401,11 +401,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nextText => 'Next';
 
   @override
-  String get homeHeroTitle => 'Discover Authentic Nepal';
+  String get homeHeroTitle => 'Discover Nepal Your Way';
 
   @override
   String get homeHeroSubtitle =>
-      'Connect with local hosts, homestays & mountain guides';
+      'From local tables to mountain trails, discover Nepal your way';
 
   @override
   String get railRecommendedSub =>
@@ -422,11 +422,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Direct impact travel supporting local communities';
 
   @override
-  String get regionsSubtitle => 'From Annapurna circuits to Everest highlands';
+  String get regionsSubtitle =>
+      'Cities, villages, jungles, lakes, and mountain regions';
 
   @override
-  String get categoriesSubtitle =>
-      'Find journeys tailored to your adventure style';
+  String get categoriesSubtitle => 'Choose how you want to experience Nepal';
 
   @override
   String get addressCopied => 'Meeting point address copied to clipboard';
@@ -738,18 +738,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'Instant chat messages and instructions from local hosts';
 
   @override
-  String get notifWeatherAlertsTitle => 'Mountain Weather Alerts';
+  String get notifWeatherAlertsTitle => 'Travel Weather Alerts';
 
   @override
   String get notifWeatherAlertsSub =>
-      'Crucial trail weather and safety warnings for booked treks';
+      'Useful weather and safety updates for booked experiences';
 
   @override
   String get notifPromoOffersTitle => 'Promotional Offers';
 
   @override
   String get notifPromoOffersSub =>
-      'Seasonal discounts on homestays and featured treks';
+      'Seasonal discounts on stays and featured experiences';
 
   @override
   String get notifSoundEnabledTitle => 'Sound Effects';
@@ -820,11 +820,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get darkThemeSub => 'Enable dark theme for nighttime reading';
 
   @override
-  String get offlineMapsTitle => 'Offline Trail Maps';
+  String get offlineMapsTitle => 'Offline Maps';
 
   @override
   String get offlineMapsSub =>
-      'Download maps for offline navigation during treks';
+      'Download maps for offline navigation during experiences';
 
   @override
   String get clearCacheTitle => 'Clear Cache';

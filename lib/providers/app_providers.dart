@@ -7,8 +7,8 @@ import '../core/supabase_client.dart';
 import '../models/booking.dart';
 import '../models/category.dart';
 import '../models/experience.dart';
+import '../models/experience_family.dart';
 import '../models/generated_itinerary.dart';
-import '../models/home_rail_rule.dart';
 import '../models/host_application.dart';
 import '../models/notification.dart';
 import '../models/profile.dart';
@@ -23,7 +23,6 @@ import '../repositories/recent_searches_repository.dart';
 import '../repositories/review_repository.dart';
 import '../repositories/saved_repository.dart';
 import '../repositories/taxonomy_repository.dart';
-import 'remote_config_providers.dart';
 
 final supabaseClientProvider = Provider<SupabaseClient>((ref) {
   return AppSupabaseClient.client;
@@ -91,6 +90,7 @@ final experiencesProvider =
       final repo = ref.watch(experienceRepositoryProvider);
       int? minPricePaisa;
       int? maxPricePaisa;
+      int? maxDurationHours;
       final minStr = filters['min_price'] ?? filters['min_price_paisa'];
       final maxStr = filters['max_price'] ?? filters['max_price_paisa'];
       if (minStr != null && minStr.isNotEmpty) {
@@ -99,14 +99,20 @@ final experiencesProvider =
       if (maxStr != null && maxStr.isNotEmpty) {
         maxPricePaisa = int.tryParse(maxStr);
       }
+      final maxDurationStr = filters['max_duration_hours'];
+      if (maxDurationStr != null && maxDurationStr.isNotEmpty) {
+        maxDurationHours = int.tryParse(maxDurationStr);
+      }
 
       return repo.getExperiences(
+        familySlug: filters['family'],
         categoryId: filters['category_id'],
         regionId: filters['region_id'],
         difficulty: filters['difficulty'],
         searchQuery: filters['search_query'],
         minPricePaisa: minPricePaisa,
         maxPricePaisa: maxPricePaisa,
+        maxDurationHours: maxDurationHours,
         sortBy: filters['sort_by'],
       );
     });
@@ -123,15 +129,27 @@ final homeRailsProvider = FutureProvider<Map<String, List<Experience>>>((
   ref,
 ) async {
   final repo = ref.watch(experienceRepositoryProvider);
-  final railRules = resolveHomeRailRules(
-    ref.watch(remoteContentProvider('home_rail_rules')),
-  );
-  return repo.getHomeRails(railRules: railRules);
+  return repo.getHomeRails();
 });
 
 final categoriesProvider = FutureProvider<List<Category>>((ref) async {
   final repo = ref.watch(taxonomyRepositoryProvider);
   return repo.getCategories();
+});
+
+final experienceFamiliesProvider = FutureProvider<List<ExperienceFamily>>((
+  ref,
+) async {
+  final repo = ref.watch(taxonomyRepositoryProvider);
+  return repo.getExperienceFamilies();
+});
+
+final experienceTaxonomyProvider = FutureProvider<ExperienceTaxonomy>((
+  ref,
+) async {
+  final categories = await ref.watch(categoriesProvider.future);
+  final families = await ref.watch(experienceFamiliesProvider.future);
+  return ExperienceTaxonomy(categories: categories, families: families);
 });
 
 final regionsProvider = FutureProvider<List<Region>>((ref) async {
@@ -224,19 +242,20 @@ class AiItineraryNotifier extends StateNotifier<AiItineraryState> {
     String? groupType,
   }) {
     _lastRequest = (confirmed) => _repository.generate(
-          tripType: tripType,
-          durationDays: durationDays,
-          pace: pace,
-          budgetNpr: budgetNpr,
-          interests: interests,
-          groupType: groupType,
-          confirmed: confirmed,
-        );
+      tripType: tripType,
+      durationDays: durationDays,
+      pace: pace,
+      budgetNpr: budgetNpr,
+      interests: interests,
+      groupType: groupType,
+      confirmed: confirmed,
+    );
     return _run(_lastRequest!(false));
   }
 
   Future<void> generateFromPrompt(String prompt) {
-    _lastRequest = (confirmed) => _repository.generateFromPrompt(prompt, confirmed: confirmed);
+    _lastRequest = (confirmed) =>
+        _repository.generateFromPrompt(prompt, confirmed: confirmed);
     return _run(_lastRequest!(false));
   }
 
@@ -334,6 +353,29 @@ String deferredActionDestination(DeferredAction? action) {
     'HOST_APPLICATION' => '/host',
     _ => '/home',
   };
+}
+
+/// Resolves the landing page after authentication using the same backend
+/// host-access decision as the launch splash. Profile metadata and deferred
+/// UI state are not sufficient authorization for Host Mode.
+Future<String> authenticatedDestination(
+  SupabaseClient client,
+  DeferredAction? action,
+) async {
+  try {
+    final response = await client.rpc('current_host_access');
+    final rows = response is List ? response : const [];
+    final row = rows.isNotEmpty && rows.first is Map
+        ? Map<String, dynamic>.from(rows.first as Map)
+        : const <String, dynamic>{};
+    if (row['is_approved'] == true && row['is_active'] == true) {
+      return '/host/dashboard';
+    }
+  } catch (_) {
+    // Authentication must still complete if host access is temporarily
+    // unavailable. Guarded host routes will verify access independently.
+  }
+  return deferredActionDestination(action);
 }
 
 class NetworkStateNotifier extends StateNotifier<bool> {

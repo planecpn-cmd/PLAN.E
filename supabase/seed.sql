@@ -642,6 +642,68 @@ begin
     4.9, 115, 'published'
   );
 
+  -- Keep demo discovery balanced across all six experience families. These
+  -- assignments intentionally produce five published experiences per family.
+  update public.experiences as experience
+  set
+    category_id = category.id,
+    title = seed.title,
+    summary = seed.summary,
+    description = seed.summary,
+    difficulty = case
+      when family.slug = 'adventure-together' then experience.difficulty
+      else 'easy'
+    end,
+    max_altitude_m = case
+      when family.slug = 'adventure-together' then experience.max_altitude_m
+      else null
+    end,
+    permits_required = case
+      when family.slug = 'adventure-together' then experience.permits_required
+      else '{}'::text[]
+    end
+  from (
+    values
+      ('everest-base-camp-trek', 'trekking', 'Everest Base Camp Trek', 'A guided high-altitude trek shared with a small group.'),
+      ('annapurna-base-camp-trek', 'trekking', 'Annapurna Base Camp Trek', 'A classic Himalayan trek through villages and mountain landscapes.'),
+      ('island-peak-climbing', 'climbing', 'Island Peak Climbing Expedition', 'A supported mountaineering challenge for experienced adventurers.'),
+      ('pokhara-paragliding', 'camping', 'Pokhara Tandem Paragliding', 'Fly above Pokhara with an experienced tandem pilot.'),
+      ('bhotekoshi-whitewater-rafting', 'camping', 'Bhotekoshi White Water Rafting', 'Share an exciting guided rafting day on the Bhotekoshi River.'),
+
+      ('nagarkot-sunrise-hike', 'day-trip', 'Nagarkot Sunrise Day Trip', 'A relaxed guided sunrise outing with village and valley viewpoints.'),
+      ('chitwan-jungle-safari', 'guided-tour', 'Chitwan Wildlife and Culture Tour', 'Discover wildlife and Tharu culture with local guides.'),
+      ('everest-heli-tour', 'travel-package', 'Everest Helicopter Tour', 'A scenic flight package with Himalayan views and breakfast.'),
+      ('pokhara-peace-stupa-hike', 'day-trip', 'Pokhara Peace Stupa Day Tour', 'Cross the lake and visit the Peace Stupa on a guided day out.'),
+      ('kakani-trout-strawberry', 'day-trip', 'Kakani Farm and Food Day Trip', 'Taste local produce and meet growers in the Kakani hills.'),
+
+      ('panauti-community-homestay', 'homestay', 'Panauti Community Homestay', 'Stay with a local family and experience everyday Newari life.'),
+      ('ghandruk-homestay-experience', 'village-stay', 'Ghandruk Village Homestay', 'Share meals, stories, and village traditions with a Gurung host.'),
+      ('bandipur-cultural-walk', 'culture', 'Bandipur Living Culture Experience', 'Explore local heritage, architecture, and community stories.'),
+      ('bhaktapur-pottery-workshop', 'craft-workshop', 'Bhaktapur Pottery Workshop', 'Learn traditional pottery techniques from a local craftsperson.'),
+      ('tiji-festival-mustang', 'culture', 'Tiji Festival Cultural Experience', 'Experience sacred mask dances and living Mustang traditions.'),
+
+      ('langtang-valley-trek', 'wellness-retreat', 'Langtang Mindfulness Retreat', 'Slow down with guided reflection, gentle walks, and village hospitality.'),
+      ('rara-lake-wilderness-trek', 'yoga', 'Rara Lakeside Yoga Weekend', 'Practice yoga and restore beside the quiet waters of Rara Lake.'),
+      ('shivapuri-peak-hike', 'meditation', 'Shivapuri Forest Meditation Morning', 'A guided morning of mindful walking and forest meditation.'),
+      ('dhulikhel-namobuddha-hike', 'meditation', 'Namobuddha Mindfulness Retreat', 'Explore Buddhist mindfulness through guided practice and reflection.'),
+      ('himalayan-sound-healing', 'wellness', 'Himalayan Sound Healing', 'A restorative singing-bowl and meditation session in Pokhara.'),
+
+      ('upper-mustang-trek', 'community-event', 'Mustang Culture Exchange Meetup', 'Meet residents and fellow travelers through stories, music, and food.'),
+      ('manaslu-circuit-trek', 'meetup', 'Manaslu Travelers Community Evening', 'Swap stories and practical local knowledge with a welcoming group.'),
+      ('mardi-himal-trek', 'group-activity', 'Pokhara Sunrise Social Walk', 'Join an easy-paced social morning with new people and local hosts.'),
+      ('australian-camp-overnight', 'community-event', 'Dhampus Campfire Community Night', 'Gather for food, music, and conversation in a village setting.'),
+      ('phulchowki-mountain-biking', 'group-activity', 'Kathmandu Cycling Social', 'Ride, pause, and connect with a friendly local cycling group.'),
+
+      ('bardia-tiger-tracking', 'conservation-project', 'Bardia Wildlife Conservation Day', 'Support habitat monitoring and learn from community conservationists.'),
+      ('mera-peak-climbing', 'skill-sharing', 'Mountain Safety Skill-Sharing Project', 'Exchange practical safety knowledge with guides and young trainees.'),
+      ('gokyo-lakes-trek', 'volunteer-project', 'Gokyo Community Clean-up Project', 'Help protect mountain settlements and trails alongside local partners.'),
+      ('helambu-circuit-trek', 'volunteer-project', 'Helambu School Support Week', 'Contribute time and practical skills to a community-led school project.'),
+      ('tilicho-lake-annapurna-circuit', 'conservation-project', 'Tilicho Watershed Conservation Project', 'Join local stewards protecting a fragile highland watershed.')
+  ) as seed(slug, category_slug, title, summary)
+  join public.categories as category on category.slug = seed.category_slug
+  join public.experience_families as family on family.id = category.family_id
+  where experience.slug = seed.slug;
+
 end $$;
 
 -- Seed real departures after the experience catalog exists. Payment and

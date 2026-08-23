@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../core/experience_presentation.dart';
 import '../../models/category.dart';
+import '../../models/experience_family.dart';
 import '../../models/region.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
@@ -12,18 +14,22 @@ import '../../widgets/widgets.dart';
 class FilterSheet extends ConsumerStatefulWidget {
   final String? initialDifficulty;
   final String? initialCategoryId;
+  final String? initialFamilySlug;
   final String? initialRegionId;
   final int? initialMinPricePaisa;
   final int? initialMaxPricePaisa;
+  final int? initialMaxDurationHours;
   final String? initialSortBy;
 
   const FilterSheet({
     super.key,
     this.initialDifficulty,
     this.initialCategoryId,
+    this.initialFamilySlug,
     this.initialRegionId,
     this.initialMinPricePaisa,
     this.initialMaxPricePaisa,
+    this.initialMaxDurationHours,
     this.initialSortBy,
   });
 
@@ -34,8 +40,10 @@ class FilterSheet extends ConsumerStatefulWidget {
 class _FilterSheetState extends ConsumerState<FilterSheet> {
   String? _selectedDifficulty;
   String? _selectedCategoryId;
+  String? _selectedFamilySlug;
   String? _selectedRegionId;
   String? _selectedSortBy;
+  int? _selectedMaxDurationHours;
   late TextEditingController _minPriceController;
   late TextEditingController _maxPriceController;
 
@@ -44,8 +52,10 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     super.initState();
     _selectedDifficulty = widget.initialDifficulty;
     _selectedCategoryId = widget.initialCategoryId;
+    _selectedFamilySlug = widget.initialFamilySlug;
     _selectedRegionId = widget.initialRegionId;
     _selectedSortBy = widget.initialSortBy ?? 'relevance';
+    _selectedMaxDurationHours = widget.initialMaxDurationHours;
     _minPriceController = TextEditingController(
       text: widget.initialMinPricePaisa != null
           ? (widget.initialMinPricePaisa! ~/ 100).toString()
@@ -69,8 +79,10 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     setState(() {
       _selectedDifficulty = null;
       _selectedCategoryId = null;
+      _selectedFamilySlug = null;
       _selectedRegionId = null;
       _selectedSortBy = 'relevance';
+      _selectedMaxDurationHours = null;
       _minPriceController.clear();
       _maxPriceController.clear();
     });
@@ -85,9 +97,11 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     Navigator.of(context).pop<Map<String, String?>>({
       'difficulty': _selectedDifficulty,
       'category_id': _selectedCategoryId,
+      'family': _selectedFamilySlug,
       'region_id': _selectedRegionId,
       'min_price': minPaisa?.toString(),
       'max_price': maxPaisa?.toString(),
+      'max_duration_hours': _selectedMaxDurationHours?.toString(),
       'sort_by': _selectedSortBy,
     });
   }
@@ -96,12 +110,22 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final categoriesAsync = ref.watch(categoriesProvider);
+    final familiesAsync = ref.watch(experienceFamiliesProvider);
     final regionsAsync = ref.watch(regionsProvider);
+    final taxonomy = ref.watch(experienceTaxonomyProvider).valueOrNull;
+    final showDifficulty =
+        _selectedDifficulty != null ||
+        familySupportsDifficulty(_selectedFamilySlug) ||
+        familySupportsDifficulty(
+          taxonomy?.familyFor(_selectedCategoryId)?.slug,
+        );
 
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.ivory,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadii.lg24)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadii.lg24),
+        ),
       ),
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg16,
@@ -130,16 +154,24 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
 
               // Title Row
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    l10n.filterAndSort,
-                    style: AppTypography.headingMedium.copyWith(color: AppColors.forest),
+                  Expanded(
+                    child: Text(
+                      l10n.filterAndSort,
+                      maxLines: 2,
+                      style: AppTypography.headingMedium.copyWith(
+                        color: AppColors.forest,
+                      ),
+                    ),
                   ),
+                  const SizedBox(width: AppSpacing.sm8),
                   TextButton(
                     onPressed: _resetAll,
                     style: TextButton.styleFrom(
-                      minimumSize: const Size(AppTouchTarget.minSize, AppTouchTarget.minSize),
+                      minimumSize: const Size(
+                        AppTouchTarget.minSize,
+                        AppTouchTarget.minSize,
+                      ),
                     ),
                     child: Text(
                       l10n.resetAll,
@@ -158,7 +190,9 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
               // 1. Sort By Options
               Text(
                 l10n.sortBy,
-                style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
+                style: AppTypography.headingMedium.copyWith(
+                  color: AppColors.ink,
+                ),
               ),
               const SizedBox(height: AppSpacing.sm8),
               Wrap(
@@ -177,29 +211,80 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
 
               const SizedBox(height: AppSpacing.xxl24),
 
-              // 2. Difficulty Level
               Text(
-                l10n.difficultyLevel,
-                style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
+                'Experience family',
+                style: AppTypography.headingMedium.copyWith(
+                  color: AppColors.ink,
+                ),
               ),
               const SizedBox(height: AppSpacing.sm8),
-              Wrap(
-                spacing: AppSpacing.sm8,
-                runSpacing: AppSpacing.sm8,
-                children: [
-                  _buildDifficultyChip('easy', l10n.easy),
-                  _buildDifficultyChip('moderate', l10n.moderate),
-                  _buildDifficultyChip('challenging', l10n.challenging),
-                  _buildDifficultyChip('strenuous', l10n.strenuous),
-                ],
+              AsyncValueView<List<ExperienceFamily>>(
+                value: familiesAsync,
+                onRetry: () => ref.refresh(experienceFamiliesProvider),
+                isEmpty: (families) => families.isEmpty,
+                emptyView: Text(
+                  'No experience families loaded',
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.disabledText,
+                  ),
+                ),
+                data: (families) => Wrap(
+                  spacing: AppSpacing.sm8,
+                  runSpacing: AppSpacing.sm8,
+                  children: families.map((family) {
+                    return FilterChipPill(
+                      label: family.nameEn,
+                      isSelected: _selectedFamilySlug == family.slug,
+                      onSelected: (selected) {
+                        setState(() {
+                          _selectedFamilySlug = selected ? family.slug : null;
+                          _selectedCategoryId = null;
+                          if (!familySupportsDifficulty(_selectedFamilySlug)) {
+                            _selectedDifficulty = null;
+                          }
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
               ),
+
+              if (showDifficulty) ...[
+                const SizedBox(height: AppSpacing.xxl24),
+                Text(
+                  l10n.difficultyLevel,
+                  style: AppTypography.headingMedium.copyWith(
+                    color: AppColors.ink,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs4),
+                Text(
+                  'Only applies to outdoor adventure experiences',
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.disabledText,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm8),
+                Wrap(
+                  spacing: AppSpacing.sm8,
+                  runSpacing: AppSpacing.sm8,
+                  children: [
+                    _buildDifficultyChip('easy', l10n.easy),
+                    _buildDifficultyChip('moderate', l10n.moderate),
+                    _buildDifficultyChip('challenging', l10n.challenging),
+                    _buildDifficultyChip('strenuous', l10n.strenuous),
+                  ],
+                ),
+              ],
 
               const SizedBox(height: AppSpacing.xxl24),
 
-              // 3. Price Range (NPR)
+              // Universal filters remain visible for every experience.
               Text(
                 'Price Range (NPR)',
-                style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
+                style: AppTypography.headingMedium.copyWith(
+                  color: AppColors.ink,
+                ),
               ),
               const SizedBox(height: AppSpacing.sm8),
               Row(
@@ -208,10 +293,15 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                     child: TextField(
                       controller: _minPriceController,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(fontSize: 14, color: AppColors.ink),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.ink,
+                      ),
                       decoration: InputDecoration(
                         labelText: 'Min Price (Rs.)',
-                        labelStyle: const TextStyle(color: AppColors.disabledText),
+                        labelStyle: const TextStyle(
+                          color: AppColors.disabledText,
+                        ),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 10,
@@ -228,10 +318,15 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                     child: TextField(
                       controller: _maxPriceController,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(fontSize: 14, color: AppColors.ink),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.ink,
+                      ),
                       decoration: InputDecoration(
                         labelText: 'Max Price (Rs.)',
-                        labelStyle: const TextStyle(color: AppColors.disabledText),
+                        labelStyle: const TextStyle(
+                          color: AppColors.disabledText,
+                        ),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 10,
@@ -248,10 +343,34 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
 
               const SizedBox(height: AppSpacing.xxl24),
 
-              // 4. Categories Section
               Text(
-                l10n.category,
-                style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
+                'Duration',
+                style: AppTypography.headingMedium.copyWith(
+                  color: AppColors.ink,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm8),
+              Wrap(
+                spacing: AppSpacing.sm8,
+                runSpacing: AppSpacing.sm8,
+                children: [
+                  _buildDurationChip(null, 'Any duration'),
+                  _buildDurationChip(2, 'Up to 2 hours'),
+                  _buildDurationChip(4, 'Half day'),
+                  _buildDurationChip(8, 'Full day'),
+                  _buildDurationChip(48, 'Weekend'),
+                  _buildDurationChip(72, 'Up to 3 days'),
+                ],
+              ),
+
+              const SizedBox(height: AppSpacing.xxl24),
+
+              // Types are progressively narrowed by the selected family.
+              Text(
+                'Experience type',
+                style: AppTypography.headingMedium.copyWith(
+                  color: AppColors.ink,
+                ),
               ),
               const SizedBox(height: AppSpacing.sm8),
 
@@ -261,13 +380,44 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                 isEmpty: (categories) => categories.isEmpty,
                 emptyView: Text(
                   'No categories loaded',
-                  style: AppTypography.caption.copyWith(color: AppColors.disabledText),
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.disabledText,
+                  ),
                 ),
                 data: (categories) {
+                  final visibleCategories = _selectedFamilySlug == null
+                      ? categories
+                            .where(
+                              (category) => category.id == _selectedCategoryId,
+                            )
+                            .toList()
+                      : categories.where((category) {
+                          return taxonomy?.familyFor(category.id)?.slug ==
+                                  _selectedFamilySlug ||
+                              fallbackFamilySlugByCategorySlug[category.slug] ==
+                                  _selectedFamilySlug;
+                        }).toList();
+                  if (_selectedFamilySlug == null &&
+                      _selectedCategoryId == null) {
+                    return Text(
+                      'Choose an experience family to see its types.',
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.disabledText,
+                      ),
+                    );
+                  }
+                  if (visibleCategories.isEmpty) {
+                    return Text(
+                      'No types are available for this family yet.',
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.disabledText,
+                      ),
+                    );
+                  }
                   return Wrap(
                     spacing: AppSpacing.sm8,
                     runSpacing: AppSpacing.sm8,
-                    children: categories.map((cat) {
+                    children: visibleCategories.map((cat) {
                       final isSelected = _selectedCategoryId == cat.id;
                       return FilterChipPill(
                         label: cat.nameEn,
@@ -288,7 +438,9 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
               // 5. Regions Section
               Text(
                 l10n.region,
-                style: AppTypography.headingMedium.copyWith(color: AppColors.ink),
+                style: AppTypography.headingMedium.copyWith(
+                  color: AppColors.ink,
+                ),
               ),
               const SizedBox(height: AppSpacing.sm8),
 
@@ -298,7 +450,9 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                 isEmpty: (regions) => regions.isEmpty,
                 emptyView: Text(
                   'No regions loaded',
-                  style: AppTypography.caption.copyWith(color: AppColors.disabledText),
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.disabledText,
+                  ),
                 ),
                 data: (regions) {
                   return Wrap(
@@ -357,6 +511,18 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
       onSelected: (selected) {
         setState(() {
           _selectedDifficulty = selected ? value : null;
+        });
+      },
+    );
+  }
+
+  Widget _buildDurationChip(int? hours, String label) {
+    return FilterChipPill(
+      label: label,
+      isSelected: _selectedMaxDurationHours == hours,
+      onSelected: (_) {
+        setState(() {
+          _selectedMaxDurationHours = hours;
         });
       },
     );

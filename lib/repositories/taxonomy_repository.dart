@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/offline_cache.dart';
 import '../models/category.dart';
+import '../models/experience_family.dart';
 import '../models/region.dart';
 
 class TaxonomyRepository {
@@ -10,6 +11,36 @@ class TaxonomyRepository {
 
   static const _categoriesCacheKey = 'categories';
   static const _regionsCacheKey = 'regions';
+  static const _familiesCacheKey = 'experience_families';
+
+  Future<List<ExperienceFamily>> getExperienceFamilies() async {
+    try {
+      final response = await _client
+          .from('experience_families')
+          .select()
+          .order('sort_order', ascending: true);
+      final families = (response as List<dynamic>)
+          .map(
+            (json) => ExperienceFamily.fromJson(json as Map<String, dynamic>),
+          )
+          .toList();
+      await OfflineCache.write(
+        _familiesCacheKey,
+        families.map((family) => family.toJson()).toList(),
+      );
+      return families;
+    } catch (_) {
+      final cached = await OfflineCache.read<List<ExperienceFamily>>(
+        _familiesCacheKey,
+        (json) => (json as List)
+            .map(
+              (item) => ExperienceFamily.fromJson(item as Map<String, dynamic>),
+            )
+            .toList(),
+      );
+      return cached ?? defaultExperienceFamilies;
+    }
+  }
 
   Future<List<Category>> getCategories() async {
     try {
@@ -19,8 +50,9 @@ class TaxonomyRepository {
           .order('sort_order', ascending: true);
 
       final List<dynamic> data = response as List<dynamic>;
-      final categories =
-          data.map((json) => Category.fromJson(json as Map<String, dynamic>)).toList();
+      final categories = data
+          .map((json) => Category.fromJson(json as Map<String, dynamic>))
+          .toList();
 
       await OfflineCache.write(
         _categoriesCacheKey,
@@ -47,8 +79,9 @@ class TaxonomyRepository {
           .order('sort_order', ascending: true);
 
       final List<dynamic> data = response as List<dynamic>;
-      final regions =
-          data.map((json) => Region.fromJson(json as Map<String, dynamic>)).toList();
+      final regions = data
+          .map((json) => Region.fromJson(json as Map<String, dynamic>))
+          .toList();
 
       await OfflineCache.write(
         _regionsCacheKey,

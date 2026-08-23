@@ -93,7 +93,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
     final messenger = ScaffoldMessenger.of(context);
 
     try {
-      final repo = ref.read(bookingFeatureRepositoryProvider);
+      final repo = ref.read(bookingRepositoryProvider);
       final intent = await repo.createBookingIntent(
         experienceId: experience.id,
         departureId: _selectedDeparture!.id,
@@ -109,8 +109,13 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
         // Read, not watch — this is a one-shot decision at the moment the
         // sheet opens, not something the already-open sheet needs to react
         // to live if the flag flips mid-checkout.
-        final esewaEnabled = ref.read(featureFlagProvider('payment_esewa')) ?? true;
-        _showPaymentIntentModalSheet(experience, intent, esewaEnabled: esewaEnabled);
+        final esewaEnabled =
+            ref.read(featureFlagProvider('payment_esewa')) ?? true;
+        _showPaymentIntentModalSheet(
+          experience,
+          intent,
+          esewaEnabled: esewaEnabled,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -410,7 +415,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                       final messenger = ScaffoldMessenger.of(context);
                       final router = GoRouter.of(context);
                       final pageNavigator = Navigator.of(context);
-                      final repo = ref.read(bookingFeatureRepositoryProvider);
+                      final repo = ref.read(bookingRepositoryProvider);
 
                       try {
                         final paymentUrl = await repo.initiatePayment(

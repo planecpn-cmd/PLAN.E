@@ -13,6 +13,7 @@ import 'package:plan_e/providers/trip_tools_providers.dart';
 import 'package:plan_e/repositories/trip_chat_repository.dart';
 import 'package:plan_e/theme/app_theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final _baseTime = DateTime.utc(2026, 8, 14, 5, 49);
 
@@ -45,6 +46,10 @@ HostConversation _conversation(String id, List<HostMessage> messages) =>
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
 
   group('canonical message ordering', () {
     test('messages render oldest to newest using timestamps', () {

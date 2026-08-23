@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/offline_cache.dart';
+import '../../core/message_outbox.dart';
+import '../../core/push_notification_service.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/app_button.dart';
@@ -14,9 +16,7 @@ class LogoutDialog extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return AlertDialog(
-      shape: const RoundedRectangleBorder(
-        borderRadius: AppRadii.borderMd16,
-      ),
+      shape: const RoundedRectangleBorder(borderRadius: AppRadii.borderMd16),
       backgroundColor: AppColors.white,
       title: Row(
         children: [
@@ -47,6 +47,12 @@ class LogoutDialog extends ConsumerWidget {
               child: AppButton(
                 label: 'Log Out',
                 onPressed: () async {
+                  // A deferred action only belongs to the session that
+                  // created it. In particular, signing out while a host
+                  // route is mounted must not leave HOST_APPLICATION queued
+                  // for the next login, otherwise an ordinary login is
+                  // redirected to /host instead of /home.
+                  ref.read(deferredActionProvider.notifier).clear();
                   try {
                     final client = ref.read(supabaseClientProvider);
                     // Captured before signOut() — currentUser is null right
@@ -56,9 +62,13 @@ class LogoutDialog extends ConsumerWidget {
                     // this user's cached bookings/profile because a fetch
                     // happened to fail right after they signed in.
                     final userId = client.auth.currentUser?.id;
+                    await PushNotificationService.unregisterCurrentDevice();
                     await client.auth.signOut();
                     if (userId != null) {
-                      await OfflineCache.clearWhere((key) => key.contains(':$userId'));
+                      await OfflineCache.clearWhere(
+                        (key) => key.contains(':$userId'),
+                      );
+                      await MessageOutboxStore.clearUser(userId);
                     }
                     ref.invalidate(profileProvider);
                   } catch (_) {

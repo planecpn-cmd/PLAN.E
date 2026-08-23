@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../theme/theme.dart';
+import '../../core/push_notification_service.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/app_toast.dart';
 
@@ -10,15 +11,24 @@ class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
-  ConsumerState<NotificationsScreen> createState() => _NotificationsScreenState();
+  ConsumerState<NotificationsScreen> createState() =>
+      _NotificationsScreenState();
 }
 
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   bool _tripAlerts = true;
-  bool _hostMessages = true;
+  bool _hostMessages = false;
   bool _promoOffers = false;
   bool _weatherAlerts = true;
   bool _soundEnabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    PushNotificationService.permissionGranted().then((enabled) {
+      if (mounted) setState(() => _hostMessages = enabled);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +59,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             const SizedBox(height: AppSpacing.xs4),
             Text(
               'Customize which notifications you receive from PLAN E.',
-              style: AppTypography.caption.copyWith(color: AppColors.disabledText),
+              style: AppTypography.caption.copyWith(
+                color: AppColors.disabledText,
+              ),
             ),
             const SizedBox(height: AppSpacing.lg16),
             AppCard(
@@ -58,45 +70,73 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 children: [
                   _NotificationSwitchTile(
                     title: 'Trip Updates & Reminders',
-                    subtitle: 'Itinerary changes, upcoming booking alerts & check-in times',
+                    subtitle:
+                        'Itinerary changes, upcoming booking alerts & check-in times',
                     icon: Icons.calendar_today_outlined,
                     value: _tripAlerts,
                     onChanged: (val) {
                       setState(() => _tripAlerts = val);
-                      AppToast.show(context, message: 'Trip updates preference saved');
+                      AppToast.show(
+                        context,
+                        message: 'Trip updates preference saved',
+                      );
                     },
                   ),
                   const Divider(height: 1, color: AppColors.borderSubtle),
                   _NotificationSwitchTile(
                     title: 'Host & Direct Messages',
-                    subtitle: 'Instant chat messages and instructions from local hosts',
+                    subtitle:
+                        'Instant chat messages and instructions from local hosts',
                     icon: Icons.chat_bubble_outline,
                     value: _hostMessages,
-                    onChanged: (val) {
-                      setState(() => _hostMessages = val);
-                      AppToast.show(context, message: 'Host messages preference saved');
+                    onChanged: (val) async {
+                      if (!val) {
+                        await PushNotificationService.unregisterCurrentDevice();
+                        if (mounted) setState(() => _hostMessages = false);
+                        return;
+                      }
+                      final enabled =
+                          await PushNotificationService.requestPermissionAndRegister();
+                      if (!context.mounted) return;
+                      setState(() => _hostMessages = enabled);
+                      AppToast.show(
+                        context,
+                        message: enabled
+                            ? 'Message notifications enabled'
+                            : PushNotificationService.isConfigured
+                            ? 'Notification permission was not granted'
+                            : 'Push notifications are not configured in this build',
+                      );
                     },
                   ),
                   const Divider(height: 1, color: AppColors.borderSubtle),
                   _NotificationSwitchTile(
                     title: 'Mountain Weather Alerts',
-                    subtitle: 'Real-time weather & trail safety warnings for booked region',
+                    subtitle:
+                        'Real-time weather & trail safety warnings for booked region',
                     icon: Icons.thunderstorm_outlined,
                     value: _weatherAlerts,
                     onChanged: (val) {
                       setState(() => _weatherAlerts = val);
-                      AppToast.show(context, message: 'Weather alerts preference saved');
+                      AppToast.show(
+                        context,
+                        message: 'Weather alerts preference saved',
+                      );
                     },
                   ),
                   const Divider(height: 1, color: AppColors.borderSubtle),
                   _NotificationSwitchTile(
                     title: 'Promotions & Special Deals',
-                    subtitle: 'Seasonal discounts on homestays and featured treks',
+                    subtitle:
+                        'Seasonal discounts on homestays and featured treks',
                     icon: Icons.local_offer_outlined,
                     value: _promoOffers,
                     onChanged: (val) {
                       setState(() => _promoOffers = val);
-                      AppToast.show(context, message: 'Promotional offers preference saved');
+                      AppToast.show(
+                        context,
+                        message: 'Promotional offers preference saved',
+                      );
                     },
                   ),
                   const Divider(height: 1, color: AppColors.borderSubtle),

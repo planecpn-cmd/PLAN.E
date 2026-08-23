@@ -74,7 +74,7 @@ class AppLocalizationsNe extends AppLocalizations {
   String get seeAll => 'सबै हेर्नुहोस्';
 
   @override
-  String get searchHint => 'मुख्य शब्द, स्थान, पदयात्रा खोज्नुहोस्...';
+  String get searchHint => 'अनुभव, स्थान वा गतिविधि खोज्नुहोस्';
 
   @override
   String get searchResults => 'खोज परिणामहरू';
@@ -374,25 +374,25 @@ class AppLocalizationsNe extends AppLocalizations {
   String get confirmPasswordLabel => 'पासवर्ड पुष्टि गर्नुहोस्';
 
   @override
-  String get onboardingSlide1Title => 'स्थानीय संस्कृति खोज्नुहोस्';
+  String get onboardingSlide1Title => 'नेपाललाई फरक तरिकाले अन्वेषण गर्नुहोस्';
 
   @override
   String get onboardingSlide1Desc =>
-      'उत्साही स्थानीयहरूद्वारा सञ्चालित प्रामाणिक नेपाल अनुभवहरू';
+      'नेपालभरिका यात्रा, खाना, संस्कृति, साहसिक गतिविधि र अनुभवहरू पत्ता लगाउनुहोस्।';
 
   @override
-  String get onboardingSlide2Title => 'ओझेलमा परेका पदयात्रा मार्गहरू';
+  String get onboardingSlide2Title => 'आफ्नो रुचिको अनुभव खोज्नुहोस्';
 
   @override
   String get onboardingSlide2Desc =>
-      'लुकेका पदमार्गहरू, पवित्र हिमाल उपत्यकाहरू र प्राचीन गाउँहरू अन्वेषण गर्नुहोस्';
+      'साहसिक बन्नुहोस्, आराम गर्नुहोस्, नयाँ कुरा सिक्नुहोस्, मानिसहरू भेट्नुहोस् वा स्थानीय जस्तै बाँच्नुहोस्।';
 
   @override
-  String get onboardingSlide3Title => 'स्थानीय समुदायहरूलाई सहयोग गर्नुहोस्';
+  String get onboardingSlide3Title => 'आफ्नो समय अर्थपूर्ण बनाउनुहोस्';
 
   @override
   String get onboardingSlide3Desc =>
-      'प्रत्येक बुकिङले ग्रामीण परिवार र कारीगरहरूलाई प्रत्यक्ष सशक्त बनाउँछ';
+      'स्थानीय आयोजक, समुदाय र सधैं सम्झिरहने अनुभवहरूसँग जोडिनुहोस्।';
 
   @override
   String get skipText => 'छाड्नुहोस्';
@@ -401,11 +401,11 @@ class AppLocalizationsNe extends AppLocalizations {
   String get nextText => 'अर्को';
 
   @override
-  String get homeHeroTitle => 'प्रामाणिक नेपाल खोज्नुहोस्';
+  String get homeHeroTitle => 'आफ्नै तरिकाले नेपाल पत्ता लगाउनुहोस्';
 
   @override
   String get homeHeroSubtitle =>
-      'स्थानीय आयोजकहरू, होमस्टे र हिमाली गाइडहरूसँग जोडिनुहोस्';
+      'स्थानीय परिकारदेखि हिमाली पदमार्गसम्म, आफ्नै तरिकाले नेपाल पत्ता लगाउनुहोस्';
 
   @override
   String get railRecommendedSub =>
@@ -423,11 +423,11 @@ class AppLocalizationsNe extends AppLocalizations {
       'स्थानीय समुदायलाई सहयोग पुर्याउने प्रत्यक्ष प्रभाव यात्रा';
 
   @override
-  String get regionsSubtitle => 'अन्नपूर्ण चक्रदेखि सगरमाथा उच्चभूमिसम्म';
+  String get regionsSubtitle => 'सहर, गाउँ, जङ्गल, ताल र हिमाली क्षेत्रहरू';
 
   @override
   String get categoriesSubtitle =>
-      'तपाईंको साहसिक शैली अनुसारका यात्राहरू फेला पार्नुहोस्';
+      'तपाईं नेपाललाई कसरी अनुभव गर्न चाहनुहुन्छ छान्नुहोस्';
 
   @override
   String get addressCopied => 'भेट्ने स्थानको ठेगाना क्लिपबोर्डमा कपी गरियो';
@@ -738,18 +738,17 @@ class AppLocalizationsNe extends AppLocalizations {
       'स्थानीय होस्टहरूबाट तत्काल च्याट सन्देशहरू र निर्देशनहरू';
 
   @override
-  String get notifWeatherAlertsTitle => 'हिमाली मौसम अलर्ट';
+  String get notifWeatherAlertsTitle => 'यात्रा मौसम सूचना';
 
   @override
   String get notifWeatherAlertsSub =>
-      'बुकिङ गरिएका पदयात्राहरूका लागि महत्त्वपूर्ण पदमार्ग मौसम र सुरक्षा चेतावनीहरू';
+      'बुक गरिएका अनुभवका लागि उपयोगी मौसम र सुरक्षा जानकारी';
 
   @override
   String get notifPromoOffersTitle => 'प्रवर्द्धनात्मक प्रस्तावहरू';
 
   @override
-  String get notifPromoOffersSub =>
-      'होमस्टे र विशेष पदयात्राहरूमा मौसमी छुटहरू';
+  String get notifPromoOffersSub => 'बसाइ र विशेष अनुभवहरूमा मौसमी छुटहरू';
 
   @override
   String get notifSoundEnabledTitle => 'ध्वनि प्रभावहरू';
@@ -822,11 +821,11 @@ class AppLocalizationsNe extends AppLocalizations {
       'रातिको समयमा पढ्नका लागि डार्क थिम सक्षम गर्नुहोस्';
 
   @override
-  String get offlineMapsTitle => 'अफलाइन पदयात्रा नक्सा';
+  String get offlineMapsTitle => 'अफलाइन नक्सा';
 
   @override
   String get offlineMapsSub =>
-      'पदयात्राको क्रममा अफलाइन नेभिगेसनका लागि नक्सा डाउनलोड गर्नुहोस्';
+      'अनुभवका बेला अफलाइन नेभिगेसनका लागि नक्सा डाउनलोड गर्नुहोस्';
 
   @override
   String get clearCacheTitle => 'क्यास हटाउनुहोस्';

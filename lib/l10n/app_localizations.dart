@@ -227,7 +227,7 @@ abstract class AppLocalizations {
   /// No description provided for @searchHint.
   ///
   /// In en, this message translates to:
-  /// **'Search by keyword, location, trek...'**
+  /// **'Search experiences, places or activities'**
   String get searchHint;
 
   /// No description provided for @searchResults.
@@ -815,37 +815,37 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingSlide1Title.
   ///
   /// In en, this message translates to:
-  /// **'Discover Local Culture'**
+  /// **'Explore Nepal Differently'**
   String get onboardingSlide1Title;
 
   /// No description provided for @onboardingSlide1Desc.
   ///
   /// In en, this message translates to:
-  /// **'Authentic Nepal experiences hosted by passionate locals'**
+  /// **'Discover trips, food, culture, adventure, and experiences across Nepal.'**
   String get onboardingSlide1Desc;
 
   /// No description provided for @onboardingSlide2Title.
   ///
   /// In en, this message translates to:
-  /// **'Trek Off the Beaten Path'**
+  /// **'Find Your Kind of Experience'**
   String get onboardingSlide2Title;
 
   /// No description provided for @onboardingSlide2Desc.
   ///
   /// In en, this message translates to:
-  /// **'Explore hidden trails, sacred mountain valleys, and ancient villages'**
+  /// **'Adventure, relax, learn something new, meet people, or live like a local.'**
   String get onboardingSlide2Desc;
 
   /// No description provided for @onboardingSlide3Title.
   ///
   /// In en, this message translates to:
-  /// **'Support Local Communities'**
+  /// **'Make Your Time Meaningful'**
   String get onboardingSlide3Title;
 
   /// No description provided for @onboardingSlide3Desc.
   ///
   /// In en, this message translates to:
-  /// **'Every booking directly empowers rural families and artisans'**
+  /// **'Join local hosts, communities, and experiences you will actually remember.'**
   String get onboardingSlide3Desc;
 
   /// No description provided for @skipText.
@@ -863,13 +863,13 @@ abstract class AppLocalizations {
   /// No description provided for @homeHeroTitle.
   ///
   /// In en, this message translates to:
-  /// **'Discover Authentic Nepal'**
+  /// **'Discover Nepal Your Way'**
   String get homeHeroTitle;
 
   /// No description provided for @homeHeroSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Connect with local hosts, homestays & mountain guides'**
+  /// **'From local tables to mountain trails, discover Nepal your way'**
   String get homeHeroSubtitle;
 
   /// No description provided for @railRecommendedSub.
@@ -899,13 +899,13 @@ abstract class AppLocalizations {
   /// No description provided for @regionsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'From Annapurna circuits to Everest highlands'**
+  /// **'Cities, villages, jungles, lakes, and mountain regions'**
   String get regionsSubtitle;
 
   /// No description provided for @categoriesSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Find journeys tailored to your adventure style'**
+  /// **'Choose how you want to experience Nepal'**
   String get categoriesSubtitle;
 
   /// No description provided for @addressCopied.
@@ -1487,13 +1487,13 @@ abstract class AppLocalizations {
   /// No description provided for @notifWeatherAlertsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Mountain Weather Alerts'**
+  /// **'Travel Weather Alerts'**
   String get notifWeatherAlertsTitle;
 
   /// No description provided for @notifWeatherAlertsSub.
   ///
   /// In en, this message translates to:
-  /// **'Crucial trail weather and safety warnings for booked treks'**
+  /// **'Useful weather and safety updates for booked experiences'**
   String get notifWeatherAlertsSub;
 
   /// No description provided for @notifPromoOffersTitle.
@@ -1505,7 +1505,7 @@ abstract class AppLocalizations {
   /// No description provided for @notifPromoOffersSub.
   ///
   /// In en, this message translates to:
-  /// **'Seasonal discounts on homestays and featured treks'**
+  /// **'Seasonal discounts on stays and featured experiences'**
   String get notifPromoOffersSub;
 
   /// No description provided for @notifSoundEnabledTitle.
@@ -1643,13 +1643,13 @@ abstract class AppLocalizations {
   /// No description provided for @offlineMapsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Offline Trail Maps'**
+  /// **'Offline Maps'**
   String get offlineMapsTitle;
 
   /// No description provided for @offlineMapsSub.
   ///
   /// In en, this message translates to:
-  /// **'Download maps for offline navigation during treks'**
+  /// **'Download maps for offline navigation during experiences'**
   String get offlineMapsSub;
 
   /// No description provided for @clearCacheTitle.

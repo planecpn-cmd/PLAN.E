@@ -18,7 +18,9 @@ class ExperienceCard extends StatelessWidget {
   final int? reviewCount;
   final String priceText;
   final String? imageUrl;
-  final String? categoryTag;
+  final String? familyLabel;
+  final String? typeLabel;
+  final String? detailText;
   final bool isSaved;
   final VoidCallback? onTap;
   final VoidCallback? onBookmarkTap;
@@ -33,7 +35,9 @@ class ExperienceCard extends StatelessWidget {
     this.reviewCount,
     required this.priceText,
     this.imageUrl,
-    this.categoryTag,
+    this.familyLabel,
+    this.typeLabel,
+    this.detailText,
     this.isSaved = false,
     this.onTap,
     this.onBookmarkTap,
@@ -44,7 +48,13 @@ class ExperienceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isPoster = variant == ExperienceCardVariant.poster;
-    final double imageHeight = isPoster ? width * 1.07 : 140.0;
+    final resolvedWidth = width.isFinite
+        ? width
+        : MediaQuery.sizeOf(context).width;
+    final double imageHeight = isPoster
+        ? resolvedWidth * 1.07
+        : resolvedWidth * 0.56;
+    final imageRequestWidth = (resolvedWidth * 2).round();
 
     return Semantics(
       container: true,
@@ -83,15 +93,14 @@ class ExperienceCard extends StatelessWidget {
                           color: AppColors.sage,
                           child: imageUrl != null && imageUrl!.isNotEmpty
                               ? CachedNetworkImage(
-                                  // 2x width for retina crispness — `width`
-                                  // here is this card's own real, always-
-                                  // finite render width (never unbounded),
-                                  // so this is the exact size actually
-                                  // needed, not a guess. See
+                                  // 2x the resolved card width for retina
+                                  // crispness. Full-width list cards pass
+                                  // infinity, so they resolve against the
+                                  // current viewport first. See
                                   // docs/OFFLINE_CACHE_PLAN.md §4.2.
                                   imageUrl: resizedImageUrl(
                                     imageUrl!,
-                                    width: (width * 2).round(),
+                                    width: imageRequestWidth,
                                   ),
                                   cacheManager: AppImageCacheManager.instance,
                                   fit: BoxFit.cover,
@@ -103,24 +112,38 @@ class ExperienceCard extends StatelessWidget {
                                         height: 24,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.forest),
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                AppColors.forest,
+                                              ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                  errorWidget: (context, url, error) => const Center(
-                                    child: Icon(Icons.terrain, size: 40, color: AppColors.forest),
-                                  ),
+                                  errorWidget: (context, url, error) =>
+                                      const Center(
+                                        child: Icon(
+                                          Icons.image_outlined,
+                                          size: 40,
+                                          color: AppColors.forest,
+                                        ),
+                                      ),
                                 )
                               : const Center(
-                                  child: Icon(Icons.landscape, size: 48, color: AppColors.forest),
+                                  child: Icon(
+                                    Icons.image_outlined,
+                                    size: 48,
+                                    color: AppColors.forest,
+                                  ),
                                 ),
                         ),
                       ),
                     ),
 
-                    // Category Badge
-                    if (categoryTag != null)
+                    // The primary badge communicates what family this is.
+                    // Physical difficulty belongs in contextual metadata and
+                    // is only supplied for adventure experiences.
+                    if (familyLabel != null && familyLabel!.isNotEmpty)
                       Positioned(
                         top: AppSpacing.sm8,
                         left: AppSpacing.sm8,
@@ -134,7 +157,7 @@ class ExperienceCard extends StatelessWidget {
                             borderRadius: AppRadii.borderSm8,
                           ),
                           child: Text(
-                            categoryTag!,
+                            familyLabel!.toUpperCase(),
                             style: AppTypography.caption.copyWith(
                               color: AppColors.ivory,
                               fontWeight: FontWeight.w600,
@@ -143,25 +166,24 @@ class ExperienceCard extends StatelessWidget {
                         ),
                       ),
 
-                    // Bookmark button — top offset matches the category
-                    // badge's exactly (both AppSpacing.sm8) so the two sit
-                    // on the same plane instead of the badge sitting lower
-                    // than the bookmark's larger tap-target box did.
+                    // Keep the full Android touch target inside the image.
                     Positioned(
-                      top: AppSpacing.sm8,
-                      right: AppSpacing.sm8,
+                      top: 2,
+                      right: 2,
                       child: Semantics(
                         button: true,
-                        label: isSaved ? 'Remove $title from saved' : 'Save $title',
+                        label: isSaved
+                            ? 'Remove $title from saved'
+                            : 'Save $title',
                         child: SizedBox(
-                          width: 36,
-                          height: 36,
+                          width: AppTouchTarget.minSize,
+                          height: AppTouchTarget.minSize,
                           child: IconButton(
                             padding: EdgeInsets.zero,
                             onPressed: onBookmarkTap,
                             icon: Icon(
                               isSaved ? Icons.bookmark : Icons.bookmark_border,
-                              color: isSaved ? AppColors.gold : AppColors.deep,
+                              color: isSaved ? AppColors.forest : AppColors.deep,
                               size: 22,
                             ),
                           ),
@@ -179,25 +201,49 @@ class ExperienceCard extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.bold),
-                        maxLines: 1,
+                        style: AppTypography.bodyLarge.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: AppSpacing.xs4),
                       Row(
                         children: [
-                          const Icon(Icons.location_on_outlined, size: 14, color: AppColors.disabledText),
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 14,
+                            color: AppColors.disabledText,
+                          ),
                           const SizedBox(width: AppSpacing.xs4),
                           Expanded(
                             child: Text(
                               location,
-                              style: AppTypography.caption.copyWith(color: AppColors.disabledText),
+                              style: AppTypography.caption.copyWith(
+                                color: AppColors.disabledText,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
+                      if ((typeLabel?.isNotEmpty ?? false) ||
+                          (detailText?.isNotEmpty ?? false)) ...[
+                        const SizedBox(height: AppSpacing.xs4),
+                        Text(
+                          [
+                            if (typeLabel?.isNotEmpty ?? false) typeLabel!,
+                            if (detailText?.isNotEmpty ?? false) detailText!,
+                          ].join(' • '),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.forest,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: AppSpacing.sm8),
                       if (isPoster)
                         // Stacked, not shared on one row — a poster card is
@@ -211,7 +257,11 @@ class ExperienceCard extends StatelessWidget {
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.star, size: 14, color: AppColors.gold),
+                                const Icon(
+                                  Icons.star,
+                                  size: 14,
+                                  color: AppColors.gold,
+                                ),
                                 const SizedBox(width: 2),
                                 Text(
                                   rating.toStringAsFixed(1),

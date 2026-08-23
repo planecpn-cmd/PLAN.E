@@ -8,7 +8,6 @@ import '../../../widgets/widgets.dart';
 import '../domain/host_mode_models.dart';
 import 'host_conversation_navigation.dart';
 import 'host_mode_providers.dart';
-import 'widgets/host_mode_scaffold.dart';
 
 class HostBookingDetailScreen extends ConsumerWidget {
   const HostBookingDetailScreen({super.key, required this.id});

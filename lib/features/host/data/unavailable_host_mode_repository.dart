@@ -13,6 +13,9 @@ class UnavailableHostModeRepository implements HostModeRepository {
   Future<T> _unavailable<T>() => Future<T>.error(StateError(_message));
 
   @override
+  String? get currentUserId => null;
+
+  @override
   Future<HostAccess> getHostAccess() async => const HostAccess(
     isApproved: false,
     isActive: false,
@@ -74,8 +77,12 @@ class UnavailableHostModeRepository implements HostModeRepository {
   Future<void> markConversationRead(String id) => _unavailable();
 
   @override
-  Future<HostMessage> sendMessage(String id, String normalizedText) =>
-      _unavailable();
+  Future<HostMessage> sendMessage(
+    String id,
+    String normalizedText, {
+    String? clientMessageId,
+    String? attachmentUrl,
+  }) => _unavailable();
 
   @override
   Future<HostProfileDraft> getHostProfile() => _unavailable();

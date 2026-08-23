@@ -5,6 +5,9 @@ import 'host_mode_repository.dart';
 /// DEVELOPMENT ONLY: in-memory state. It is never persisted and resets when
 /// the app process restarts. This is not authentication or authorization.
 class MockHostModeRepository implements HostModeRepository {
+  @override
+  String get currentUserId => 'mock-host-user';
+
   HostProfileDraft _profile = const HostProfileDraft(
     displayName: 'Siddharth Gurung',
     bio:
@@ -478,16 +481,24 @@ class MockHostModeRepository implements HostModeRepository {
   }
 
   @override
-  Future<HostMessage> sendMessage(String id, String normalizedText) async {
+  Future<HostMessage> sendMessage(
+    String id,
+    String normalizedText, {
+    String? clientMessageId,
+    String? attachmentUrl,
+  }) async {
     final text = normalizedText.trim();
     if (text.isEmpty || text.length > 2000) {
       throw ArgumentError('Message must contain 1 to 2000 characters.');
     }
     final message = HostMessage(
-      id: 'mock-message-${DateTime.now().microsecondsSinceEpoch}',
+      id:
+          clientMessageId ??
+          'mock-message-${DateTime.now().microsecondsSinceEpoch}',
       text: text,
       sentByHost: true,
       sentAt: DateTime.now().toUtc(),
+      attachmentUrl: attachmentUrl,
     );
     final index = _conversations.indexWhere((c) => c.id == id);
     if (index >= 0) {

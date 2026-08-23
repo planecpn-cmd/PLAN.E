@@ -1,6 +1,7 @@
 import '../domain/host_mode_models.dart';
 
 abstract interface class HostModeRepository {
+  String? get currentUserId;
   Future<HostAccess> getHostAccess();
   Future<HostDashboardData> getDashboard();
   Future<List<HostExperience>> getExperiences();
@@ -22,7 +23,12 @@ abstract interface class HostModeRepository {
   Future<HostConversation?> getConversation(String id);
   Future<HostConversation?> getDepartureConversation(String experienceId);
   Future<void> markConversationRead(String id);
-  Future<HostMessage> sendMessage(String id, String normalizedText);
+  Future<HostMessage> sendMessage(
+    String id,
+    String normalizedText, {
+    String? clientMessageId,
+    String? attachmentUrl,
+  });
   Future<HostProfileDraft> getHostProfile();
   Future<void> updateHostProfile(HostProfileDraft normalizedProfile);
   Future<HostBusinessData> getBusinessPage(HostBusinessPage page);

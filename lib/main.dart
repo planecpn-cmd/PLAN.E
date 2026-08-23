@@ -12,6 +12,7 @@ import 'core/scaled_app_viewport.dart';
 import 'core/app_version.dart';
 import 'core/device_identity.dart';
 import 'core/remote_config_service.dart';
+import 'core/push_notification_service.dart';
 import 'l10n/app_localizations.dart';
 import 'providers/app_providers.dart';
 import 'theme/app_theme.dart';
@@ -24,6 +25,16 @@ void main() async {
   await AppVersionInfo.initialize();
   await DeviceIdentity.initialize();
   await AppSupabaseClient.initialize();
+  // Firebase is optional in local/demo builds. When FIREBASE_* dart defines
+  // are present, this registers only authorized devices and handles the
+  // content-free deep link included in trip-message pushes.
+  unawaited(
+    PushNotificationService.initialize(
+      onOpen: (route) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => router.go(route));
+      },
+    ),
+  );
   if (!OnboardingPreferences.isCompleted &&
       AppSupabaseClient.client.auth.currentUser != null) {
     await OnboardingPreferences.markCompleted();
@@ -107,11 +118,15 @@ class _PlanEAppState extends ConsumerState<PlanEApp>
           ref.read(oauthInFlightProvider)) {
         ref.read(oauthInFlightProvider.notifier).state = false;
         final deferred = ref.read(deferredActionProvider);
-        final destination = deferredActionDestination(deferred);
+        authenticatedDestination(Supabase.instance.client, deferred).then((
+          destination,
+        ) {
+          if (!mounted) return;
+          router.go(destination);
+        });
         if (deferred != null) {
           ref.read(deferredActionProvider.notifier).clear();
         }
-        router.go(destination);
       }
     });
   }
@@ -168,7 +183,7 @@ class _PlanEAppState extends ConsumerState<PlanEApp>
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'PLAN E',
+      title: 'Plan E by rabina',
       theme: AppTheme.lightTheme,
       routerConfig: router,
       builder: (context, child) =>

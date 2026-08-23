@@ -7,9 +7,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
+import '../../core/experience_presentation.dart';
 import '../../l10n/app_localizations.dart';
-import '../../models/category.dart';
 import '../../models/experience.dart';
+import '../../models/experience_family.dart';
 import '../../models/region.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
@@ -67,7 +68,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final categoriesAsync = ref.watch(categoriesProvider);
+    final familiesAsync = ref.watch(experienceFamiliesProvider);
     final regionsAsync = ref.watch(regionsProvider);
     final navigationClearance =
         MediaQuery.viewPaddingOf(context).bottom + 128.0;
@@ -96,7 +97,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
           child: RefreshIndicator(
             color: AppColors.forest,
             onRefresh: () async {
-              ref.invalidate(categoriesProvider);
+              ref.invalidate(experienceFamiliesProvider);
               ref.invalidate(regionsProvider);
             },
             child: CustomScrollView(
@@ -142,121 +143,68 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                         ],
                         const SizedBox(height: 16),
 
-                        // Explore Filters
+                        // Intent comes before terrain or geography: the six
+                        // families explain the breadth of PLAN E at a glance.
                         SectionHeader(
-                          title: 'Filter Experiences',
-                          actionLabel: 'More Filters',
+                          title: 'Browse by experience',
+                          subtitle: 'Choose the kind of day you want to have',
+                          actionLabel: 'All filters',
                           onActionTap: () => _openFilters(context),
                         ),
                         const SizedBox(height: 8),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              FilterChipPill(
-                                label: 'All Experiences',
-                                icon: Icons.explore_outlined,
-                                isSelected: false,
-                                onSelected: (_) => context.push('/search'),
-                              ),
-                              const SizedBox(width: 8),
-                              FilterChipPill(
-                                label: l10n.easy,
-                                icon: Icons.directions_walk,
-                                isSelected: false,
-                                onSelected: (_) =>
-                                    context.push('/search?difficulty=easy'),
-                              ),
-                              const SizedBox(width: 8),
-                              FilterChipPill(
-                                label: l10n.moderate,
-                                icon: Icons.hiking,
-                                isSelected: false,
-                                onSelected: (_) =>
-                                    context.push('/search?difficulty=moderate'),
-                              ),
-                              const SizedBox(width: 8),
-                              FilterChipPill(
-                                label: l10n.challenging,
-                                icon: Icons.landscape_outlined,
-                                isSelected: false,
-                                onSelected: (_) => context.push(
-                                  '/search?difficulty=challenging',
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              FilterChipPill(
-                                label: l10n.strenuous,
-                                icon: Icons.terrain,
-                                isSelected: false,
-                                onSelected: (_) => context.push(
-                                  '/search?difficulty=strenuous',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Section 1: Categories
-                        Text(
-                          l10n.categories,
-                          style: const TextStyle(
-                            fontFamily: 'serif',
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.forest,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-
-                        AsyncValueView<List<Category>>(
-                          value: categoriesAsync,
-                          onRetry: () => ref.refresh(categoriesProvider),
+                        AsyncValueView<List<ExperienceFamily>>(
+                          value: familiesAsync,
+                          onRetry: () =>
+                              ref.refresh(experienceFamiliesProvider),
                           isEmpty: (list) => list.isEmpty,
                           emptyView: const EmptyStateView(
-                            title: 'No Categories Available',
+                            title: 'No Experience Families Available',
                             description:
-                                'Explore categories will be loaded soon.',
+                                'Experience families will be loaded soon.',
                           ),
-                          data: (categories) {
+                          data: (families) {
                             return GridView.builder(
                               padding: EdgeInsets.zero,
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              itemCount: categories.length,
+                              itemCount: families.length,
                               gridDelegate:
                                   const SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 2,
-                                    mainAxisSpacing: 10,
-                                    crossAxisSpacing: 10,
-                                    childAspectRatio: 1.85,
+                                    mainAxisSpacing: 12,
+                                    crossAxisSpacing: 12,
+                                    childAspectRatio: 1.42,
                                   ),
                               itemBuilder: (context, index) {
-                                final category = categories[index];
-                                // No real cover photos are seeded for categories
-                                // yet (all null) — a bespoke icon-on-gradient card
-                                // reads as an intentional brand pattern, where the
-                                // old PlanEPhoto fallback (flat sage + centered
-                                // icon + dark wash) read as a broken/loading image.
-                                return _CategoryCard(
-                                  title: category.nameEn,
-                                  icon: _categoryIcon(category.slug),
+                                final family = families[index];
+                                return ExperienceFamilyCard(
+                                  family: family,
                                   onTap: () => context.push(
-                                    '/search?category_id=${category.id}',
+                                    '/search?family=${family.slug}',
                                   ),
                                 );
                               },
                             );
                           },
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 24),
 
-                        // Section 2: Popular Regions
+                        const SectionHeader(
+                          title: 'Explore by mood',
+                          subtitle: 'Start with how you want to feel',
+                        ),
+                        const SizedBox(height: 8),
+                        ExperienceMoodGrid(
+                          onSelected: (mood) =>
+                              context.push('/search?family=${mood.familySlug}'),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Location supports intent; it no longer defines it.
                         SectionHeader(
-                          title: 'Popular Regions',
+                          title: 'Explore by location',
                           subtitle:
-                              'From Annapurna circuits to Everest highlands',
+                              'Cities, villages, valleys, and wild places',
                           actionLabel: l10n.seeAll,
                           onActionTap: () => context.push('/search'),
                         ),
@@ -329,31 +277,6 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     context.push(
       Uri(path: '/search', queryParameters: queryParameters).toString(),
     );
-  }
-
-  IconData _categoryIcon(String slug) {
-    switch (slug) {
-      case 'trekking':
-        return Icons.hiking;
-      case 'hiking':
-        return Icons.directions_walk;
-      case 'camping':
-        return Icons.cabin_outlined;
-      case 'climbing':
-        return Icons.terrain;
-      case 'homestay':
-        return Icons.home_outlined;
-      case 'culture':
-        return Icons.temple_buddhist_outlined;
-      case 'wildlife':
-        return Icons.pets;
-      case 'wellness':
-        return Icons.self_improvement;
-      case 'volunteering':
-        return Icons.volunteer_activism;
-      default:
-        return Icons.landscape_outlined;
-    }
   }
 
   IconData _regionIcon(String slug) {
@@ -448,20 +371,14 @@ class _ExploreHeaderDelegate extends SliverPersistentHeaderDelegate {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // topCenter, so the crop takes from the bottom (lake and
-                // reflection) and keeps the peaks — they're the subject of
-                // the app, and cropping from the top decapitated them.
-                // BoxFit.cover, not fill, so the photo keeps its aspect
-                // ratio instead of being squashed to the box.
                 Image.asset(
-                  'assets/images/explore_header_mountains.png',
+                  'assets/images/home_experiences_hero.png',
                   fit: BoxFit.cover,
-                  alignment: Alignment.topCenter,
+                  alignment: const Alignment(0.35, 0.2),
                 ),
-                // The photo's own fade-to-pale tail sits in its bottom rows,
-                // which cropping from below now discards — so the seam is
-                // painted explicitly here instead. Without it the photo
-                // would end on a hard horizontal edge mid-search-bar.
+                const DecoratedBox(
+                  decoration: BoxDecoration(color: AppColors.overlay),
+                ),
                 const Positioned(
                   left: 0,
                   right: 0,
@@ -492,7 +409,7 @@ class _ExploreHeaderDelegate extends SliverPersistentHeaderDelegate {
                             fontFamily: 'serif',
                             fontSize: 32,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.forest,
+                            color: AppColors.white,
                           ),
                         ),
                       ),
@@ -618,88 +535,6 @@ class _HeaderActionButton extends StatelessWidget {
   }
 }
 
-class _CategoryCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _CategoryCard({
-    required this.title,
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.forest, AppColors.deep],
-          ),
-          boxShadow: const [
-            BoxShadow(
-              color: AppColors.shadow,
-              blurRadius: 10,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          children: [
-            // Oversized, low-opacity icon as background texture — fills the
-            // card with brand-relevant visual interest in place of a photo.
-            Positioned(
-              right: -12,
-              bottom: -12,
-              child: Icon(
-                icon,
-                size: 78,
-                color: AppColors.white.withValues(alpha: 0.10),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: AppColors.white.withValues(alpha: 0.16),
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: Icon(icon, size: 16, color: AppColors.white),
-                  ),
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontFamily: 'serif',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.white,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _RegionCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -786,6 +621,7 @@ class _ExploreSearchResults extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final results = ref.watch(experiencesProvider(filters));
+    final taxonomy = ref.watch(experienceTaxonomyProvider).valueOrNull;
     return AsyncValueView<List<Experience>>(
       value: results,
       onRetry: () => ref.refresh(experiencesProvider(filters)),
@@ -793,7 +629,7 @@ class _ExploreSearchResults extends ConsumerWidget {
       emptyView: const EmptyStateView(
         icon: Icons.search_off,
         title: 'No Experiences Found',
-        description: 'Try another trail, place, or trek.',
+        description: 'Try another experience, place, or activity.',
       ),
       data: (items) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -806,8 +642,12 @@ class _ExploreSearchResults extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 12),
-          ...items.map(
-            (experience) => Padding(
+          ...items.map((experience) {
+            final presentation = ExperiencePresentation.from(
+              experience,
+              taxonomy,
+            );
+            return Padding(
               padding: const EdgeInsets.only(bottom: 14),
               child: ExperienceCard(
                 width: double.infinity,
@@ -817,11 +657,13 @@ class _ExploreSearchResults extends ConsumerWidget {
                 reviewCount: experience.ratingCount,
                 priceText: AppFormatters.formatNpr(experience.pricePaisa),
                 imageUrl: experience.coverImageUrl,
-                categoryTag: experience.difficulty.name.toUpperCase(),
+                familyLabel: presentation.familyLabel,
+                typeLabel: presentation.typeLabel,
+                detailText: presentation.detailText,
                 onTap: () => context.push('/experience/${experience.id}'),
               ),
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );

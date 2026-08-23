@@ -14,10 +14,7 @@ import 'booking_providers.dart';
 class ConfirmationScreen extends ConsumerWidget {
   final String bookingId;
 
-  const ConfirmationScreen({
-    super.key,
-    required this.bookingId,
-  });
+  const ConfirmationScreen({super.key, required this.bookingId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -34,7 +31,11 @@ class ConfirmationScreen extends ConsumerWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.receipt_long_outlined, size: 64, color: AppColors.disabledText),
+                const Icon(
+                  Icons.receipt_long_outlined,
+                  size: 64,
+                  color: AppColors.disabledText,
+                ),
                 const SizedBox(height: 12),
                 const Text(
                   'Booking record not found.',
@@ -68,7 +69,11 @@ class ConfirmationScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.check, size: 45, color: AppColors.white),
+                    child: const Icon(
+                      Icons.check,
+                      size: 45,
+                      color: AppColors.white,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   const Text(
@@ -83,7 +88,10 @@ class ConfirmationScreen extends ConsumerWidget {
                   const SizedBox(height: 8),
                   const Text(
                     'Your adventure is officially reserved.',
-                    style: TextStyle(color: AppColors.disabledText, fontSize: 14.5),
+                    style: TextStyle(
+                      color: AppColors.disabledText,
+                      fontSize: 14.5,
+                    ),
                   ),
                   const SizedBox(height: 20),
 
@@ -106,7 +114,10 @@ class ConfirmationScreen extends ConsumerWidget {
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.sage,
                                 borderRadius: BorderRadius.circular(12),
@@ -135,15 +146,29 @@ class ConfirmationScreen extends ConsumerWidget {
 
                         Row(
                           children: [
-                            const Icon(Icons.person_outline, size: 18, color: AppColors.forest),
+                            const Icon(
+                              Icons.person_outline,
+                              size: 18,
+                              color: AppColors.forest,
+                            ),
                             const SizedBox(width: 8),
-                            Text(booking.contactName, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                            Text(
+                              booking.contactName,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            const Icon(Icons.groups_outlined, size: 18, color: AppColors.forest),
+                            const Icon(
+                              Icons.groups_outlined,
+                              size: 18,
+                              color: AppColors.forest,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               '${booking.adults} Adult${booking.adults > 1 ? "s" : ""}${booking.children > 0 ? ", ${booking.children} Children" : ""}',
@@ -154,10 +179,17 @@ class ConfirmationScreen extends ConsumerWidget {
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            const Icon(Icons.calendar_today_outlined, size: 18, color: AppColors.forest),
+                            const Icon(
+                              Icons.calendar_today_outlined,
+                              size: 18,
+                              color: AppColors.forest,
+                            ),
                             const SizedBox(width: 8),
                             Text(
-                              AppFormatters.formatTripDate(booking.createdAt, pattern: 'd MMM yyyy'),
+                              AppFormatters.formatTripDate(
+                                booking.createdAt,
+                                pattern: 'd MMM yyyy',
+                              ),
                               style: const TextStyle(fontSize: 14),
                             ),
                           ],
@@ -165,14 +197,23 @@ class ConfirmationScreen extends ConsumerWidget {
                         const Divider(height: 20),
 
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.sage.withValues(alpha: .5),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
                             children: [
-                              const Text('Total paid', style: TextStyle(fontSize: 15, color: AppColors.ink)),
+                              const Text(
+                                'Total paid',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: AppColors.ink,
+                                ),
+                              ),
                               const Spacer(),
                               Text(
                                 AppFormatters.formatNpr(booking.totalPaisa),
@@ -210,19 +251,13 @@ class ConfirmationScreen extends ConsumerWidget {
                       children: [
                         _NextStepTile(
                           icon: Icons.assignment_outlined,
-                          text: '1. Check your itinerary',
+                          text: '1. View experience schedule',
                           onTap: () => context.go('/itinerary/${booking.id}'),
                         ),
                         const Divider(height: 1),
                         _NextStepTile(
-                          icon: Icons.backpack_outlined,
-                          text: '2. Prepare gear checklist',
-                          onTap: () => context.go('/gear/${booking.id}'),
-                        ),
-                        const Divider(height: 1),
-                        _NextStepTile(
                           icon: Icons.chat_bubble_outline,
-                          text: '3. Message your host',
+                          text: '2. Message your host',
                           onTap: () => context.go('/chat/${booking.id}'),
                         ),
                       ],
@@ -246,11 +281,18 @@ class ConfirmationScreen extends ConsumerWidget {
                   const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.mail_outline, color: AppColors.forest, size: 18),
+                      Icon(
+                        Icons.mail_outline,
+                        color: AppColors.forest,
+                        size: 18,
+                      ),
                       SizedBox(width: 8),
                       Text(
                         'Confirmation details saved to your account.',
-                        style: TextStyle(color: AppColors.disabledText, fontSize: 13),
+                        style: TextStyle(
+                          color: AppColors.disabledText,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
@@ -289,8 +331,20 @@ class _NextStepTile extends StatelessWidget {
               child: Icon(icon, color: AppColors.forest, size: 18),
             ),
             const SizedBox(width: 12),
-            Expanded(child: Text(text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500))),
-            const Icon(Icons.chevron_right, size: 20, color: AppColors.disabledText),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right,
+              size: 20,
+              color: AppColors.disabledText,
+            ),
           ],
         ),
       ),

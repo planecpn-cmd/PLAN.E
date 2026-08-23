@@ -7,12 +7,15 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
+import '../../core/experience_presentation.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/experience.dart';
+import '../../models/experience_family.dart';
 import '../../models/promo_banner.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/widgets.dart';
+import '../experience/experience_strings.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -21,8 +24,15 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final homeRailsAsync = ref.watch(homeRailsProvider);
+    final savedIds = ref
+        .watch(savedExperiencesProvider)
+        .valueOrNull
+        ?.map((experience) => experience.id)
+        .toSet();
+    final taxonomy = ref.watch(experienceTaxonomyProvider).valueOrNull;
     final profileAsync = ref.watch(profileProvider);
-    final aiItineraryEnabled = ref.watch(featureFlagProvider('ai_itinerary')) ?? true;
+    final aiItineraryEnabled =
+        ref.watch(featureFlagProvider('ai_itinerary')) ?? true;
     // Side-effect only — triggers the silent location auto-fetch once per
     // app session; the AsyncValue<void> result itself is never read.
     ref.watch(_homeLocationAutoFetchProvider);
@@ -38,442 +48,146 @@ class HomeScreen extends ConsumerWidget {
         statusBarBrightness: Brightness.dark,
       ),
       child: Scaffold(
-      body: PlanEBackground(
-        safeArea: false,
-        // top: false — the hero photo goes edge-to-edge behind the status
-        // bar; the *inner* SafeArea further down (wrapping just the header
-        // row) is what protects that text from the status bar instead. With
-        // this SafeArea also reserving top space, the hero was getting
-        // pushed down by a statusbar-height strip of plain background
-        // before it even started — that was the "doesn't blend" gap.
-        child: SafeArea(
-          top: false,
-          bottom: false,
-          child: RefreshIndicator(
-            color: AppColors.forest,
-            onRefresh: () async {
-              ref.invalidate(homeRailsProvider);
-            },
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(bottom: 100),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // One continuous photo behind logo, header, motto, heading
-                  // and both CTAs — not a plain header band that hands off
-                  // to a separate boxed photo below it. This is the same
-                  // structural move the NAS reference makes: everything up
-                  // to the fade-out sits on one hero image, edge to edge.
-                  SizedBox(
-                    height: 340,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Image.asset(
-                          'assets/images/herosection.jpg',
-                          fit: BoxFit.cover,
-                          alignment: const Alignment(0, -0.45),
-                        ),
-                        // Light top wash, just enough for the header row —
-                        // the buttons don't need this at all (they're
-                        // opaque-filled already) and the heading uses a
-                        // text shadow instead of a heavy backdrop, so the
-                        // photo itself stays visible rather than getting
-                        // washed out under a dark overlay.
-                        const DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [Color(0x66000000), Colors.transparent],
-                              stops: [0.0, 0.22],
-                            ),
-                          ),
-                        ),
-                        // One continuous, light gradient fading into the
-                        // page background at the bottom — no separate
-                        // overlaid layer with its own stop range, which
-                        // is what left a visible seam last time.
-                        const DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                Color(0x40000000),
-                                AppColors.ivory,
-                              ],
-                              stops: [0.74, 0.88, 1.0],
-                            ),
-                          ),
-                        ),
-                        SafeArea(
-                          bottom: false,
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Header Row — Logo, Location, Notifications & Points
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          const PlanELogo(
-                                            fontSize: 26,
-                                            centered: false,
-                                            color: AppColors.white,
-                                          ),
-                                          const SizedBox(height: 4),
-                                          GestureDetector(
-                                            onTap: ref.watch(homeLocationLoadingProvider)
-                                                ? null
-                                                : () => _useCurrentLocation(context, ref),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                ref.watch(homeLocationLoadingProvider)
-                                                    ? const SizedBox(
-                                                        width: 14,
-                                                        height: 14,
-                                                        child: CircularProgressIndicator(
-                                                          strokeWidth: 2,
-                                                          valueColor: AlwaysStoppedAnimation<Color>(
-                                                            AppColors.white,
-                                                          ),
-                                                        ),
-                                                      )
-                                                    : const Icon(
-                                                        Icons.my_location,
-                                                        size: 16,
-                                                        color: AppColors.white,
-                                                      ),
-                                                const SizedBox(width: 4),
-                                                Flexible(
-                                                  child: Text(
-                                                    ref.watch(homeLocationLabelProvider),
-                                                    overflow: TextOverflow.ellipsis,
-                                                    style: AppTypography.bodyMedium.copyWith(
-                                                      fontSize: 13,
-                                                      color: AppColors.white,
-                                                      fontWeight: FontWeight.w500,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    _NotificationBell(
-                                      unreadCount:
-                                          ref.watch(unreadNotificationCountProvider).value ?? 0,
-                                      onTap: () => context.push('/notifications'),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      // Fixed height matching
-                                      // _NotificationBell's 48px touch
-                                      // target exactly — before this, the
-                                      // pill's own vertical padding gave it
-                                      // a shorter natural height than the
-                                      // circular bell beside it.
-                                      height: AppTouchTarget.minSize,
-                                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.forest,
-                                        borderRadius: BorderRadius.circular(28),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const CircleAvatar(
-                                            radius: 12,
-                                            backgroundColor: AppColors.white,
-                                            child: Icon(
-                                              Icons.local_activity,
-                                              size: 14,
-                                              color: AppColors.gold,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            '${profileAsync.value?.points ?? 0} pts',
-                                            style: const TextStyle(
-                                              color: AppColors.white,
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 6),
-                                const Text(
-                                  'Trek • Discover • Belong',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.4,
-                                    color: AppColors.gold,
-                                  ),
-                                ),
-                                // Fixed gap, not a Spacer — a Spacer
-                                // stretches to whatever room the hero's
-                                // height happens to leave, which is exactly
-                                // what made this gap balloon whenever the
-                                // hero got taller. A fixed value stays the
-                                // same regardless.
-                                const SizedBox(height: 14),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.gold,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Text(
-                                    'FEATURED',
-                                    style: TextStyle(
-                                      color: AppColors.white,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 1,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                const Text(
-                                  'Discover\nNepal Himalayas',
-                                  style: TextStyle(
-                                    fontFamily: 'serif',
-                                    color: AppColors.white,
-                                    fontSize: 30,
-                                    height: 1.05,
-                                    shadows: [
-                                      Shadow(color: Color(0x99000000), blurRadius: 10, offset: Offset(0, 2)),
-                                    ],
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 18),
-                                // Equal-width, equal-height pair — a Row of
-                                // two Expanded buttons, not a Wrap of
-                                // intrinsically-sized ones. Wrap let the two
-                                // buttons size independently and sit
-                                // unevenly; this locks them to one shared
-                                // baseline and width, the way the reference
-                                // pairs its two CTAs.
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: AppButton(
-                                        label: 'Search Treks',
-                                        minHeight: 46,
-                                        onPressed: () => context.push(
-                                          Uri(
-                                            path: '/search',
-                                            queryParameters: const {
-                                              'query': 'Trekking in Nepal',
-                                            },
-                                          ).toString(),
-                                        ),
-                                      ),
-                                    ),
-                                    // Remote kill switch (feature_flags.ai_itinerary)
-                                    // — pulled from home entirely when the LLM
-                                    // provider behind it is down, not just
-                                    // disabled, so it doesn't invite a tap that
-                                    // only leads to an error screen.
-                                    if (aiItineraryEnabled) ...[
-                                      const SizedBox(width: 10),
-                                      // Lower-commitment path next to the hard
-                                      // "book something" CTA — a guided quiz,
-                                      // not a purchase decision.
-                                      Expanded(
-                                        child: AppButton.secondary(
-                                          label: 'Plan with AI',
-                                          icon: Icons.auto_awesome,
-                                          minHeight: 46,
-                                          onPressed: () => context.push('/ai-planner'),
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+        body: PlanEBackground(
+          safeArea: false,
+          // top: false — the hero photo goes edge-to-edge behind the status
+          // bar; the *inner* SafeArea further down (wrapping just the header
+          // row) is what protects that text from the status bar instead. With
+          // this SafeArea also reserving top space, the hero was getting
+          // pushed down by a statusbar-height strip of plain background
+          // before it even started — that was the "doesn't blend" gap.
+          child: SafeArea(
+            top: false,
+            bottom: false,
+            child: RefreshIndicator(
+              color: AppColors.forest,
+              onRefresh: () async {
+                ref.invalidate(homeRailsProvider);
+                ref.invalidate(categoriesProvider);
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.only(bottom: 100),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _HomeHero(
+                      points: profileAsync.value?.points ?? 0,
+                      aiItineraryEnabled: aiItineraryEnabled,
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  const _PromoBanner(),
+                    const SizedBox(height: 10),
+                    const _PromoBanner(),
 
-                  // Content Rails wrapped in AsyncValueView
-                  AsyncValueView<Map<String, List<Experience>>>(
-                    value: homeRailsAsync,
-                    onRetry: () => ref.refresh(homeRailsProvider),
-                    isEmpty: (data) =>
-                        data.values.every((list) => list.isEmpty),
-                    emptyView: const Padding(
-                      padding: EdgeInsets.all(24),
-                      child: EmptyStateView(
-                        title: 'No Experiences Available',
-                        description:
-                            'Check back soon for new curated Nepal adventures.',
+                    // Content Rails wrapped in AsyncValueView
+                    AsyncValueView<Map<String, List<Experience>>>(
+                      value: homeRailsAsync,
+                      onRetry: () => ref.refresh(homeRailsProvider),
+                      isEmpty: (data) =>
+                          data.values.every((list) => list.isEmpty),
+                      emptyView: const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: EmptyStateView(
+                          title: 'No Experiences Available',
+                          description:
+                              'Check back soon for new ways to experience Nepal.',
+                        ),
                       ),
-                    ),
-                    data: (railsMap) {
-                      return Column(
-                        children: [
-                          if (railsMap['recommended']?.isNotEmpty ?? false) ...[
-                            ContentRail(
-                              height: 276,
-                              title: l10n.recommendedForYou,
-                              subtitle:
-                                  'Handpicked experiences based on popular journeys',
-                              actionLabel: l10n.seeAll,
-                              onActionTap: () =>
-                                  context.push('/collection/recommended'),
-                              items: railsMap['recommended']!
-                                  .map(
-                                    (exp) => _buildExperienceCard(context, exp),
-                                  )
-                                  .toList(),
-                            ),
-                            const SizedBox(height: 24),
-                          ],
-                          if (railsMap['trending']?.isNotEmpty ?? false) ...[
-                            ContentRail(
-                              height: 276,
-                              title: l10n.trendingNow,
-                              subtitle:
-                                  'Most booked trips this season in Nepal',
-                              actionLabel: l10n.seeAll,
-                              onActionTap: () =>
-                                  context.push('/collection/trending'),
-                              items: railsMap['trending']!
-                                  .map(
-                                    (exp) => _buildExperienceCard(context, exp),
-                                  )
-                                  .toList(),
-                            ),
-                            const SizedBox(height: 24),
-                          ],
-                          if (railsMap['homestays']?.isNotEmpty ?? false) ...[
-                            ContentRail(
-                              height: 276,
-                              title: l10n.authenticHomestays,
-                              subtitle: 'Immerse in local village hospitality',
-                              actionLabel: l10n.seeAll,
-                              onActionTap: () =>
-                                  context.push('/collection/homestays'),
-                              items: railsMap['homestays']!
-                                  .map(
-                                    (exp) => _buildExperienceCard(context, exp),
-                                  )
-                                  .toList(),
-                            ),
-                            const SizedBox(height: 24),
-                          ],
-                          if (railsMap['community']?.isNotEmpty ?? false) ...[
-                            ContentRail(
-                              height: 276,
-                              title: l10n.communityLedTours,
-                              subtitle:
-                                  'Direct impact travel supporting local communities',
-                              actionLabel: l10n.seeAll,
-                              onActionTap: () =>
-                                  context.push('/collection/community'),
-                              items: railsMap['community']!
-                                  .map(
-                                    (exp) => _buildExperienceCard(context, exp),
-                                  )
-                                  .toList(),
-                            ),
-                            const SizedBox(height: 24),
-                          ],
-                          if (railsMap['adventure-together']?.isNotEmpty ??
-                              false) ...[
-                            ContentRail(
-                              height: 276,
-                              title: 'Adventure Together',
-                              subtitle:
-                                  'Made for couples, friends, families, and groups',
-                              actionLabel: l10n.seeAll,
-                              onActionTap: () => context.push(
-                                '/collection/adventure-together',
+                      data: (railsMap) {
+                        return Column(
+                          children: [
+                            if (railsMap['recommended']?.isNotEmpty ??
+                                false) ...[
+                              ContentRail(
+                                height: 324,
+                                title: l10n.recommendedForYou,
+                                subtitle:
+                                    'Handpicked experiences based on popular journeys',
+                                actionLabel: l10n.seeAll,
+                                onActionTap: () =>
+                                    context.push('/collection/recommended'),
+                                items: railsMap['recommended']!
+                                    .map(
+                                      (exp) => _buildExperienceCard(
+                                        context,
+                                        ref,
+                                        exp,
+                                        taxonomy,
+                                        savedIds ?? const {},
+                                      ),
+                                    )
+                                    .toList(),
                               ),
-                              items: railsMap['adventure-together']!
-                                  .map(
-                                    (exp) => _buildExperienceCard(context, exp),
-                                  )
-                                  .toList(),
-                            ),
-                            const SizedBox(height: 24),
+                              const SizedBox(height: 24),
+                            ],
+                            if (railsMap['trending']?.isNotEmpty ?? false) ...[
+                              ContentRail(
+                                height: 324,
+                                title: l10n.trendingNow,
+                                subtitle:
+                                    'Experiences people are loving this week',
+                                actionLabel: l10n.seeAll,
+                                onActionTap: () =>
+                                    context.push('/collection/trending'),
+                                items: railsMap['trending']!
+                                    .map(
+                                      (exp) => _buildExperienceCard(
+                                        context,
+                                        ref,
+                                        exp,
+                                        taxonomy,
+                                        savedIds ?? const {},
+                                      ),
+                                    )
+                                    .toList(),
+                              ),
+                              const SizedBox(height: 24),
+                            ],
+                            for (final spec in _homeFamilyRails)
+                              if (railsMap[spec.slug]?.isNotEmpty ?? false) ...[
+                                ContentRail(
+                                  height: 324,
+                                  title: spec.title,
+                                  subtitle: spec.subtitle,
+                                  actionLabel: l10n.seeAll,
+                                  onActionTap: () =>
+                                      context.push('/collection/${spec.slug}'),
+                                  items: railsMap[spec.slug]!
+                                      .map(
+                                        (exp) => _buildExperienceCard(
+                                          context,
+                                          ref,
+                                          exp,
+                                          taxonomy,
+                                          savedIds ?? const {},
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                                const SizedBox(height: 24),
+                              ],
                           ],
-                          if (railsMap['mind-soul']?.isNotEmpty ?? false) ...[
-                            ContentRail(
-                              height: 276,
-                              title: 'Mind & Soul',
-                              subtitle:
-                                  'Wellness, reflection, nature, and deep relaxation',
-                              actionLabel: l10n.seeAll,
-                              onActionTap: () =>
-                                  context.push('/collection/mind-soul'),
-                              items: railsMap['mind-soul']!
-                                  .map(
-                                    (exp) => _buildExperienceCard(context, exp),
-                                  )
-                                  .toList(),
-                            ),
-                            const SizedBox(height: 24),
-                          ],
-                          if (railsMap['give-back']?.isNotEmpty ?? false) ...[
-                            ContentRail(
-                              height: 276,
-                              title: 'Give Back',
-                              subtitle:
-                                  'Community, conservation, and positive local impact',
-                              actionLabel: l10n.seeAll,
-                              onActionTap: () =>
-                                  context.push('/collection/give-back'),
-                              items: railsMap['give-back']!
-                                  .map(
-                                    (exp) => _buildExperienceCard(context, exp),
-                                  )
-                                  .toList(),
-                            ),
-                            const SizedBox(height: 24),
-                          ],
-                        ],
-                      );
-                    },
-                  ),
-                ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
-      ),
     );
   }
 
-  Widget _buildExperienceCard(BuildContext context, Experience exp) {
+  Widget _buildExperienceCard(
+    BuildContext context,
+    WidgetRef ref,
+    Experience exp,
+    ExperienceTaxonomy? taxonomy,
+    Set<String> savedIds,
+  ) {
+    final presentation = ExperiencePresentation.from(exp, taxonomy);
+    final isSaved = savedIds.contains(exp.id);
     return ExperienceCard(
       title: exp.title,
       location: _shortLocation(exp.locationName),
@@ -481,11 +195,57 @@ class HomeScreen extends ConsumerWidget {
       reviewCount: exp.ratingCount,
       priceText: AppFormatters.formatNpr(exp.pricePaisa),
       imageUrl: exp.coverImageUrl,
-      categoryTag: exp.difficulty.name.toUpperCase(),
+      typeLabel: presentation.typeLabel,
+      detailText: presentation.detailText,
+      isSaved: isSaved,
       onTap: () => context.push('/experience/${exp.id}'),
+      onBookmarkTap: () => _toggleSaved(context, ref, exp.id, isSaved),
       variant: ExperienceCardVariant.poster,
       width: 148.0,
     );
+  }
+
+  Future<void> _toggleSaved(
+    BuildContext context,
+    WidgetRef ref,
+    String experienceId,
+    bool isSaved,
+  ) async {
+    if (ref.read(supabaseClientProvider).auth.currentUser == null) {
+      ref
+          .read(deferredActionProvider.notifier)
+          .setPending(
+            DeferredAction(
+              screenId: 'PL-09',
+              entityId: experienceId,
+              action: 'save',
+            ),
+          );
+      if (context.mounted) context.push('/auth/required');
+      return;
+    }
+
+    try {
+      await ref.read(savedRepositoryProvider).toggleSave(experienceId, isSaved);
+      ref.invalidate(savedExperiencesProvider);
+      if (context.mounted) {
+        AppToast.show(
+          context,
+          message: isSaved
+              ? ExperienceStrings.removedFromWishlist
+              : ExperienceStrings.savedToWishlist,
+          variant: AppToastVariant.success,
+        );
+      }
+    } catch (error) {
+      if (context.mounted) {
+        AppToast.show(
+          context,
+          message: error.toString(),
+          variant: AppToastVariant.error,
+        );
+      }
+    }
   }
 
   /// "Lo Manthang / Mustang" → "Lo Manthang" — one or two words instead of
@@ -500,6 +260,297 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
+class _HomeFamilyRailSpec {
+  final String slug;
+  final String title;
+  final String subtitle;
+
+  const _HomeFamilyRailSpec(this.slug, this.title, this.subtitle);
+}
+
+const _homeFamilyRails = [
+  _HomeFamilyRailSpec(
+    'live-like-a-local',
+    'Live Like a Local',
+    'Food, homes, villages, culture, and crafts',
+  ),
+  _HomeFamilyRailSpec(
+    'mind-soul',
+    'Mind & Soul',
+    'Wellness, reflection, healing, and creativity',
+  ),
+  _HomeFamilyRailSpec(
+    'meet-people',
+    'Meet People',
+    'Activities, events, and communities to join',
+  ),
+  _HomeFamilyRailSpec(
+    'give-back',
+    'Give Back',
+    'Community, conservation, and meaningful impact',
+  ),
+  _HomeFamilyRailSpec(
+    'trips-tours',
+    'Trips & Tours',
+    'Day trips, guided tours, packages, and sightseeing',
+  ),
+  _HomeFamilyRailSpec(
+    'adventure-together',
+    'Adventure Together',
+    'Outdoor adventures made for sharing',
+  ),
+];
+
+class _HomeHero extends ConsumerWidget {
+  final int points;
+  final bool aiItineraryEnabled;
+
+  const _HomeHero({required this.points, required this.aiItineraryEnabled});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locating = ref.watch(homeLocationLoadingProvider);
+    return SizedBox(
+      height: 430,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Semantics(
+            image: true,
+            label:
+                'Pottery, local food, wellness, and a countryside walk in Nepal',
+            child: Image.asset(
+              'assets/images/home_experiences_hero.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.center,
+            ),
+          ),
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xA6000000),
+                  Color(0x30000000),
+                  Color(0xB800160F),
+                  AppColors.ivory,
+                ],
+                stops: [0, 0.26, 0.78, 1],
+              ),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const PlanELogo(
+                              fontSize: 26,
+                              centered: false,
+                              color: AppColors.white,
+                            ),
+                            Semantics(
+                              button: true,
+                              label: locating
+                                  ? 'Finding current location'
+                                  : 'Use current location',
+                              child: InkWell(
+                                onTap: locating
+                                    ? null
+                                    : () => _useCurrentLocation(context, ref),
+                                borderRadius: AppRadii.borderSm8,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 6,
+                                    horizontal: 2,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (locating)
+                                        const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: AppColors.white,
+                                          ),
+                                        )
+                                      else
+                                        const Icon(
+                                          Icons.my_location,
+                                          size: 16,
+                                          color: AppColors.white,
+                                        ),
+                                      const SizedBox(width: 5),
+                                      Flexible(
+                                        child: Text(
+                                          ref.watch(homeLocationLabelProvider),
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            color: AppColors.white,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _NotificationBell(
+                        unreadCount:
+                            ref.watch(unreadNotificationCountProvider).value ??
+                            0,
+                        onTap: () => context.push('/notifications'),
+                      ),
+                      const SizedBox(width: 8),
+                      Semantics(
+                        label: '$points PLAN E points',
+                        child: Container(
+                          height: AppTouchTarget.minSize,
+                          padding: const EdgeInsets.symmetric(horizontal: 13),
+                          decoration: const BoxDecoration(
+                            color: AppColors.forest,
+                            borderRadius: AppRadii.borderPill,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.local_activity_outlined,
+                                size: 17,
+                                color: AppColors.gold,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '$points pts',
+                                style: const TextStyle(
+                                  color: AppColors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  const Text(
+                    'Discover Nepal\nyour way.',
+                    style: TextStyle(
+                      fontFamily: 'serif',
+                      color: AppColors.white,
+                      fontSize: 31,
+                      height: 1.02,
+                      fontWeight: FontWeight.w700,
+                      shadows: [
+                        Shadow(
+                          color: Color(0x99000000),
+                          blurRadius: 12,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'From local tables to mountain trails, find experiences worth remembering.',
+                    maxLines: 2,
+                    style: TextStyle(
+                      color: AppColors.white,
+                      fontSize: 14,
+                      height: 1.35,
+                      fontWeight: FontWeight.w500,
+                      shadows: [
+                        Shadow(color: Color(0x99000000), blurRadius: 8),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Semantics(
+                    button: true,
+                    label: 'Search experiences, places, or activities',
+                    child: Material(
+                      color: AppColors.white,
+                      borderRadius: AppRadii.borderPill,
+                      child: InkWell(
+                        onTap: () => context.push('/search'),
+                        borderRadius: AppRadii.borderPill,
+                        child: const SizedBox(
+                          height: AppTouchTarget.minSize,
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: Row(
+                              children: [
+                                Icon(Icons.search, color: AppColors.forest),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'What do you want to do?',
+                                    style: TextStyle(
+                                      color: AppColors.disabledText,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AppButton(
+                          label: 'Explore Nepal',
+                          minHeight: 46,
+                          fontSize: 13,
+                          onPressed: () => context.push('/explore'),
+                        ),
+                      ),
+                      if (aiItineraryEnabled) ...[
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: AppButton.secondary(
+                            label: 'Plan with AI',
+                            icon: Icons.auto_awesome,
+                            minHeight: 46,
+                            fontSize: 13,
+                            onPressed: () => context.push('/ai-planner'),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// One reverse-geocode call to a "City, Country" label, shared by the
 /// explicit tap-to-locate flow and the silent auto-fetch on home load.
 Future<String?> _labelFromPosition(Position position) async {
@@ -511,8 +562,8 @@ Future<String?> _labelFromPosition(Position position) async {
   final city = (place?.locality?.isNotEmpty ?? false)
       ? place!.locality!
       : ((place?.subAdministrativeArea?.isNotEmpty ?? false)
-          ? place!.subAdministrativeArea!
-          : null);
+            ? place!.subAdministrativeArea!
+            : null);
   final label = [
     city,
     place?.country,
@@ -529,7 +580,8 @@ Future<String?> _labelFromPosition(Position position) async {
 final _homeLocationAutoFetchProvider = FutureProvider<void>((ref) async {
   try {
     final permission = await Geolocator.checkPermission();
-    final granted = permission == LocationPermission.always ||
+    final granted =
+        permission == LocationPermission.always ||
         permission == LocationPermission.whileInUse;
     if (!granted) return;
     if (!await Geolocator.isLocationServiceEnabled()) return;
@@ -636,7 +688,11 @@ class _NotificationBell extends StatelessWidget {
                 onTap: onTap,
                 customBorder: const CircleBorder(),
                 child: const SizedBox.expand(
-                  child: Icon(Icons.notifications_outlined, size: 20, color: AppColors.forest),
+                  child: Icon(
+                    Icons.notifications_outlined,
+                    size: 20,
+                    color: AppColors.forest,
+                  ),
                 ),
               ),
             ),
@@ -647,7 +703,10 @@ class _NotificationBell extends StatelessWidget {
                 child: Container(
                   width: 9,
                   height: 9,
-                  decoration: const BoxDecoration(color: AppColors.gold, shape: BoxShape.circle),
+                  decoration: const BoxDecoration(
+                    color: AppColors.gold,
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ),
           ],
@@ -690,7 +749,11 @@ class _PromoBanner extends ConsumerWidget {
           ),
           borderRadius: BorderRadius.circular(18),
           boxShadow: const [
-            BoxShadow(color: AppColors.shadow, blurRadius: 10, offset: Offset(0, 4)),
+            BoxShadow(
+              color: AppColors.shadow,
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
           ],
         ),
         child: Row(
@@ -712,13 +775,18 @@ class _PromoBanner extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: const TextStyle(fontSize: 12, color: AppColors.sage),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.sage,
+                      ),
                     ),
                   ],
                 ],
               ),
             ),
-            if (ctaLabel != null && ctaLabel.isNotEmpty && ctaRoute != null) ...[
+            if (ctaLabel != null &&
+                ctaLabel.isNotEmpty &&
+                ctaRoute != null) ...[
               const SizedBox(width: 12),
               AppButton.secondary(
                 label: ctaLabel,

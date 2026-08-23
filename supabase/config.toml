@@ -421,6 +421,12 @@ verify_jwt = false
 [functions.payment-return]
 verify_jwt = false
 
+# Called only by the database pg_net trigger. JWT verification is disabled
+# because the trigger authenticates with a dedicated Vault-backed secret;
+# the function rejects every request without that header.
+[functions.trip-message-push]
+verify_jwt = false
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.

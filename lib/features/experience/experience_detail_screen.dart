@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
+import '../../core/experience_presentation.dart';
 import '../../models/experience.dart';
 import '../../models/experience_departure.dart';
 import '../../models/itinerary_item.dart';
@@ -117,7 +118,8 @@ class _ExperienceDetailScreenState
                         button: true,
                         label: 'Join experience action button',
                         child: AppButton(
-                          label: ExperienceStrings.joinButtonLabel.toUpperCase(),
+                          label: ExperienceStrings.joinButtonLabel
+                              .toUpperCase(),
                           onPressed: () {
                             context.push('/booking/${widget.id}');
                           },
@@ -154,6 +156,9 @@ class _ExperienceDetailScreenState
     final itinerary = itineraryAsync.asData?.value ?? [];
     final reviews = reviewsAsync.asData?.value ?? [];
     final hostProfile = hostAsync?.asData?.value;
+    final taxonomy = ref.watch(experienceTaxonomyProvider).valueOrNull;
+    final presentation = ExperiencePresentation.from(experience, taxonomy);
+    final isAdventure = familySupportsDifficulty(presentation.familySlug);
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -172,47 +177,45 @@ class _ExperienceDetailScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Section 3: title/location/rating/date
-                _buildTitleLocationRatingDateSection(experience, departures),
+                _buildTitleLocationRatingDateSection(experience, presentation),
                 const SizedBox(height: 20),
 
-                // Section 4: duration/difficulty/altitude/group size
-                _buildQuickStatsSection(experience),
+                // Universal facts plus family-specific context.
+                _buildQuickStatsSection(experience, isAdventure),
                 const SizedBox(height: 20),
 
-                // Section 5: overview
-                _buildOverviewSection(experience, itinerary),
+                _buildOverviewSection(experience),
                 const SizedBox(height: 20),
 
-                // Section 6: price
-                _buildPriceSection(experience),
-                const SizedBox(height: 20),
-
-                // Section 7: included
-                _buildIncludedSection(experience),
-                const SizedBox(height: 20),
-
-                // Section 8: bring list
-                _buildBringListSection(experience),
-                const SizedBox(height: 20),
-
-                // Section 9: meeting point + map
-                _buildMeetingPointMapSection(context, experience),
-                const SizedBox(height: 20),
-
-                // Section 10: participants
-                _buildParticipantsSection(experience),
-                const SizedBox(height: 20),
-
-                // Section 11: things to know
-                _buildThingsToKnowSection(experience),
-                const SizedBox(height: 20),
-
-                // Section 12: reviews
-                _buildReviewsSection(experience, reviews),
-                const SizedBox(height: 20),
-
-                // Section 13: organizer
                 _buildOrganizerSection(context, hostProfile),
+                if (itinerary.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  _buildScheduleSection(itinerary),
+                ],
+                const SizedBox(height: 20),
+
+                _buildPriceSection(experience),
+
+                if (experience.included.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  _buildIncludedSection(experience),
+                ],
+
+                if (experience.bringList.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  _buildBringListSection(experience),
+                ],
+
+                const SizedBox(height: 20),
+                _buildMeetingPointMapSection(context, experience),
+
+                if (experience.thingsToKnow.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  _buildThingsToKnowSection(experience),
+                ],
+
+                const SizedBox(height: 20),
+                _buildReviewsSection(experience, reviews),
                 const SizedBox(height: 40),
               ],
             ),
@@ -267,7 +270,9 @@ class _ExperienceDetailScreenState
                 _buildCircleIconButton(
                   icon: isSaved ? Icons.favorite : Icons.favorite_border,
                   iconColor: isSaved ? AppColors.error : AppColors.ink,
-                  label: isSaved ? 'Remove from saved experiences' : 'Save experience',
+                  label: isSaved
+                      ? 'Remove from saved experiences'
+                      : 'Save experience',
                   onPressed: () =>
                       _toggleOptimisticSave(experience.id, isSaved),
                 ),
@@ -374,12 +379,14 @@ class _ExperienceDetailScreenState
           children: [
             Icon(Icons.flash_on, size: 16, color: AppColors.forest),
             SizedBox(width: 8),
-            Text(
-              ExperienceStrings.instantConfirmation,
-              style: TextStyle(
-                color: AppColors.forest,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
+            Expanded(
+              child: Text(
+                ExperienceStrings.instantConfirmation,
+                style: TextStyle(
+                  color: AppColors.forest,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],
@@ -410,7 +417,7 @@ class _ExperienceDetailScreenState
           Expanded(
             child: Text(
               isLowSpot
-                  ? '🔥  ${nextDeparture.spotsLeft} SPOTS LEFT for ${AppFormatters.formatTripDate(nextDeparture.startDate, pattern: 'd MMM')}'
+                  ? '${nextDeparture.spotsLeft} SPOTS LEFT for ${AppFormatters.formatTripDate(nextDeparture.startDate, pattern: 'd MMM')}'
                   : '${nextDeparture.spotsLeft} spots available on ${AppFormatters.formatTripDate(nextDeparture.startDate, pattern: 'd MMM')}',
               style: TextStyle(
                 color: isLowSpot ? AppColors.warning : AppColors.success,
@@ -426,34 +433,50 @@ class _ExperienceDetailScreenState
 
   Widget _buildTitleLocationRatingDateSection(
     Experience experience,
-    List<ExperienceDeparture> departures,
+    ExperiencePresentation presentation,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.sage,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.hiking, size: 16, color: AppColors.forest),
-              const SizedBox(width: 6),
-              Text(
-                experience.difficulty.name.toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
+        if (presentation.familyLabel != null ||
+            presentation.typeLabel != null) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.sage,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.explore_outlined,
+                  size: 16,
                   color: AppColors.forest,
                 ),
-              ),
-            ],
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    [
+                      if (presentation.familyLabel != null)
+                        presentation.familyLabel!,
+                      if (presentation.typeLabel != null)
+                        presentation.typeLabel!,
+                    ].join(' • ').toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.forest,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
+          const SizedBox(height: 8),
+        ],
         Text(
           experience.title,
           style: const TextStyle(
@@ -495,48 +518,57 @@ class _ExperienceDetailScreenState
     );
   }
 
-  Widget _buildQuickStatsSection(Experience experience) {
-    return Row(
-      children: [
-        Expanded(
-          child: _InfoTile(
-            icon: Icons.schedule,
-            value: AppFormatters.formatDuration(experience.durationHours),
-            label: 'Duration',
-          ),
+  Widget _buildQuickStatsSection(Experience experience, bool isAdventure) {
+    final facts = <_ExperienceFact>[
+      _ExperienceFact(
+        Icons.schedule,
+        AppFormatters.formatDuration(experience.durationHours),
+        'Duration',
+      ),
+      _ExperienceFact(
+        Icons.groups_outlined,
+        '${experience.groupSizeMin}-${experience.groupSizeMax}',
+        'Group size',
+      ),
+      _ExperienceFact(Icons.person_outline, '${experience.minAge}+', 'Min age'),
+      if (isAdventure)
+        _ExperienceFact(
+          Icons.signal_cellular_alt,
+          experience.difficulty.name.toUpperCase(),
+          'Difficulty',
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _InfoTile(
-            icon: Icons.signal_cellular_alt,
-            value: experience.difficulty.name.toUpperCase(),
-            label: 'Difficulty',
-          ),
+      if (isAdventure && experience.maxAltitudeM != null)
+        _ExperienceFact(
+          Icons.filter_hdr,
+          '${experience.maxAltitudeM} m',
+          'Altitude',
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _InfoTile(
-            icon: Icons.groups_outlined,
-            value: '${experience.groupSizeMin}-${experience.groupSizeMax}',
-            label: 'Group size',
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _InfoTile(
-            icon: Icons.filter_hdr,
-            value: '${experience.maxAltitudeM ?? 2000} m',
-            label: 'Altitude',
-          ),
-        ),
-      ],
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tileWidth = (constraints.maxWidth - 8) / 2;
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: facts
+              .map(
+                (fact) => SizedBox(
+                  width: tileWidth,
+                  child: _InfoTile(
+                    icon: fact.icon,
+                    value: fact.value,
+                    label: fact.label,
+                  ),
+                ),
+              )
+              .toList(),
+        );
+      },
     );
   }
 
-  Widget _buildOverviewSection(
-    Experience experience,
-    List<ItineraryItem> itinerary,
-  ) {
+  Widget _buildOverviewSection(Experience experience) {
     final String descriptionText =
         experience.description ?? experience.summary ?? '';
     return Container(
@@ -552,14 +584,16 @@ class _ExperienceDetailScreenState
           const Row(
             children: [
               Icon(
-                Icons.calendar_today_outlined,
+                Icons.auto_stories_outlined,
                 size: 20,
                 color: AppColors.forest,
               ),
               SizedBox(width: 8),
-              Text(
-                'Trip Overview',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              Expanded(
+                child: Text(
+                  'About this experience',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -601,6 +635,92 @@ class _ExperienceDetailScreenState
     );
   }
 
+  Widget _buildScheduleSection(List<ItineraryItem> itinerary) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.white.withValues(alpha: .93),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.event_note_outlined,
+                size: 20,
+                color: AppColors.forest,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'Schedule',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ...itinerary.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    constraints: const BoxConstraints(minWidth: 52),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: const BoxDecoration(
+                      color: AppColors.sage,
+                      borderRadius: AppRadii.borderSm8,
+                    ),
+                    child: Text(
+                      item.startTime?.isNotEmpty == true
+                          ? item.startTime!
+                          : 'Day ${item.dayNumber}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppColors.forest,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.title,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (item.description?.isNotEmpty == true)
+                          Text(
+                            item.description!,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.disabledText,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPriceSection(Experience experience) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -623,8 +743,9 @@ class _ExperienceDetailScreenState
             ],
           ),
           const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.end,
+            spacing: 6,
             children: [
               Text(
                 AppFormatters.formatNpr(experience.pricePaisa),
@@ -634,7 +755,6 @@ class _ExperienceDetailScreenState
                   color: AppColors.forest,
                 ),
               ),
-              const SizedBox(width: 6),
               const Text(
                 '/ person',
                 style: TextStyle(fontSize: 12, color: AppColors.disabledText),
@@ -647,10 +767,6 @@ class _ExperienceDetailScreenState
   }
 
   Widget _buildIncludedSection(Experience experience) {
-    final List<String> includedItems = experience.included.isNotEmpty
-        ? experience.included
-        : ExperienceStrings.defaultIncluded;
-
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -672,7 +788,7 @@ class _ExperienceDetailScreenState
             ],
           ),
           const SizedBox(height: 10),
-          ...includedItems.map(
+          ...experience.included.map(
             (item) => Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Row(
@@ -696,10 +812,6 @@ class _ExperienceDetailScreenState
   }
 
   Widget _buildBringListSection(Experience experience) {
-    final List<String> bringItems = experience.bringList.isNotEmpty
-        ? experience.bringList
-        : ExperienceStrings.defaultBringList;
-
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -721,7 +833,7 @@ class _ExperienceDetailScreenState
             ],
           ),
           const SizedBox(height: 10),
-          ...bringItems.map(
+          ...experience.bringList.map(
             (item) => Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Row(
@@ -762,9 +874,11 @@ class _ExperienceDetailScreenState
             children: [
               Icon(Icons.location_on, color: AppColors.forest),
               SizedBox(width: 8),
-              Text(
-                'Meeting Point',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              Expanded(
+                child: Text(
+                  'Meeting Point',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -790,40 +904,7 @@ class _ExperienceDetailScreenState
     );
   }
 
-  Widget _buildParticipantsSection(Experience experience) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.white.withValues(alpha: .93),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: const Row(
-        children: [
-          Icon(Icons.group, size: 20, color: AppColors.forest),
-          SizedBox(width: 8),
-          Text(
-            "Who's Joining",
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-          ),
-          Spacer(),
-          Text(
-            'Small Group Tour',
-            style: TextStyle(fontSize: 12, color: AppColors.disabledText),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildThingsToKnowSection(Experience experience) {
-    const items = [
-      'Moderate fitness required',
-      'Event runs rain or shine unless unsafe',
-      'Arrive 15 minutes early',
-      'No plastic littering',
-    ];
-
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -845,7 +926,7 @@ class _ExperienceDetailScreenState
             ],
           ),
           const SizedBox(height: 10),
-          ...items.map(
+          ...experience.thingsToKnow.map(
             (item) => Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Row(
@@ -957,7 +1038,7 @@ class _ExperienceDetailScreenState
             radius: 24,
             backgroundColor: AppColors.sage,
             child: Icon(
-              Icons.landscape_outlined,
+              Icons.person_outline,
               size: 24,
               color: AppColors.forest,
             ),
@@ -975,7 +1056,7 @@ class _ExperienceDetailScreenState
                   ),
                 ),
                 const Text(
-                  'Verified Himalayan Guide & Local Partner',
+                  'Verified local host',
                   style: TextStyle(fontSize: 11, color: AppColors.disabledText),
                 ),
               ],
@@ -985,6 +1066,14 @@ class _ExperienceDetailScreenState
       ),
     );
   }
+}
+
+class _ExperienceFact {
+  const _ExperienceFact(this.icon, this.value, this.label);
+
+  final IconData icon;
+  final String value;
+  final String label;
 }
 
 class _InfoTile extends StatelessWidget {
@@ -1001,7 +1090,7 @@ class _InfoTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 80,
+      constraints: const BoxConstraints(minHeight: 80),
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.white,

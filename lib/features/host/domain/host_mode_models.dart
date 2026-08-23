@@ -213,15 +213,76 @@ class HostBookingRequest {
 
 class HostMessage {
   final String id;
+  final String? senderId;
   final String text;
   final bool sentByHost;
   final DateTime sentAt;
+  final bool isPending;
+  final bool isFailed;
+  final String? attachmentUrl;
+  final bool isDelivered;
+  final bool isSeen;
+  final DateTime? editedAt;
+  final DateTime? deletedAt;
   const HostMessage({
     required this.id,
+    this.senderId,
     required this.text,
     required this.sentByHost,
     required this.sentAt,
+    this.isPending = false,
+    this.isFailed = false,
+    this.attachmentUrl,
+    this.isDelivered = false,
+    this.isSeen = false,
+    this.editedAt,
+    this.deletedAt,
   });
+
+  HostMessage copyWith({
+    String? text,
+    bool? isPending,
+    bool? isFailed,
+    bool? isDelivered,
+    bool? isSeen,
+    DateTime? editedAt,
+    DateTime? deletedAt,
+  }) => HostMessage(
+    id: id,
+    senderId: senderId,
+    text: text ?? this.text,
+    sentByHost: sentByHost,
+    sentAt: sentAt,
+    isPending: isPending ?? this.isPending,
+    isFailed: isFailed ?? this.isFailed,
+    attachmentUrl: attachmentUrl,
+    isDelivered: isDelivered ?? this.isDelivered,
+    isSeen: isSeen ?? this.isSeen,
+    editedAt: editedAt ?? this.editedAt,
+    deletedAt: deletedAt ?? this.deletedAt,
+  );
+
+  HostMessage withMutation({
+    String? effectiveBody,
+    DateTime? editedAt,
+    DateTime? deletedAt,
+  }) => HostMessage(
+    id: id,
+    senderId: senderId,
+    text: deletedAt == null ? effectiveBody ?? text : 'Message deleted',
+    sentByHost: sentByHost,
+    sentAt: sentAt,
+    isPending: isPending,
+    isFailed: isFailed,
+    attachmentUrl: deletedAt == null ? attachmentUrl : null,
+    isDelivered: isDelivered,
+    isSeen: isSeen,
+    editedAt: editedAt ?? this.editedAt,
+    deletedAt: deletedAt ?? this.deletedAt,
+  );
+
+  bool get isEdited => editedAt != null;
+  bool get isDeleted => deletedAt != null;
 }
 
 class HostConversation {

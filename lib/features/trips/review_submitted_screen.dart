@@ -53,8 +53,8 @@ class ReviewSubmittedScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 28),
                 AppButton(
-                  label: 'Back to My Trips',
-                  onPressed: () => context.go('/trips'),
+                  label: 'Back to Plans',
+                  onPressed: () => context.go('/plans?tab=past'),
                 ),
               ],
             ),

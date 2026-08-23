@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
+import '../../core/experience_presentation.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/experience.dart';
+import '../../models/experience_family.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/widgets.dart';
@@ -31,6 +33,12 @@ class CollectionScreen extends ConsumerWidget {
         return 'Mind & Soul';
       case 'give-back':
         return 'Give Back';
+      case 'trips-tours':
+        return 'Trips & Tours';
+      case 'live-like-a-local':
+        return 'Live Like a Local';
+      case 'meet-people':
+        return 'Meet People';
       default:
         if (slug.isNotEmpty) {
           return '${slug[0].toUpperCase()}${slug.substring(1)} Collection';
@@ -55,6 +63,12 @@ class CollectionScreen extends ConsumerWidget {
         return 'Wellness, yoga, meditation, nature, and restorative escapes';
       case 'give-back':
         return 'Community service, conservation, and positive local impact';
+      case 'trips-tours':
+        return 'Day trips, guided tours, packages, and sightseeing';
+      case 'live-like-a-local':
+        return 'Food, homes, villages, culture, and crafts';
+      case 'meet-people':
+        return 'Meetups, activities, events, and communities';
       default:
         return 'Explore our curated list of authentic experiences';
     }
@@ -63,6 +77,7 @@ class CollectionScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final taxonomy = ref.watch(experienceTaxonomyProvider).valueOrNull;
     // If slug is one of the rail types, we can use homeRailsProvider or experiencesProvider
     final isRailType = [
       'recommended',
@@ -72,6 +87,9 @@ class CollectionScreen extends ConsumerWidget {
       'adventure-together',
       'mind-soul',
       'give-back',
+      'trips-tours',
+      'live-like-a-local',
+      'meet-people',
     ].contains(slug.toLowerCase());
 
     if (isRailType) {
@@ -114,7 +132,7 @@ class CollectionScreen extends ConsumerWidget {
             ),
             data: (railsMap) {
               final list = railsMap[slug.toLowerCase()] ?? [];
-              return _buildList(context, list);
+              return _buildList(context, list, taxonomy);
             },
           ),
         ),
@@ -159,14 +177,18 @@ class CollectionScreen extends ConsumerWidget {
               actionLabel: l10n.exploreAll,
               onActionPressed: () => context.go('/explore'),
             ),
-            data: (experiences) => _buildList(context, experiences),
+            data: (experiences) => _buildList(context, experiences, taxonomy),
           ),
         ),
       );
     }
   }
 
-  Widget _buildList(BuildContext context, List<Experience> experiences) {
+  Widget _buildList(
+    BuildContext context,
+    List<Experience> experiences,
+    ExperienceTaxonomy? taxonomy,
+  ) {
     return ListView.separated(
       padding: AppSpacing.screenPadding,
       itemCount: experiences.length + 1,
@@ -199,6 +221,7 @@ class CollectionScreen extends ConsumerWidget {
         }
 
         final exp = experiences[index - 1];
+        final presentation = ExperiencePresentation.from(exp, taxonomy);
         return ExperienceCard(
           width: double.infinity,
           title: exp.title,
@@ -207,7 +230,9 @@ class CollectionScreen extends ConsumerWidget {
           reviewCount: exp.ratingCount,
           priceText: AppFormatters.formatNpr(exp.pricePaisa),
           imageUrl: exp.coverImageUrl,
-          categoryTag: exp.difficulty.name.toUpperCase(),
+          familyLabel: presentation.familyLabel,
+          typeLabel: presentation.typeLabel,
+          detailText: presentation.detailText,
           onTap: () => context.push('/experience/${exp.id}'),
         );
       },

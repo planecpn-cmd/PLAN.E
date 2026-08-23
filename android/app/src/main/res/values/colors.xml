@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  Splash background color.
-  Hex value MUST stay in sync with AppColors.ivory in lib/theme/tokens.dart (#F6F2E9).
-  Native Android XML cannot reference Dart constants — this is the only unavoidable duplication.
--->
 <resources>
-    <color name="splashBackground">#F6F2E9</color>
+    <color name="splashBackground">#FAFAFA</color>
+    <color name="launcherBackground">#FAFAFA</color>
 </resources>

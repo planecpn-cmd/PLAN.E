@@ -54,13 +54,11 @@ List<OnboardingSlideData> resolveOnboardingSlides(
 class OnboardingSlideScreen extends ConsumerStatefulWidget {
   final int step;
 
-  const OnboardingSlideScreen({
-    super.key,
-    required this.step,
-  });
+  const OnboardingSlideScreen({super.key, required this.step});
 
   @override
-  ConsumerState<OnboardingSlideScreen> createState() => _OnboardingSlideScreenState();
+  ConsumerState<OnboardingSlideScreen> createState() =>
+      _OnboardingSlideScreenState();
 }
 
 class _OnboardingSlideScreenState extends ConsumerState<OnboardingSlideScreen> {
@@ -69,23 +67,23 @@ class _OnboardingSlideScreenState extends ConsumerState<OnboardingSlideScreen> {
   static const List<OnboardingSlideData> _slides = [
     OnboardingSlideData(
       screenId: 'PL-02',
-      title: 'Discover Authentic Nepal',
+      title: 'Explore Nepal Differently',
       description:
-          'Explore hidden mountain villages, homestays, and community-led eco treks curated by local experts.',
-      icon: Icons.explore_outlined,
+          'Discover trips, food, culture, adventure, and experiences across Nepal.',
+      icon: Icons.travel_explore_outlined,
     ),
     OnboardingSlideData(
       screenId: 'PL-03',
-      title: 'Transparent & Local Pricing',
+      title: 'Find Your Kind of Experience',
       description:
-          'Clear NPR pricing in paisa, instant reservations, and offline-ready trip itineraries built for mountain connectivity.',
-      icon: Icons.payments_outlined,
+          'Adventure, relax, learn something new, meet people, or live like a local.',
+      icon: Icons.interests_outlined,
     ),
     OnboardingSlideData(
       screenId: 'PL-04',
-      title: 'Empower Local Hosts',
+      title: 'Make Your Time Meaningful',
       description:
-          'Every booking directly supports indigenous hosts, homestay families, and sustainable high-altitude conservation.',
+          'Join local hosts, communities, and experiences you will actually remember.',
       icon: Icons.volunteer_activism_outlined,
     ),
   ];
@@ -113,7 +111,8 @@ class _OnboardingSlideScreenState extends ConsumerState<OnboardingSlideScreen> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.step != widget.step) {
       final targetPage = (widget.step - 1).clamp(0, _slides.length - 1);
-      if (_pageController.hasClients && _pageController.page?.round() != targetPage) {
+      if (_pageController.hasClients &&
+          _pageController.page?.round() != targetPage) {
         _pageController.animateToPage(
           targetPage,
           duration: const Duration(milliseconds: 300),
@@ -238,7 +237,9 @@ class _OnboardingSlideScreenState extends ConsumerState<OnboardingSlideScreen> {
                   width: index == currentIndex ? 24.0 : 8.0,
                   height: 8.0,
                   decoration: BoxDecoration(
-                    color: index == currentIndex ? AppColors.forest : AppColors.border,
+                    color: index == currentIndex
+                        ? AppColors.forest
+                        : AppColors.border,
                     borderRadius: AppRadii.borderPill,
                   ),
                 ),

@@ -10,6 +10,7 @@ class AppSupabaseClient {
   /// Edge Function URLs that need to be opened outside `functions.invoke`
   /// (payment gateway checkout/return links).
   static String get baseUrl => _url;
+  static bool get isInitialized => _initialized;
 
   /// Deep link the OS routes back into this app after an OAuth browser flow.
   /// A custom URL scheme needs no domain — it's registered directly in
@@ -50,8 +51,7 @@ class AppSupabaseClient {
 
     await Supabase.initialize(
       url: url,
-      // ignore: deprecated_member_use
-      anonKey: anonKey,
+      publishableKey: anonKey,
       authOptions: const FlutterAuthClientOptions(
         authFlowType: AuthFlowType.pkce,
       ),

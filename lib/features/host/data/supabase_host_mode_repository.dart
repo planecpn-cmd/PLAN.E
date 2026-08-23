@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/chat_ordering.dart';
 import '../domain/host_mode_models.dart';
@@ -14,6 +17,9 @@ class SupabaseHostModeRepository extends UnavailableHostModeRepository {
   SupabaseHostModeRepository(this._client);
 
   final SupabaseClient _client;
+
+  @override
+  String? get currentUserId => _client.auth.currentUser?.id;
 
   static const _fallbackImage = 'assets/images/welcome_hero.jpg';
 
@@ -218,7 +224,9 @@ class SupabaseHostModeRepository extends UnavailableHostModeRepository {
     final bookingsById = {for (final booking in bookings) booking.id: booking};
     final messageRows = await _client
         .from('trip_messages')
-        .select('id,booking_id,sender_id,body,created_at')
+        .select(
+          'id,booking_id,sender_id,body,attachment_url,created_at,trip_message_receipts(delivered_at,seen_at),trip_message_mutations(effective_body,edited_at,deleted_at)',
+        )
         .inFilter('booking_id', bookingsById.keys.toList())
         .order('created_at');
     final messagesByBooking = <String, List<HostMessage>>{};
@@ -226,22 +234,68 @@ class SupabaseHostModeRepository extends UnavailableHostModeRepository {
       final row = Map<String, dynamic>.from(raw);
       final bookingId = row['booking_id']?.toString();
       if (bookingId == null) continue;
+      final receipts = row['trip_message_receipts'];
+      final receiptRows = receipts is List
+          ? receipts
+                .whereType<Map<String, dynamic>>()
+                .map(Map<String, dynamic>.from)
+                .toList()
+          : const <Map<String, dynamic>>[];
+      final mutations = row['trip_message_mutations'];
+      final mutationRows = mutations is List
+          ? mutations.whereType<Map<String, dynamic>>().toList()
+          : const <Map<String, dynamic>>[];
+      final mutation = mutationRows.firstOrNull;
+      final deletedAt = _date(mutation?['deleted_at']);
       messagesByBooking
           .putIfAbsent(bookingId, () => [])
           .add(
             HostMessage(
               id: row['id']?.toString() ?? '',
-              text: row['body']?.toString() ?? '',
+              senderId: row['sender_id']?.toString(),
+              text: deletedAt != null
+                  ? 'Message deleted'
+                  : mutation?['effective_body']?.toString() ??
+                        row['body']?.toString() ??
+                        '',
               sentByHost: row['sender_id']?.toString() == user.id,
               sentAt: _date(row['created_at']) ?? DateTime.now(),
+              attachmentUrl: deletedAt == null
+                  ? row['attachment_url']?.toString()
+                  : null,
+              isDelivered: receiptRows.any(
+                (receipt) => receipt['delivered_at'] != null,
+              ),
+              isSeen: receiptRows.any((receipt) => receipt['seen_at'] != null),
+              editedAt: _date(mutation?['edited_at']),
+              deletedAt: deletedAt,
             ),
           );
+    }
+
+    final readRows = await _client
+        .from('trip_message_reads')
+        .select('conversation_id,last_read_at')
+        .inFilter('conversation_id', bookingsById.keys.toList());
+    final lastReadByBooking = <String, DateTime>{};
+    for (final raw in readRows) {
+      final row = Map<String, dynamic>.from(raw);
+      final bookingId = row['conversation_id']?.toString();
+      final lastReadAt = _date(row['last_read_at']);
+      if (bookingId != null && lastReadAt != null) {
+        lastReadByBooking[bookingId] = lastReadAt;
+      }
     }
 
     final conversations = bookings.map((booking) {
       final messages = sortHostMessagesChronologically(
         messagesByBooking[booking.id] ?? const [],
       );
+      final lastReadAt = lastReadByBooking[booking.id];
+      final unreadCount = messages.where((message) {
+        if (message.sentByHost) return false;
+        return lastReadAt == null || message.sentAt.isAfter(lastReadAt);
+      }).length;
       return HostConversation(
         id: booking.id,
         identity:
@@ -255,7 +309,7 @@ class SupabaseHostModeRepository extends UnavailableHostModeRepository {
         isGroup:
             booking.status == HostBookingStatus.confirmed &&
             booking.travelerCount > 1,
-        unreadCount: 0,
+        unreadCount: unreadCount,
         messages: messages,
       );
     });
@@ -263,18 +317,151 @@ class SupabaseHostModeRepository extends UnavailableHostModeRepository {
   }
 
   @override
-  Stream<List<HostConversation>> watchConversations() async* {
-    // Supabase's table stream emits the current rows first and then emits on
-    // INSERT/UPDATE/DELETE when Realtime is enabled. RLS still limits rows to
-    // conversations visible to the authenticated host. Re-fetching here also
-    // restores profile/booking joins and canonical metadata.
-    // Preserve a query-based fallback for deployments where Realtime has not
-    // been enabled yet.
-    yield await getConversations();
-    await for (final _
-        in _client.from('trip_messages').stream(primaryKey: ['id'])) {
-      yield await getConversations();
+  Stream<List<HostConversation>> watchConversations() {
+    late final StreamController<List<HostConversation>> controller;
+    RealtimeChannel? channel;
+    var conversations = <HostConversation>[];
+    Future<void> patchQueue = Future.value();
+
+    Future<void> patchInsertedMessage(PostgresChangePayload payload) async {
+      final row = payload.newRecord;
+      final bookingId = row['booking_id']?.toString();
+      final messageId = row['id']?.toString();
+      if (bookingId == null || messageId == null) return;
+
+      final index = conversations.indexWhere((item) => item.id == bookingId);
+      if (index == -1) {
+        // A booking created after this subscription started has no cached
+        // inbox row. Refresh only on that rare cache miss; ordinary inserts
+        // patch one conversation locally in O(1) database work.
+        conversations = await getConversations();
+        if (!controller.isClosed) {
+          controller.add(sortHostConversationsByLatestActivity(conversations));
+        }
+        return;
+      }
+
+      final existing = conversations[index];
+      if (existing.messages.any((message) => message.id == messageId)) return;
+      final userId = _client.auth.currentUser?.id;
+      final sentByHost = row['sender_id']?.toString() == userId;
+      final message = HostMessage(
+        id: messageId,
+        senderId: row['sender_id']?.toString(),
+        text: row['body']?.toString() ?? '',
+        sentByHost: sentByHost,
+        sentAt: _date(row['created_at'])?.toUtc() ?? DateTime.now().toUtc(),
+        attachmentUrl: row['attachment_url']?.toString(),
+      );
+      conversations[index] = existing.copyWith(
+        messages: sortHostMessagesChronologically([
+          ...existing.messages,
+          message,
+        ]),
+        unreadCount: existing.unreadCount + (sentByHost ? 0 : 1),
+      );
+      conversations = sortHostConversationsByLatestActivity(conversations);
+      if (!controller.isClosed) controller.add(conversations);
     }
+
+    void patchReceipt(PostgresChangePayload payload) {
+      final row = payload.newRecord;
+      final bookingId = row['conversation_id']?.toString();
+      final messageId = row['message_id']?.toString();
+      if (bookingId == null || messageId == null) return;
+      final conversationIndex = conversations.indexWhere(
+        (item) => item.id == bookingId,
+      );
+      if (conversationIndex == -1) return;
+      final conversation = conversations[conversationIndex];
+      final messageIndex = conversation.messages.indexWhere(
+        (message) => message.id == messageId,
+      );
+      if (messageIndex == -1) return;
+      final messages = List<HostMessage>.from(conversation.messages);
+      messages[messageIndex] = messages[messageIndex].copyWith(
+        isDelivered: row['delivered_at'] != null,
+        isSeen: row['seen_at'] != null,
+      );
+      conversations[conversationIndex] = conversation.copyWith(
+        messages: messages,
+      );
+      if (!controller.isClosed) controller.add(conversations);
+    }
+
+    void patchMutation(PostgresChangePayload payload) {
+      final row = payload.newRecord;
+      final bookingId = row['conversation_id']?.toString();
+      final messageId = row['message_id']?.toString();
+      if (bookingId == null || messageId == null) return;
+      final conversationIndex = conversations.indexWhere(
+        (item) => item.id == bookingId,
+      );
+      if (conversationIndex == -1) return;
+      final conversation = conversations[conversationIndex];
+      final messageIndex = conversation.messages.indexWhere(
+        (message) => message.id == messageId,
+      );
+      if (messageIndex == -1) return;
+      final messages = List<HostMessage>.from(conversation.messages);
+      messages[messageIndex] = messages[messageIndex].withMutation(
+        effectiveBody: row['effective_body']?.toString(),
+        editedAt: _date(row['edited_at']),
+        deletedAt: _date(row['deleted_at']),
+      );
+      conversations[conversationIndex] = conversation.copyWith(
+        messages: messages,
+      );
+      if (!controller.isClosed) controller.add(conversations);
+    }
+
+    controller = StreamController<List<HostConversation>>(
+      onListen: () {
+        unawaited(() async {
+          try {
+            final user = await _requireApprovedHost();
+            channel = _client
+                .channel(
+                  'host-inbox-${user.id}-${DateTime.now().microsecondsSinceEpoch}',
+                )
+                .onPostgresChanges(
+                  event: PostgresChangeEvent.insert,
+                  schema: 'public',
+                  table: 'trip_messages',
+                  callback: (payload) {
+                    patchQueue = patchQueue.then(
+                      (_) => patchInsertedMessage(payload),
+                    );
+                  },
+                )
+                .onPostgresChanges(
+                  event: PostgresChangeEvent.all,
+                  schema: 'public',
+                  table: 'trip_message_receipts',
+                  callback: patchReceipt,
+                )
+                .onPostgresChanges(
+                  event: PostgresChangeEvent.all,
+                  schema: 'public',
+                  table: 'trip_message_mutations',
+                  callback: patchMutation,
+                )
+                .subscribe();
+            conversations = await getConversations();
+            if (!controller.isClosed) controller.add(conversations);
+          } catch (error, stack) {
+            if (!controller.isClosed) controller.addError(error, stack);
+          }
+        }());
+      },
+      onCancel: () async {
+        final activeChannel = channel;
+        if (activeChannel != null) {
+          await _client.removeChannel(activeChannel);
+        }
+      },
+    );
+    return controller.stream;
   }
 
   @override
@@ -305,27 +492,46 @@ class SupabaseHostModeRepository extends UnavailableHostModeRepository {
   @override
   Future<void> markConversationRead(String id) async {
     await _requireApprovedHost();
-    // Read receipts are intentionally not claimed until a backend field and
-    // policy exist. Seeded conversations currently report zero unread items.
+    await _client.rpc(
+      'mark_trip_conversation_read',
+      params: {'p_conversation_id': id},
+    );
   }
 
   @override
-  Future<HostMessage> sendMessage(String id, String normalizedText) async {
+  Future<HostMessage> sendMessage(
+    String id,
+    String normalizedText, {
+    String? clientMessageId,
+    String? attachmentUrl,
+  }) async {
     final user = await _requireApprovedHost();
     final text = normalizedText.trim();
     if (text.isEmpty || text.length > 2000) {
       throw ArgumentError('Message must contain 1 to 2000 characters.');
     }
-    final row = await _client
-        .from('trip_messages')
-        .insert({'booking_id': id, 'sender_id': user.id, 'body': text})
-        .select('id,sender_id,body,created_at')
-        .single();
+    final stableId = clientMessageId ?? const Uuid().v4();
+    final response = await _client.rpc(
+      'send_trip_message',
+      params: {
+        'p_booking_id': id,
+        'p_client_message_id': stableId,
+        'p_body': text,
+        'p_attachment_url': attachmentUrl,
+      },
+    );
+    final rows = response as List;
+    if (rows.isEmpty) {
+      throw StateError('Message could not be reconciled after retry.');
+    }
+    final row = Map<String, dynamic>.from(rows.first as Map);
     return HostMessage(
       id: row['id']?.toString() ?? '',
+      senderId: row['sender_id']?.toString(),
       text: row['body']?.toString() ?? text,
       sentByHost: row['sender_id']?.toString() == user.id,
       sentAt: _date(row['created_at'])?.toUtc() ?? DateTime.now().toUtc(),
+      attachmentUrl: row['attachment_url']?.toString(),
     );
   }
 

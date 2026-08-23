@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../core/chat_ordering.dart';
+import '../core/message_outbox.dart';
 import '../models/budget_entry.dart';
 import '../models/gear_checklist_item.dart';
 import '../models/trip_message.dart';
@@ -30,6 +32,8 @@ class TripChatNotifier extends StateNotifier<AsyncValue<List<TripMessage>>> {
   final TripChatRepository _repository;
   final String bookingId;
   StreamSubscription<List<TripMessage>>? _realtimeSubscription;
+  StreamSubscription<List<TripMessageReceiptSnapshot>>? _receiptSubscription;
+  StreamSubscription<List<TripMessageMutationSnapshot>>? _mutationSubscription;
   final List<TripMessage> _outboxMessages = [];
   List<TripMessage> _remoteMessages = [];
   static const _uuid = Uuid();
@@ -40,10 +44,24 @@ class TripChatNotifier extends StateNotifier<AsyncValue<List<TripMessage>>> {
   }
 
   void _initChat() async {
+    final userId = _repository.currentUserId;
+    var persisted = <OutboxMessage>[];
+    if (userId != null) {
+      persisted = await MessageOutboxStore.loadConversation(
+        userId: userId,
+        conversationId: bookingId,
+        senderMode: MessageSenderMode.traveler,
+      );
+      _outboxMessages
+        ..clear()
+        ..addAll(persisted.map(_tripMessageFromOutbox));
+      _updateMergedState();
+    }
     try {
       final initialMessages = await _repository.getMessages(bookingId);
       _remoteMessages = mergeTripMessagesChronologically(initialMessages);
       _updateMergedState();
+      unawaited(_markRead());
     } catch (err, stack) {
       if (mounted) {
         state = AsyncValue.error(err, stack);
@@ -59,11 +77,64 @@ class TripChatNotifier extends StateNotifier<AsyncValue<List<TripMessage>>> {
               ...realtimeList,
             ]);
             _updateMergedState();
+            unawaited(_markRead());
           },
           onError: (err, stack) {
             // Keep existing merged state if stream emits error
           },
         );
+
+    _receiptSubscription = _repository.streamReceipts(bookingId).listen(
+      (rows) {
+        final delivered = <String>{};
+        final seen = <String>{};
+        for (final row in rows) {
+          if (row.isDelivered) delivered.add(row.messageId);
+          if (row.isSeen) seen.add(row.messageId);
+        }
+        _remoteMessages = _remoteMessages
+            .map(
+              (message) => message.copyWith(
+                isDelivered: delivered.contains(message.id),
+                isSeen: seen.contains(message.id),
+              ),
+            )
+            .toList();
+        _updateMergedState();
+      },
+      onError: (_, __) {},
+    );
+
+    _mutationSubscription = _repository.streamMutations(bookingId).listen(
+      (rows) {
+        final byMessage = {for (final row in rows) row.messageId: row};
+        _remoteMessages = _remoteMessages.map((message) {
+          final mutation = byMessage[message.id];
+          return mutation == null
+              ? message
+              : message.withMutation(
+                  effectiveBody: mutation.effectiveBody,
+                  editedAt: mutation.editedAt,
+                  deletedAt: mutation.deletedAt,
+                );
+        }).toList();
+        _updateMergedState();
+      },
+      onError: (_, __) {},
+    );
+
+    for (final item in persisted) {
+      await _sendPersisted(item.copyWith(isFailed: false));
+    }
+  }
+
+  Future<void> _markRead() async {
+    try {
+      await _repository.markConversationRead(bookingId);
+    } catch (_) {
+      // Read state is best-effort and must never make an otherwise available
+      // conversation fail to render.
+    }
   }
 
   void _updateMergedState() {
@@ -97,62 +168,170 @@ class TripChatNotifier extends StateNotifier<AsyncValue<List<TripMessage>>> {
 
     _outboxMessages.add(pendingMsg);
     _updateMergedState();
+    final item = OutboxMessage(
+      clientMessageId: tempId,
+      conversationId: bookingId,
+      userId: currentUserId,
+      senderMode: MessageSenderMode.traveler,
+      body: text.trim(),
+      createdAt: pendingMsg.createdAt,
+    );
+    await MessageOutboxStore.upsert(item);
+    await _sendPersisted(item);
+  }
 
-    try {
-      final sentMsg = await _repository.sendMessage(
-        bookingId: bookingId,
-        body: text.trim(),
-        messageId: tempId,
-      );
-      _outboxMessages.removeWhere((m) => m.id == tempId);
-      _remoteMessages = mergeTripMessagesChronologically([
-        ..._remoteMessages,
-        sentMsg,
-      ]);
-      _updateMergedState();
-    } catch (e) {
-      final index = _outboxMessages.indexWhere((m) => m.id == tempId);
-      if (index != -1) {
-        _outboxMessages[index] = pendingMsg.copyWith(
-          isPending: false,
-          isFailed: true,
-        );
-      }
-      _updateMergedState();
-    }
+  Future<void> sendAttachment({
+    required Uint8List bytes,
+    required String fileName,
+    String? mimeType,
+    String caption = 'Photo attachment',
+  }) async {
+    final userId = _repository.currentUserId;
+    if (userId == null) return;
+    final clientMessageId = _uuid.v4();
+    final uploaded = await _repository.uploadAttachment(
+      bookingId: bookingId,
+      clientMessageId: clientMessageId,
+      bytes: bytes,
+      fileName: fileName,
+      reportedMimeType: mimeType,
+    );
+    final item = OutboxMessage(
+      clientMessageId: clientMessageId,
+      conversationId: bookingId,
+      userId: userId,
+      senderMode: MessageSenderMode.traveler,
+      body: caption.trim().isEmpty ? 'Photo attachment' : caption.trim(),
+      attachmentUrl: uploaded.storagePath,
+      attachmentMimeType: uploaded.mimeType,
+      attachmentSizeBytes: uploaded.sizeBytes,
+      createdAt: DateTime.now().toUtc(),
+    );
+    await MessageOutboxStore.upsert(item);
+    _outboxMessages.add(_tripMessageFromOutbox(item));
+    _updateMergedState();
+    await _sendPersisted(item);
   }
 
   Future<void> retryMessage(TripMessage msg) async {
-    final index = _outboxMessages.indexWhere((m) => m.id == msg.id);
-    if (index != -1) {
-      _outboxMessages[index] = msg.copyWith(isPending: true, isFailed: false);
-      _updateMergedState();
-    }
+    final userId = _repository.currentUserId;
+    if (userId == null) return;
+    await _sendPersisted(
+      OutboxMessage(
+        clientMessageId: msg.id,
+        conversationId: bookingId,
+        userId: userId,
+        senderMode: MessageSenderMode.traveler,
+        body: msg.body,
+        attachmentUrl: msg.attachmentUrl,
+        attachmentMimeType: msg.attachmentMimeType,
+        attachmentSizeBytes: msg.attachmentSizeBytes,
+        createdAt: msg.createdAt,
+      ),
+    );
+  }
 
+  Future<void> editMessage(TripMessage message, String body) async {
+    final normalized = body.trim();
+    if (normalized.isEmpty || normalized.length > 2000) return;
+    await _repository.editMessage(message.id, normalized);
+    _remoteMessages = _remoteMessages
+        .map(
+          (item) => item.id == message.id
+              ? item.withMutation(
+                  effectiveBody: normalized,
+                  editedAt: DateTime.now().toUtc(),
+                )
+              : item,
+        )
+        .toList();
+    _updateMergedState();
+  }
+
+  Future<void> deleteMessage(TripMessage message) async {
+    await _repository.deleteMessage(message.id);
+    _remoteMessages = _remoteMessages
+        .map(
+          (item) => item.id == message.id
+              ? item.withMutation(deletedAt: DateTime.now().toUtc())
+              : item,
+        )
+        .toList();
+    _updateMergedState();
+  }
+
+  TripMessage _tripMessageFromOutbox(OutboxMessage item) => TripMessage(
+    id: item.clientMessageId,
+    bookingId: item.conversationId,
+    senderId: item.userId,
+    senderName: 'You',
+    body: item.body,
+    attachmentUrl: item.attachmentUrl,
+    attachmentMimeType: item.attachmentMimeType,
+    attachmentSizeBytes: item.attachmentSizeBytes,
+    createdAt: item.createdAt,
+    isPending: !item.isFailed,
+    isFailed: item.isFailed,
+  );
+
+  Future<void> _sendPersisted(OutboxMessage item) async {
+    final pending = item.copyWith(isFailed: false);
+    await MessageOutboxStore.upsert(pending);
+    final index = _outboxMessages.indexWhere(
+      (message) => message.id == item.clientMessageId,
+    );
+    if (index == -1) {
+      _outboxMessages.add(_tripMessageFromOutbox(pending));
+    } else {
+      _outboxMessages[index] = _tripMessageFromOutbox(pending);
+    }
+    _updateMergedState();
     try {
       final sentMsg = await _repository.sendMessage(
-        bookingId: bookingId,
-        body: msg.body,
-        messageId: msg.id,
+        bookingId: item.conversationId,
+        body: item.body,
+        messageId: item.clientMessageId,
+        attachmentUrl: item.attachmentUrl,
       );
-      _outboxMessages.removeWhere((m) => m.id == msg.id);
+      if (item.attachmentUrl != null &&
+          item.attachmentMimeType != null &&
+          item.attachmentSizeBytes != null) {
+        await _repository.registerAttachment(
+          messageId: sentMsg.id,
+          storagePath: item.attachmentUrl!,
+          mimeType: item.attachmentMimeType!,
+          sizeBytes: item.attachmentSizeBytes!,
+        );
+      }
+      _outboxMessages.removeWhere(
+        (message) => message.id == item.clientMessageId,
+      );
+      await MessageOutboxStore.remove(
+        userId: item.userId,
+        clientMessageId: item.clientMessageId,
+      );
       _remoteMessages = mergeTripMessagesChronologically([
         ..._remoteMessages,
         sentMsg,
       ]);
-      _updateMergedState();
-    } catch (e) {
-      final idx = _outboxMessages.indexWhere((m) => m.id == msg.id);
-      if (idx != -1) {
-        _outboxMessages[idx] = msg.copyWith(isPending: false, isFailed: true);
+    } catch (_) {
+      final failed = item.copyWith(isFailed: true);
+      await MessageOutboxStore.upsert(failed);
+      final failedIndex = _outboxMessages.indexWhere(
+        (message) => message.id == item.clientMessageId,
+      );
+      if (failedIndex != -1) {
+        _outboxMessages[failedIndex] = _tripMessageFromOutbox(failed);
       }
-      _updateMergedState();
     }
+    _updateMergedState();
   }
 
   @override
   void dispose() {
     _realtimeSubscription?.cancel();
+    _receiptSubscription?.cancel();
+    _mutationSubscription?.cancel();
     super.dispose();
   }
 }

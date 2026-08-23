@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
+import '../../core/experience_presentation.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/experience.dart';
 import '../../providers/app_providers.dart';
@@ -16,6 +17,7 @@ class SavedScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final taxonomy = ref.watch(experienceTaxonomyProvider).valueOrNull;
     final client = ref.watch(supabaseClientProvider);
     final user = client.auth.currentUser;
 
@@ -63,7 +65,8 @@ class SavedScreen extends ConsumerWidget {
                   emptyView: EmptyStateView(
                     icon: Icons.bookmark_border_rounded,
                     title: l10n.noSavedExperiences,
-                    description: 'Save your favorite Nepal experiences to view them anytime offline.',
+                    description:
+                        'Save your favorite Nepal experiences to view them anytime offline.',
                     actionLabel: l10n.exploreExperiences,
                     onActionPressed: () => context.go('/explore'),
                   ),
@@ -71,15 +74,20 @@ class SavedScreen extends ConsumerWidget {
                     return GridView.builder(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                       physics: const BouncingScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: .78,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: .68,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                          ),
                       itemCount: experiences.length,
                       itemBuilder: (context, index) {
                         final exp = experiences[index];
+                        final presentation = ExperiencePresentation.from(
+                          exp,
+                          taxonomy,
+                        );
                         return Container(
                           decoration: BoxDecoration(
                             color: AppColors.white,
@@ -98,7 +106,8 @@ class SavedScreen extends ConsumerWidget {
                             children: [
                               Expanded(
                                 child: GestureDetector(
-                                  onTap: () => context.push('/experience/${exp.id}'),
+                                  onTap: () =>
+                                      context.push('/experience/${exp.id}'),
                                   child: PlanEPhoto(
                                     imageUrl: exp.coverImageUrl,
                                     radius: 20,
@@ -106,9 +115,16 @@ class SavedScreen extends ConsumerWidget {
                                       alignment: Alignment.topRight,
                                       child: GestureDetector(
                                         onTap: () async {
-                                          final savedRepo = ref.read(savedRepositoryProvider);
-                                          await savedRepo.toggleSave(exp.id, true);
-                                          ref.invalidate(savedExperiencesProvider);
+                                          final savedRepo = ref.read(
+                                            savedRepositoryProvider,
+                                          );
+                                          await savedRepo.toggleSave(
+                                            exp.id,
+                                            true,
+                                          );
+                                          ref.invalidate(
+                                            savedExperiencesProvider,
+                                          );
                                           if (context.mounted) {
                                             AppToast.show(
                                               context,
@@ -137,10 +153,29 @@ class SavedScreen extends ConsumerWidget {
                                 ),
                               ),
                               Padding(
-                                padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                                padding: const EdgeInsets.fromLTRB(
+                                  10,
+                                  8,
+                                  10,
+                                  10,
+                                ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    if (presentation.familyLabel != null) ...[
+                                      Text(
+                                        presentation.familyLabel!.toUpperCase(),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: AppColors.gold,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: .5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                    ],
                                     Text(
                                       exp.title,
                                       maxLines: 1,
@@ -153,17 +188,40 @@ class SavedScreen extends ConsumerWidget {
                                       ),
                                     ),
                                     const SizedBox(height: 4),
+                                    Text(
+                                      [
+                                        if (presentation.typeLabel != null)
+                                          presentation.typeLabel!,
+                                        presentation.detailText,
+                                      ].join(' • '),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        color: AppColors.disabledText,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
                                     Row(
                                       children: [
-                                        const Icon(Icons.star, color: AppColors.gold, size: 16),
+                                        const Icon(
+                                          Icons.star,
+                                          color: AppColors.gold,
+                                          size: 16,
+                                        ),
                                         const SizedBox(width: 4),
                                         Text(
                                           '${exp.ratingAvg}',
-                                          style: const TextStyle(fontSize: 12, color: AppColors.disabledText),
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: AppColors.disabledText,
+                                          ),
                                         ),
                                         const Spacer(),
                                         Text(
-                                          AppFormatters.formatNpr(exp.pricePaisa),
+                                          AppFormatters.formatNpr(
+                                            exp.pricePaisa,
+                                          ),
                                           style: const TextStyle(
                                             fontSize: 12,
                                             fontWeight: FontWeight.bold,

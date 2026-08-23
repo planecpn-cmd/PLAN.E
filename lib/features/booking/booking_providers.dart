@@ -3,7 +3,6 @@ import '../../models/booking.dart';
 import '../../models/experience.dart';
 import '../../models/experience_departure.dart';
 import '../../providers/app_providers.dart';
-import 'booking_repository_service.dart';
 
 class BookingFormData {
   final Experience experience;
@@ -12,19 +11,12 @@ class BookingFormData {
   BookingFormData({required this.experience, required this.departures});
 }
 
-final bookingFeatureRepositoryProvider = Provider<BookingFeatureRepository>((
-  ref,
-) {
-  final client = ref.watch(supabaseClientProvider);
-  return BookingFeatureRepository(client);
-});
-
 final experienceDeparturesProvider =
     FutureProvider.family<List<ExperienceDeparture>, String>((
       ref,
       experienceId,
     ) async {
-      final repo = ref.watch(bookingFeatureRepositoryProvider);
+      final repo = ref.watch(bookingRepositoryProvider);
       return repo.getDepartures(experienceId);
     });
 
@@ -32,7 +24,7 @@ final bookingDetailProvider = FutureProvider.family<Booking?, String>((
   ref,
   bookingId,
 ) async {
-  final repo = ref.watch(bookingFeatureRepositoryProvider);
+  final repo = ref.watch(bookingRepositoryProvider);
   return repo.getBookingById(bookingId);
 });
 
@@ -41,7 +33,7 @@ final bookingFormDataProvider = FutureProvider.family<BookingFormData, String>((
   experienceId,
 ) async {
   final expRepo = ref.watch(experienceRepositoryProvider);
-  final bookingRepo = ref.watch(bookingFeatureRepositoryProvider);
+  final bookingRepo = ref.watch(bookingRepositoryProvider);
 
   final experience = await expRepo.getExperienceById(experienceId);
   if (experience == null) {

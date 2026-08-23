@@ -86,8 +86,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   padding: const EdgeInsets.fromLTRB(24, 20, 24, 4),
                   child: Column(
                     children: [
-                      const Icon(Icons.landscape_outlined, size: 38, color: AppColors.forest),
-                      const SizedBox(height: 2),
                       const PlanELogo(fontSize: 24, color: AppColors.deep),
                       const SizedBox(height: 2),
                       Text(
@@ -124,12 +122,20 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                               height: 1.1,
                               fontSize: 30,
                               shadows: const [
-                                Shadow(color: Color(0x99000000), blurRadius: 12, offset: Offset(0, 2)),
+                                Shadow(
+                                  color: Color(0x99000000),
+                                  blurRadius: 12,
+                                  offset: Offset(0, 2),
+                                ),
                               ],
                             ),
                           ),
                           const SizedBox(height: AppSpacing.xs4),
-                          Container(width: 36, height: 3, color: AppColors.gold),
+                          Container(
+                            width: 36,
+                            height: 3,
+                            color: AppColors.gold,
+                          ),
                           const SizedBox(height: AppSpacing.sm8),
                           Text(
                             'Curated journeys, authentic experiences and '
@@ -137,7 +143,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                             style: AppTypography.bodyMedium.copyWith(
                               color: AppColors.white,
                               shadows: const [
-                                Shadow(color: Color(0x99000000), blurRadius: 8, offset: Offset(0, 1)),
+                                Shadow(
+                                  color: Color(0x99000000),
+                                  blurRadius: 8,
+                                  offset: Offset(0, 1),
+                                ),
                               ],
                             ),
                           ),
@@ -156,7 +166,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                     color: AppColors.white,
                     borderRadius: AppRadii.borderLg24,
                     boxShadow: [
-                      BoxShadow(color: Color(0x33000000), blurRadius: 24, offset: Offset(0, 8)),
+                      BoxShadow(
+                        color: Color(0x33000000),
+                        blurRadius: 24,
+                        offset: Offset(0, 8),
+                      ),
                     ],
                   ),
                   padding: const EdgeInsets.fromLTRB(32, 24, 32, 10),
@@ -178,25 +192,35 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                         isFullWidth: true,
                         minHeight: 47,
                         borderRadius: AppRadii.borderPill,
-                        onPressed: () => _handleOAuthSignIn(OAuthProvider.google),
+                        onPressed: () =>
+                            _handleOAuthSignIn(OAuthProvider.google),
                       ),
                       if (isApplePlatform) ...[
                         const SizedBox(height: 7),
                         AppButton.secondary(
                           label: 'Continue with Apple',
-                          iconWidget: const Icon(Icons.apple, size: 20.0, color: Colors.black),
+                          iconWidget: const Icon(
+                            Icons.apple,
+                            size: 20.0,
+                            color: Colors.black,
+                          ),
                           isFullWidth: true,
                           minHeight: 47,
                           borderRadius: AppRadii.borderPill,
-                          onPressed: () => _handleOAuthSignIn(OAuthProvider.apple),
+                          onPressed: () =>
+                              _handleOAuthSignIn(OAuthProvider.apple),
                         ),
                       ],
                       const SizedBox(height: 11),
                       Row(
                         children: [
-                          const Expanded(child: Divider(color: AppColors.borderSubtle)),
+                          const Expanded(
+                            child: Divider(color: AppColors.borderSubtle),
+                          ),
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md12,
+                            ),
                             child: Text(
                               'or continue with email',
                               style: AppTypography.bodyMedium.copyWith(
@@ -205,7 +229,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                               ),
                             ),
                           ),
-                          const Expanded(child: Divider(color: AppColors.borderSubtle)),
+                          const Expanded(
+                            child: Divider(color: AppColors.borderSubtle),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 11),
@@ -231,7 +257,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   // Transparent — the photo shows through the trust-badges
                   // row instead of sitting on its own white band.
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg16, vertical: AppSpacing.sm8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg16,
+                    vertical: AppSpacing.sm8,
+                  ),
                   child: const Row(
                     children: [
                       Expanded(
@@ -272,7 +301,11 @@ class _TrustBadge extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const _TrustBadge({required this.icon, required this.title, required this.subtitle});
+  const _TrustBadge({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
 
   @override
   Widget build(BuildContext context) {
