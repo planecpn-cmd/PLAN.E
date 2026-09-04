@@ -60,6 +60,22 @@ begin
   values (v_message_b1, v_book_b1, v_user_b, 'RLS read-state fixture')
   on conflict (id) do nothing;
 
+  insert into public.booking_participants (booking_id, full_name, is_lead)
+  values (v_book_b1, 'Private Participant B', true);
+
+  insert into public.gear_checklist_items (booking_id, label)
+  values (v_book_b1, 'Private Gear B');
+
+  insert into public.budget_entries (booking_id, label, amount_paisa)
+  values (v_book_b1, 'Private Budget B', 10000);
+
+  insert into public.notifications (user_id, title, body)
+  values (v_user_b, 'Private Notification B', 'Private body');
+
+  insert into public.saved_experiences (user_id, experience_id)
+  values (v_user_b, v_exp_id)
+  on conflict (user_id, experience_id) do nothing;
+
   -- Setup host application for User A
   insert into public.host_applications (id, user_id, status, title)
   values ('80000000-0000-0000-0000-000000000001', v_user_a, 'draft', 'Host App A')
@@ -81,7 +97,13 @@ begin
   where t.schemaname = 'public'
     -- These service-only tables intentionally use RLS with zero client
     -- policies (default deny).
-    and t.tablename not in ('payments', 'ai_rate_limits')
+    and t.tablename not in (
+      'payments',
+      'ai_rate_limits',
+      'payment_redirect_tokens',
+      'trip_push_device_tokens',
+      'trip_push_deliveries'
+    )
     and not exists (
       select 1 from pg_policies p where p.schemaname = 'public' and p.tablename = t.tablename
     );
@@ -110,8 +132,16 @@ declare
   v_payments_count int;
 begin
   set local role anon;
-  select count(*) into v_bookings_count from public.bookings;
-  select count(*) into v_payments_count from public.payments;
+  begin
+    select count(*) into v_bookings_count from public.bookings;
+  exception when insufficient_privilege then
+    v_bookings_count := 0;
+  end;
+  begin
+    select count(*) into v_payments_count from public.payments;
+  exception when insufficient_privilege then
+    v_payments_count := 0;
+  end;
   if not (v_bookings_count = 0 and v_payments_count = 0) then
     raise exception 'FAIL: Assertion 3 - anon selected non-zero rows from bookings or payments';
   end if;
@@ -321,6 +351,188 @@ begin
 
   if v_count <> 0 or v_inserted then
     raise exception 'FAIL: Assertion 11 - non-member accessed another trip read state';
+  end if;
+end $$;
+
+-- Assertion 12: user A cannot read user B's related records by direct IDs
+do $$
+declare
+  v_visible integer;
+begin
+  set local role authenticated;
+  perform set_config('request.jwt.claims', json_build_object('sub', 'a0000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
+
+  select
+    (select count(*) from public.booking_participants where booking_id = '11111111-0000-0000-0000-000000000001') +
+    (select count(*) from public.gear_checklist_items where booking_id = '11111111-0000-0000-0000-000000000001') +
+    (select count(*) from public.budget_entries where booking_id = '11111111-0000-0000-0000-000000000001') +
+    (select count(*) from public.notifications where user_id = 'b0000000-0000-0000-0000-000000000002') +
+    (select count(*) from public.saved_experiences where user_id = 'b0000000-0000-0000-0000-000000000002')
+  into v_visible;
+
+  if v_visible <> 0 then
+    raise exception 'FAIL: Assertion 12 - user A read user B related records';
+  end if;
+end $$;
+
+-- Assertion 13: client roles never hold table-level destructive privileges.
+-- RLS does not protect TRUNCATE, and client roles do not need schema-management
+-- privileges such as REFERENCES, TRIGGER, or MAINTAIN.
+do $$
+declare
+  v_unsafe_privileges integer;
+begin
+  select count(*) into v_unsafe_privileges
+  from pg_tables t
+  cross join (values ('anon'), ('authenticated')) as roles(role_name)
+  cross join (values ('TRUNCATE'), ('REFERENCES'), ('TRIGGER'), ('MAINTAIN'))
+    as privileges(privilege_name)
+  where t.schemaname = 'public'
+    and has_table_privilege(
+      roles.role_name,
+      format('%I.%I', t.schemaname, t.tablename),
+      privileges.privilege_name
+    );
+
+  if v_unsafe_privileges <> 0 then
+    raise exception 'FAIL: Assertion 13 - client roles hold % unsafe table privileges',
+      v_unsafe_privileges;
+  end if;
+end $$;
+
+-- Assertion 14: new tables default to no anon/authenticated access. Every new
+-- client grant must be deliberate and live beside its RLS policy.
+do $$
+declare
+  v_default_client_privileges integer;
+begin
+  select count(*) into v_default_client_privileges
+  from pg_default_acl d
+  join pg_roles owner on owner.oid = d.defaclrole
+  join pg_namespace n on n.oid = d.defaclnamespace
+  cross join lateral aclexplode(d.defaclacl) acl
+  left join pg_roles grantee on grantee.oid = acl.grantee
+  where n.nspname = 'public'
+    and owner.rolname = 'postgres'
+    and d.defaclobjtype in ('r', 'S', 'f')
+    and (acl.grantee = 0 or grantee.rolname in ('anon', 'authenticated'));
+
+  if v_default_client_privileges <> 0 then
+    raise exception 'FAIL: Assertion 14 - future tables/sequences inherit % client privileges',
+      v_default_client_privileges;
+  end if;
+end $$;
+
+-- Assertion 15: USING (true) is limited to reviewed public catalog/config
+-- tables. Reviews are intentionally absent because their base rows contain
+-- private booking and user identifiers.
+do $$
+declare
+  v_unapproved_public_policies text;
+begin
+  select string_agg(format('%I.%I (%I)', schemaname, tablename, policyname), ', ')
+  into v_unapproved_public_policies
+  from pg_policies
+  where schemaname = 'public'
+    and regexp_replace(coalesce(qual, ''), '[()[:space:]]', '', 'g') = 'true'
+    and tablename not in (
+      'app_config',
+      'app_versions',
+      'categories',
+      'experience_families',
+      'feature_flags',
+      'interests',
+      'profiles',
+      'regions',
+      'remote_content',
+      'tags'
+    );
+
+  if v_unapproved_public_policies is not null then
+    raise exception 'FAIL: Assertion 15 - unapproved public policies: %',
+      v_unapproved_public_policies;
+  end if;
+end $$;
+
+-- Assertion 16: public review access must not reveal internal booking or user
+-- identifiers. Public review display will use a sanitized RPC contract.
+do $$
+begin
+  if has_column_privilege('anon', 'public.reviews', 'booking_id', 'SELECT')
+    or has_column_privilege('anon', 'public.reviews', 'user_id', 'SELECT')
+  then
+    raise exception 'FAIL: Assertion 16 - review identifiers are client-readable';
+  end if;
+end $$;
+
+-- Assertion 17: the public review RPC exposes only the approved display
+-- contract, and a different signed-in user cannot read the base review row.
+do $$
+declare
+  v_result_signature text;
+  v_public_count integer;
+  v_cross_user_count integer;
+  v_owner_count integer;
+begin
+  select pg_get_function_result(
+    'public.get_public_experience_reviews(uuid)'::regprocedure
+  ) into v_result_signature;
+
+  if v_result_signature ilike '%booking_id%'
+    or v_result_signature ilike '%user_id%'
+  then
+    raise exception 'FAIL: Assertion 17 - public review RPC leaks identifiers';
+  end if;
+
+  set local role anon;
+  select count(*) into v_public_count
+  from public.get_public_experience_reviews(
+    'e0000000-0000-0000-0000-000000000001'
+  );
+
+  set local role authenticated;
+  perform set_config(
+    'request.jwt.claims',
+    json_build_object(
+      'sub', 'a0000000-0000-0000-0000-000000000001',
+      'role', 'authenticated'
+    )::text,
+    true
+  );
+  select count(*) into v_cross_user_count
+  from public.reviews
+  where user_id = 'b0000000-0000-0000-0000-000000000002';
+
+  perform set_config(
+    'request.jwt.claims',
+    json_build_object(
+      'sub', 'b0000000-0000-0000-0000-000000000002',
+      'role', 'authenticated'
+    )::text,
+    true
+  );
+  select count(*) into v_owner_count
+  from public.reviews
+  where user_id = 'b0000000-0000-0000-0000-000000000002';
+
+  if v_public_count <> 1
+    or v_cross_user_count <> 0
+    or v_owner_count <> 1
+  then
+    raise exception 'FAIL: Assertion 17 - public/owner review boundaries failed';
+  end if;
+end $$;
+
+-- Assertion 18: priced bookings and live experience mutations are
+-- server-authoritative, never direct authenticated-table operations.
+do $$
+begin
+  if has_table_privilege('authenticated', 'public.bookings', 'INSERT')
+    or has_table_privilege('authenticated', 'public.experiences', 'INSERT')
+    or has_table_privilege('authenticated', 'public.experiences', 'UPDATE')
+    or has_table_privilege('authenticated', 'public.experiences', 'DELETE')
+  then
+    raise exception 'FAIL: Assertion 18 - client roles can write priced records directly';
   end if;
 end $$;
 

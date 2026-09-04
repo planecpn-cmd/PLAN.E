@@ -17,6 +17,8 @@ import '../../widgets/widgets.dart';
 
 import 'experience_detail_providers.dart';
 import 'experience_strings.dart';
+import 'limited_package_data.dart';
+import 'limited_package_detail.dart';
 
 class ExperienceDetailScreen extends ConsumerStatefulWidget {
   final String id;
@@ -42,6 +44,67 @@ class _ExperienceDetailScreenState
     final bool isSaved = _hasLocalSaveState
         ? _optimisticIsSaved
         : (serverIsSavedAsync.asData?.value ?? false);
+
+    final experience = experienceAsync.asData?.value;
+    final taxonomyAsync = ref.watch(experienceTaxonomyProvider);
+    if (experience != null) {
+      // Resolve taxonomy before rendering either mode: no flash of host data.
+      if (!taxonomyAsync.hasValue) {
+        return Scaffold(
+          backgroundColor: AppColors.ivory,
+          appBar: AppBar(title: const Text('Experience')),
+          body: taxonomyAsync.hasError
+              ? ErrorStateView(
+                  title: 'Category could not be loaded',
+                  message: 'Retry to view this experience.',
+                  onRetry: () => ref.invalidate(experienceTaxonomyProvider),
+                )
+              : const Center(child: CircularProgressIndicator()),
+        );
+      }
+      final category = taxonomyAsync.valueOrNull?.categoryFor(
+        experience.categoryId,
+      );
+      if (detailPresentationFor(category) == DetailPresentationType.limited) {
+        final regions = ref.watch(regionsProvider).valueOrNull ?? [];
+        final region = regions
+            .where((r) => r.id == experience.regionId)
+            .firstOrNull;
+        return LimitedPackageDetail(
+          key: ValueKey(experience.id),
+          data: LimitedPackageData.from(experience, category, region),
+          content: ref.watch(limitedPackageContentProvider(experience.id)),
+          departures: ref.watch(experienceDeparturesProvider(experience.id)),
+          reviews: LimitedPackageDetail.reviewSummaries(
+            ref.watch(experienceReviewsProvider(experience.id)),
+          ),
+          isSaved: isSaved,
+          onBack: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/home');
+            }
+          },
+          onSave: () => _toggleOptimisticSave(experience.id, isSaved),
+          onShare: () async {
+            await Clipboard.setData(ClipboardData(text: experience.title));
+            if (context.mounted) {
+              AppToast.show(
+                context,
+                message: 'Experience title copied',
+                variant: AppToastVariant.info,
+              );
+            }
+          },
+          onContinueStandard: () => context.push('/booking/${experience.id}'),
+          onRetryDepartures: () =>
+              ref.invalidate(experienceDeparturesProvider(experience.id)),
+          onRetryReviews: () =>
+              ref.invalidate(experienceReviewsProvider(experience.id)),
+        );
+      }
+    }
 
     return Scaffold(
       backgroundColor: AppColors.ivory,

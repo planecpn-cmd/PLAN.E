@@ -421,6 +421,10 @@ verify_jwt = false
 [functions.payment-return]
 verify_jwt = false
 
+# Server-to-server scheduled job authenticated with X-Cron-Secret.
+[functions.complete-trips-cron]
+verify_jwt = false
+
 # Called only by the database pg_net trigger. JWT verification is disabled
 # because the trigger authenticates with a dedicated Vault-backed secret;
 # the function rejects every request without that header.

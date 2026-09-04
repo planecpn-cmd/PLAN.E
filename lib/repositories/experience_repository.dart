@@ -195,13 +195,12 @@ class ExperienceRepository {
   }
 
   Future<List<Review>> getReviews(String experienceId) async {
-    final cacheKey = 'experience_reviews:$experienceId';
+    final cacheKey = 'experience_reviews:v2:$experienceId';
     try {
-      final response = await _client
-          .from('reviews')
-          .select()
-          .eq('experience_id', experienceId)
-          .order('created_at', ascending: false);
+      final response = await _client.rpc(
+        'get_public_experience_reviews',
+        params: {'p_experience_id': experienceId},
+      );
 
       final List<dynamic> data = response as List<dynamic>;
       final reviews = data
@@ -227,14 +226,15 @@ class ExperienceRepository {
   Future<Profile?> getHostProfile(String hostId) async {
     final cacheKey = 'host_profile:$hostId';
     try {
-      final response = await _client
-          .from('profiles')
-          .select()
-          .eq('id', hostId)
-          .maybeSingle();
+      final response = await _client.rpc(
+        'get_public_host_profile',
+        params: {'p_user_id': hostId},
+      ) as List<dynamic>;
 
-      if (response == null) return null;
-      final profile = Profile.fromJson(response);
+      if (response.isEmpty) return null;
+      final profile = Profile.fromJson(
+        Map<String, dynamic>.from(response.first as Map),
+      );
       await OfflineCache.write(cacheKey, profile.toJson());
       return profile;
     } catch (_) {

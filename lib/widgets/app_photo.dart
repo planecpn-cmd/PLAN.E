@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../core/image_cache_manager.dart';
 import '../core/image_url.dart';
+import '../core/photo_alignment.dart';
 import '../theme/tokens.dart';
 
 class PlanEPhoto extends StatelessWidget {
@@ -39,6 +40,7 @@ class PlanEPhoto extends StatelessWidget {
         imageUrl: resizedImageUrl(imageUrl!, width: imageRequestWidth),
         cacheManager: AppImageCacheManager.instance,
         fit: fit,
+        alignment: photoAlignment(imageUrl),
         placeholder: (context, url) => Container(
           color: AppColors.sage,
           child: const Center(
@@ -48,7 +50,11 @@ class PlanEPhoto extends StatelessWidget {
         errorWidget: (context, url, error) => Container(
           color: AppColors.sage,
           child: const Center(
-            child: Icon(Icons.broken_image, color: AppColors.disabledText, size: 28),
+            child: Icon(
+              Icons.broken_image,
+              color: AppColors.disabledText,
+              size: 28,
+            ),
           ),
         ),
       );
@@ -68,10 +74,7 @@ class PlanEPhoto extends StatelessWidget {
         width: width,
         child: Stack(
           fit: StackFit.expand,
-          children: [
-            imageWidget,
-            if (overlay != null) overlay!,
-          ],
+          children: [imageWidget, if (overlay != null) overlay!],
         ),
       ),
     );

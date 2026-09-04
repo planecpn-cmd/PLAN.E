@@ -2,9 +2,9 @@ import 'experience.dart';
 
 class Review {
   final String id;
-  final String bookingId;
+  final String? bookingId;
   final String experienceId;
-  final String userId;
+  final String? userId;
   final int rating;
   final String? title;
   final String? body;
@@ -15,9 +15,9 @@ class Review {
 
   const Review({
     required this.id,
-    required this.bookingId,
+    this.bookingId,
     required this.experienceId,
-    required this.userId,
+    this.userId,
     required this.rating,
     this.title,
     this.body,
@@ -35,9 +35,9 @@ class Review {
 
     return Review(
       id: json['id'] as String,
-      bookingId: json['booking_id'] as String,
+      bookingId: json['booking_id'] as String?,
       experienceId: json['experience_id'] as String,
-      userId: json['user_id'] as String,
+      userId: json['user_id'] as String?,
       rating: (json['rating'] as num).toInt(),
       title: json['title'] as String?,
       body: json['body'] as String?,
@@ -58,9 +58,9 @@ class Review {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'booking_id': bookingId,
+      if (bookingId != null) 'booking_id': bookingId,
       'experience_id': experienceId,
-      'user_id': userId,
+      if (userId != null) 'user_id': userId,
       'rating': rating,
       'title': title,
       'body': body,

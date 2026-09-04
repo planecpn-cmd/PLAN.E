@@ -15,14 +15,12 @@ class ProfileRepository {
 
     final cacheKey = 'profile:$userId';
     try {
-      final response = await _client
-          .from('profiles')
-          .select()
-          .eq('id', userId)
-          .maybeSingle();
+      final response = await _client.rpc('get_my_profile') as List<dynamic>;
 
-      if (response == null) return null;
-      final profile = Profile.fromJson(response);
+      if (response.isEmpty) return null;
+      final profile = Profile.fromJson(
+        Map<String, dynamic>.from(response.first as Map),
+      );
       await OfflineCache.write(cacheKey, profile.toJson());
       return profile;
     } catch (_) {

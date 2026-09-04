@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../core/image_cache_manager.dart';
 import '../core/image_url.dart';
+import '../core/photo_alignment.dart';
 import '../theme/theme.dart';
 import 'rating_stars.dart';
 
@@ -9,7 +10,7 @@ import 'rating_stars.dart';
 /// explore grids). .poster: a taller, portrait-image card for home-screen
 /// rails — same idea as Netflix's title rows, where a tall consistent poster
 /// shape reads as curated rather than a generic list-item thumbnail.
-enum ExperienceCardVariant { horizontal, poster }
+enum ExperienceCardVariant { horizontal, poster, square }
 
 class ExperienceCard extends StatelessWidget {
   final String title;
@@ -18,6 +19,7 @@ class ExperienceCard extends StatelessWidget {
   final int? reviewCount;
   final String priceText;
   final String? imageUrl;
+  final Alignment? imageAlignment;
   final String? familyLabel;
   final String? typeLabel;
   final String? detailText;
@@ -35,6 +37,7 @@ class ExperienceCard extends StatelessWidget {
     this.reviewCount,
     required this.priceText,
     this.imageUrl,
+    this.imageAlignment,
     this.familyLabel,
     this.typeLabel,
     this.detailText,
@@ -47,6 +50,7 @@ class ExperienceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (variant == ExperienceCardVariant.square) return _buildSquare(context);
     final bool isPoster = variant == ExperienceCardVariant.poster;
     final resolvedWidth = width.isFinite
         ? width
@@ -92,43 +96,55 @@ class ExperienceCard extends StatelessWidget {
                           width: double.infinity,
                           color: AppColors.sage,
                           child: imageUrl != null && imageUrl!.isNotEmpty
-                              ? CachedNetworkImage(
-                                  // 2x the resolved card width for retina
-                                  // crispness. Full-width list cards pass
-                                  // infinity, so they resolve against the
-                                  // current viewport first. See
-                                  // docs/OFFLINE_CACHE_PLAN.md §4.2.
-                                  imageUrl: resizedImageUrl(
-                                    imageUrl!,
-                                    width: imageRequestWidth,
-                                  ),
-                                  cacheManager: AppImageCacheManager.instance,
-                                  fit: BoxFit.cover,
-                                  placeholder: (context, url) => Container(
-                                    color: AppColors.skeletonBase,
-                                    child: const Center(
-                                      child: SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                AppColors.forest,
+                              ? imageUrl!.startsWith('assets/')
+                                    ? Image.asset(
+                                        imageUrl!,
+                                        fit: BoxFit.cover,
+                                        alignment:
+                                            imageAlignment ??
+                                            photoAlignment(imageUrl),
+                                      )
+                                    : CachedNetworkImage(
+                                        // 2x the resolved card width for retina
+                                        // crispness. Full-width list cards pass
+                                        // infinity, so they resolve against the
+                                        // current viewport first. See
+                                        // docs/OFFLINE_CACHE_PLAN.md §4.2.
+                                        imageUrl: resizedImageUrl(
+                                          imageUrl!,
+                                          width: imageRequestWidth,
+                                        ),
+                                        cacheManager:
+                                            AppImageCacheManager.instance,
+                                        fit: BoxFit.cover,
+                                        alignment:
+                                            imageAlignment ??
+                                            photoAlignment(imageUrl),
+                                        placeholder: (context, url) => Container(
+                                          color: AppColors.skeletonBase,
+                                          child: const Center(
+                                            child: SizedBox(
+                                              width: 24,
+                                              height: 24,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                      Color
+                                                    >(AppColors.forest),
                                               ),
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ),
-                                  ),
-                                  errorWidget: (context, url, error) =>
-                                      const Center(
-                                        child: Icon(
-                                          Icons.image_outlined,
-                                          size: 40,
-                                          color: AppColors.forest,
-                                        ),
-                                      ),
-                                )
+                                        errorWidget: (context, url, error) =>
+                                            const Center(
+                                              child: Icon(
+                                                Icons.image_outlined,
+                                                size: 40,
+                                                color: AppColors.forest,
+                                              ),
+                                            ),
+                                      )
                               : const Center(
                                   child: Icon(
                                     Icons.image_outlined,
@@ -183,7 +199,9 @@ class ExperienceCard extends StatelessWidget {
                             onPressed: onBookmarkTap,
                             icon: Icon(
                               isSaved ? Icons.bookmark : Icons.bookmark_border,
-                              color: isSaved ? AppColors.forest : AppColors.deep,
+                              color: isSaved
+                                  ? AppColors.forest
+                                  : AppColors.deep,
                               size: 22,
                             ),
                           ),
@@ -286,17 +304,17 @@ class ExperienceCard extends StatelessWidget {
                           ],
                         )
                       else
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        Wrap(
+                          spacing: AppSpacing.sm8,
+                          runSpacing: AppSpacing.xs4,
+                          alignment: WrapAlignment.spaceBetween,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            Flexible(
-                              child: RatingStars(
-                                rating: rating,
-                                reviewCount: reviewCount,
-                                starSize: 14.0,
-                              ),
+                            RatingStars(
+                              rating: rating,
+                              reviewCount: reviewCount,
+                              starSize: 14.0,
                             ),
-                            const SizedBox(width: AppSpacing.xs4),
                             Text(
                               priceText,
                               style: AppTypography.bodyMedium.copyWith(
@@ -310,6 +328,169 @@ class ExperienceCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSquare(BuildContext context) {
+    return Semantics(
+      container: true,
+      button: true,
+      label: '$title experience in $location, price $priceText',
+      child: SizedBox.square(
+        dimension: width,
+        child: Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: AppRadii.borderMd16,
+            border: Border.all(color: AppColors.borderSubtle),
+          ),
+          child: Material(
+            color: AppColors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Container(
+                          color: AppColors.sage,
+                          child: imageUrl?.isNotEmpty ?? false
+                              ? imageUrl!.startsWith('assets/')
+                                    ? Image.asset(
+                                        imageUrl!,
+                                        fit: BoxFit.cover,
+                                        alignment:
+                                            imageAlignment ??
+                                            photoAlignment(imageUrl),
+                                      )
+                                    : CachedNetworkImage(
+                                        imageUrl: resizedImageUrl(
+                                          imageUrl!,
+                                          width: (width * 2).round(),
+                                        ),
+                                        cacheManager:
+                                            AppImageCacheManager.instance,
+                                        fit: BoxFit.cover,
+                                        alignment:
+                                            imageAlignment ??
+                                            photoAlignment(imageUrl),
+                                        errorWidget: (_, _, _) => const Icon(
+                                          Icons.image_outlined,
+                                          color: AppColors.forest,
+                                        ),
+                                      )
+                              : const Icon(
+                                  Icons.image_outlined,
+                                  color: AppColors.forest,
+                                ),
+                        ),
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: SizedBox.square(
+                            dimension: AppTouchTarget.minSize,
+                            child: IconButton(
+                              tooltip: isSaved
+                                  ? 'Remove $title from saved'
+                                  : 'Save $title',
+                              onPressed: onBookmarkTap,
+                              icon: Icon(
+                                isSaved
+                                    ? Icons.bookmark
+                                    : Icons.bookmark_border,
+                                color: isSaved
+                                    ? AppColors.forest
+                                    : AppColors.deep,
+                                size: 22,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: AppSpacing.paddingMd12,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          height:
+                              MediaQuery.textScalerOf(context).scale(16) * 3,
+                          child: Text(
+                            title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.bodyLarge.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on_outlined,
+                              size: 14,
+                              color: AppColors.disabledText,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                location,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.caption.copyWith(
+                                  color: AppColors.disabledText,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.star,
+                              size: 14,
+                              color: AppColors.gold,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              rating.toStringAsFixed(1),
+                              style: AppTypography.caption.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                priceText,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.end,
+                                style: AppTypography.bodyMedium.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.forest,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

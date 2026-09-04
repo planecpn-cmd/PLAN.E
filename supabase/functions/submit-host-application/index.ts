@@ -1,5 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  AuthenticationError,
+  requireAuthenticatedUser,
+} from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,27 +24,7 @@ serve(async (req) => {
   if (req.method !== "POST") return json({ success: false, error: "Method not allowed" }, 405);
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const authHeader = req.headers.get("Authorization");
-
-    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
-      throw new Error("Host application service is not configured");
-    }
-    if (!authHeader) {
-      return json({ success: false, error: "Authentication required" }, 401);
-    }
-
-    // Verify the caller with their bearer token. Identity is never accepted
-    // from request JSON and all privileged writes use this verified user id.
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user }, error: authError } = await userClient.auth.getUser();
-    if (authError || !user) {
-      return json({ success: false, error: "Invalid or expired session" }, 401);
-    }
+    const { user, adminClient: admin } = await requireAuthenticatedUser(req);
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") {
@@ -86,10 +69,6 @@ serve(async (req) => {
     if (!bankName || !accountName || !accountNumber || !branch) {
       return json({ success: false, error: "Complete valid payout details" }, 400);
     }
-
-    const admin = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
 
     const { data: existing, error: existingError } = await admin
       .from("host_applications")
@@ -158,7 +137,13 @@ serve(async (req) => {
       application: saved,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Host application submission failed";
-    return json({ success: false, error: message }, 500);
+    if (error instanceof AuthenticationError) {
+      return json({ success: false, error: error.message }, 401);
+    }
+    console.error(
+      "Host application submission failed",
+      error instanceof Error ? error.message : "unknown error",
+    );
+    return json({ success: false, error: "Host application submission failed" }, 500);
   }
 });

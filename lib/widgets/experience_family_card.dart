@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../core/image_cache_manager.dart';
 import '../core/image_url.dart';
+import '../core/photo_alignment.dart';
 import '../models/experience_family.dart';
 import '../theme/theme.dart';
 
@@ -104,6 +105,7 @@ class _FamilyImage extends StatelessWidget {
         imageUrl: resizedImageUrl(imageUrl, width: 500),
         cacheManager: AppImageCacheManager.instance,
         fit: BoxFit.cover,
+        alignment: photoAlignment(imageUrl),
         placeholder: (_, __) => const ColoredBox(color: AppColors.sage),
         errorWidget: (_, __, ___) => _assetFallback(),
       );
@@ -111,34 +113,5 @@ class _FamilyImage extends StatelessWidget {
     return _assetFallback();
   }
 
-  Widget _assetFallback() {
-    if (family.slug == 'adventure-together') {
-      return Image.asset(
-        'assets/images/explore_header_mountains.png',
-        fit: BoxFit.cover,
-        alignment: Alignment.center,
-      );
-    }
-
-    final (scale, alignment) = switch (family.slug) {
-      'trips-tours' => (1.8, const Alignment(0.75, -0.72)),
-      'live-like-a-local' => (1.85, const Alignment(0.82, 0.75)),
-      'mind-soul' => (2.15, const Alignment(-0.08, 0.68)),
-      'meet-people' => (1.9, const Alignment(0.95, 0.72)),
-      'give-back' => (2.0, const Alignment(-0.88, 0.72)),
-      _ => (1.0, Alignment.center),
-    };
-
-    return ClipRect(
-      child: Transform.scale(
-        scale: scale,
-        alignment: alignment,
-        child: Image.asset(
-          'assets/images/home_experiences_hero.png',
-          fit: BoxFit.cover,
-          alignment: alignment,
-        ),
-      ),
-    );
-  }
+  Widget _assetFallback() => const ColoredBox(color: AppColors.sage);
 }

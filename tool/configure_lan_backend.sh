@@ -64,4 +64,4 @@ fi
 echo
 echo "PLAN E LAN backend is ready at $public_url"
 echo "Devices must be on the same Wi-Fi as this Mac."
-echo "Run the app with: flutter run -d <DEVICE_ID>"
+echo "Run the app with: flutter run --dart-define-from-file=env/local.json -d <DEVICE_ID>"

@@ -1,5 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  AuthenticationError,
+  requireAuthenticatedUser,
+} from "../_shared/auth.ts";
+import { consumeRateLimits } from "../_shared/rate_limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,62 +14,143 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+  if (req.method !== "POST") {
+    return new Response(
+      JSON.stringify({ error: "Method not allowed" }),
+      { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+    const { user, adminClient: supabaseClient } = await requireAuthenticatedUser(req);
 
-    const body = await req.json().catch(() => ({}));
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return new Response(
+        JSON.stringify({ error: "Invalid request body" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
     const {
       idempotency_key,
       booking_id,
       provider = "khalti",
       pidx,
       transaction_uuid,
-      participants = [],
     } = body;
 
-    if (!idempotency_key && !booking_id) {
+    if (
+      typeof idempotency_key !== "string" || !idempotency_key.trim() ||
+      typeof booking_id !== "string" || !booking_id.trim()
+    ) {
       return new Response(
-        JSON.stringify({ error: "Either idempotency_key or booking_id is required" }),
+        JSON.stringify({ error: "booking_id and idempotency_key are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const normalizedProvider = provider === "esewa" ? "esewa" : "khalti";
-    if (normalizedProvider === "khalti" && !pidx) {
+    if (!["khalti", "esewa"].includes(provider)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid payment provider" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    const normalizedProvider = provider as "khalti" | "esewa";
+    if (normalizedProvider === "khalti" && (typeof pidx !== "string" || !pidx.trim())) {
       return new Response(
         JSON.stringify({ error: "pidx is required to verify a Khalti payment" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    if (normalizedProvider === "esewa" && !transaction_uuid) {
+    if (
+      normalizedProvider === "esewa" &&
+      (typeof transaction_uuid !== "string" || !transaction_uuid.trim())
+    ) {
       return new Response(
         JSON.stringify({ error: "transaction_uuid is required to verify an eSewa payment" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // 1. Fetch Payment Record
-    let paymentQuery = supabaseClient.from("payments").select("*");
-    if (idempotency_key) {
-      paymentQuery = paymentQuery.eq("idempotency_key", idempotency_key);
-    } else if (booking_id) {
-      paymentQuery = paymentQuery.eq("booking_id", booking_id);
-    }
+    // Resolve the caller-owned booking before loading or mutating payment data.
+    const { data: booking, error: bookingFetchError } = await supabaseClient
+      .from("bookings")
+      .select("*")
+      .eq("id", booking_id)
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-    const { data: payment, error: paymentFetchError } = await paymentQuery.maybeSingle();
-
-    if (paymentFetchError || !payment) {
+    if (bookingFetchError) {
+      console.error("Owned booking lookup failed", bookingFetchError.message);
       return new Response(
-        JSON.stringify({ error: "Payment record not found" }),
+        JSON.stringify({ error: "Failed to load booking" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    if (!booking) {
+      return new Response(
+        JSON.stringify({ error: "Booking or payment not found" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // 2. Idempotency Check: If already paid, return early success
+    const { data: payment, error: paymentFetchError } = await supabaseClient
+      .from("payments")
+      .select("*")
+      .eq("booking_id", booking.id)
+      .eq("idempotency_key", idempotency_key)
+      .maybeSingle();
+
+    if (paymentFetchError) {
+      console.error("Owned payment lookup failed", paymentFetchError.message);
+      return new Response(
+        JSON.stringify({ error: "Failed to load payment" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    if (!payment) {
+      return new Response(
+        JSON.stringify({ error: "Booking or payment not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (
+      payment.provider !== normalizedProvider ||
+      Number(payment.amount_paisa) !== Number(booking.total_paisa)
+    ) {
+      return new Response(
+        JSON.stringify({ error: "Payment details do not match the booking intent" }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    if (
+      normalizedProvider === "khalti" &&
+      payment.raw_response?.pidx !== pidx
+    ) {
+      return new Response(
+        JSON.stringify({ error: "Payment reference does not match the initiated payment" }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    if (
+      normalizedProvider === "esewa" &&
+      payment.raw_response?.transaction_uuid !== transaction_uuid
+    ) {
+      return new Response(
+        JSON.stringify({ error: "Payment reference does not match the initiated payment" }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // Idempotency is checked only after the caller owns the booking and payment.
     if (payment.status === "paid") {
+      if (booking.status !== "confirmed") {
+        return new Response(
+          JSON.stringify({ error: "Payment state is inconsistent" }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
       return new Response(
         JSON.stringify({
           success: true,
@@ -77,18 +162,34 @@ serve(async (req) => {
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    // 3. Fetch Booking Record
-    const { data: booking, error: bookingFetchError } = await supabaseClient
-      .from("bookings")
-      .select("*")
-      .eq("id", payment.booking_id)
-      .single();
-
-    if (bookingFetchError || !booking) {
+    if (booking.status !== "pending" || !["initiated", "failed"].includes(payment.status)) {
       return new Response(
-        JSON.stringify({ error: "Associated booking not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Payment cannot be verified for this booking" }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    if (!booking.quote_expires_at || Date.parse(booking.quote_expires_at) <= Date.now()) {
+      return new Response(
+        JSON.stringify({ error: "Booking quote has expired" }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const retryAfter = await consumeRateLimits(supabaseClient, [
+      { key: `payment:verify:user:${user.id}`, limit: 20, minutes: 15 },
+      { key: `payment:verify:booking:${booking.id}`, limit: 10, minutes: 15 },
+    ]);
+    if (retryAfter != null) {
+      return new Response(
+        JSON.stringify({ error: "Payment verification limit reached. Try again later." }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": String(retryAfter),
+          },
+        },
       );
     }
 
@@ -139,7 +240,11 @@ serve(async (req) => {
       const statusData = await statusRes.json();
       gatewayResponse = statusData;
 
-      isPaymentSuccess = statusRes.ok && statusData.status === "COMPLETE";
+      isPaymentSuccess =
+        statusRes.ok &&
+        statusData.status === "COMPLETE" &&
+        statusData.transaction_uuid === transaction_uuid &&
+        Math.round(Number(statusData.total_amount) * 100) === Number(payment.amount_paisa);
       txRef = statusData.ref_id || transaction_uuid;
     }
 
@@ -152,7 +257,9 @@ serve(async (req) => {
           raw_response: { ...payment.raw_response, ...gatewayResponse },
           updated_at: new Date().toISOString(),
         })
-        .eq("id", payment.id);
+        .eq("id", payment.id)
+        .eq("booking_id", booking.id)
+        .in("status", ["initiated", "failed"]);
 
       return new Response(
         JSON.stringify({ error: "Payment verification failed or status is not paid" }),
@@ -160,124 +267,47 @@ serve(async (req) => {
       );
     }
 
-    // 4. Update Payments -> 'paid'
-    const { error: updatePaymentError } = await supabaseClient
-      .from("payments")
-      .update({
-        status: "paid",
-        provider: normalizedProvider,
-        provider_ref: txRef,
-        raw_response: { ...payment.raw_response, ...gatewayResponse },
-        paid_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+    const { data: finalized, error: finalizationError } = await supabaseClient
+      .rpc("finalize_verified_payment", {
+        p_booking_id: booking.id,
+        p_payment_id: payment.id,
+        p_provider: normalizedProvider,
+        p_provider_ref: txRef,
+        p_gateway_response: gatewayResponse,
       })
-      .eq("id", payment.id);
-
-    if (updatePaymentError) {
-      return new Response(
-        JSON.stringify({ error: `Failed to update payment status: ${updatePaymentError.message}` }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // 5. Update Bookings -> 'confirmed' (service_role bypasses RLS status change trigger)
-    const { error: updateBookingError } = await supabaseClient
-      .from("bookings")
-      .update({
-        status: "confirmed",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", booking.id);
-
-    if (updateBookingError) {
-      return new Response(
-        JSON.stringify({ error: `Failed to confirm booking: ${updateBookingError.message}` }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // 6. Decrement spots_left in experience_departures
-    const totalGuests = (booking.adults || 1) + (booking.children || 0);
-    const { data: departure } = await supabaseClient
-      .from("experience_departures")
-      .select("spots_left")
-      .eq("id", booking.departure_id)
       .single();
 
-    if (departure) {
-      const newSpots = Math.max(0, departure.spots_left - totalGuests);
-      await supabaseClient
-        .from("experience_departures")
-        .update({ spots_left: newSpots })
-        .eq("id", booking.departure_id);
+    if (finalizationError || !finalized) {
+      console.error(
+        "Atomic payment finalization failed",
+        finalizationError?.message ?? "No result returned",
+      );
+      return new Response(
+        JSON.stringify({ error: "Failed to finalize verified payment" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
-
-    // 7. Insert Participants into booking_participants
-    const participantRows = [
-      {
-        booking_id: booking.id,
-        full_name: booking.contact_name,
-        is_lead: true,
-      },
-    ];
-
-    if (Array.isArray(participants) && participants.length > 0) {
-      for (const p of participants) {
-        if (p.full_name && p.full_name !== booking.contact_name) {
-          participantRows.push({
-            booking_id: booking.id,
-            full_name: p.full_name,
-            is_lead: false,
-          });
-        }
-      }
-    }
-
-    await supabaseClient.from("booking_participants").insert(participantRows);
-
-    // 8. Seed Gear Checklist in gear_checklist_items
-    const { data: experience } = await supabaseClient
-      .from("experiences")
-      .select("bring_list")
-      .eq("id", booking.experience_id)
-      .single();
-
-    let gearList: string[] = experience?.bring_list || [];
-    if (!gearList || gearList.length === 0) {
-      gearList = [
-        "Trekking Boots",
-        "Water Bottle (1.5L)",
-        "Warm Layered Clothing",
-        "Rain Jacket / Poncho",
-        "Personal First Aid Kit",
-        "Headlamp with extra batteries",
-      ];
-    }
-
-    const gearRows = gearList.map((label: string, index: number) => ({
-      booking_id: booking.id,
-      label,
-      is_checked: false,
-      is_custom: false,
-      sort_order: index,
-    }));
-
-    await supabaseClient.from("gear_checklist_items").insert(gearRows);
 
     return new Response(
       JSON.stringify({
         success: true,
-        booking_id: booking.id,
-        booking_ref: booking.booking_ref,
-        status: "confirmed",
-        payment_status: "paid",
+        booking_id: finalized.result_booking_id,
+        booking_ref: finalized.result_booking_ref,
+        status: finalized.result_booking_status,
+        payment_status: finalized.result_payment_status,
         message: "Payment verified and booking confirmed successfully",
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (err instanceof AuthenticationError) {
+      return new Response(
+        JSON.stringify({ error: err.message }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     return new Response(
-      JSON.stringify({ error: err.message ?? "Payment webhook processing failed" }),
+      JSON.stringify({ error: err instanceof Error ? err.message : "Payment webhook processing failed" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

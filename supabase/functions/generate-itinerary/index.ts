@@ -1,5 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  AuthenticationError,
+  requireAuthenticatedUser,
+} from "../_shared/auth.ts";
+import { consumeRateLimits } from "../_shared/rate_limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,17 +11,14 @@ const corsHeaders = {
 };
 
 const GEMINI_MODEL = "gemini-3.1-flash-lite";
-const RATE_LIMIT_PER_HOUR = 15;
 
-async function fetchWithRetry(url: string, init: RequestInit, attempts = 3): Promise<Response> {
-  let lastResponse: Response | null = null;
-  for (let i = 0; i < attempts; i++) {
-    const res = await fetch(url, init);
-    if (res.status !== 429 && res.status !== 503) return res;
-    lastResponse = res;
-    if (i < attempts - 1) await new Promise((r) => setTimeout(r, 1000 * (i + 1)));
-  }
-  return lastResponse!;
+function boundedText(value: unknown, maxLength: number): string | null {
+  return typeof value === "string" ? value.slice(0, maxLength) : null;
+}
+
+function isOptionalText(value: unknown, maxLength: number): boolean {
+  return value == null ||
+    (typeof value === "string" && value.trim().length <= maxLength);
 }
 
 function parseModelJson(rawText: string): any {
@@ -46,13 +47,13 @@ async function fetchCatalogSummary(supabaseClient: any) {
 
   return (data ?? []).map((e: any) => ({
     id: e.id,
-    title: e.title,
-    summary: e.summary,
-    difficulty: e.difficulty,
+    title: boundedText(e.title, 160),
+    summary: boundedText(e.summary, 400),
+    difficulty: boundedText(e.difficulty, 40),
     duration_days: Math.ceil((e.duration_hours ?? 0) / 24),
     price_npr: Math.round((e.price_paisa ?? 0) / 100),
-    region: e.regions?.name_en ?? null,
-    category: e.categories?.name_en ?? null,
+    region: boundedText(e.regions?.name_en, 100),
+    category: boundedText(e.categories?.name_en, 100),
   }));
 }
 
@@ -60,50 +61,23 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   try {
-    const geminiKey = Deno.env.get("GEMINI_API_KEY");
-    if (!geminiKey) {
-      return new Response(
-        JSON.stringify({ error: "AI itinerary generation is not configured yet." }),
-        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const { user, adminClient: supabaseClient } = await requireAuthenticatedUser(req);
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseServiceKey =
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Auth gate, hoisted above every other check: this function spends money
-    // on a third party per call, so an unauthenticated caller must never
-    // reach the Gemini fetch. The anon key alone satisfies Supabase's
-    // verify_jwt gateway check, so that check is not enough on its own.
-    const authHeader = req.headers.get("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
-    const {
-      data: { user },
-    } = token ? await supabaseClient.auth.getUser(token) : { data: { user: null } };
-    if (!user) {
-      return new Response(JSON.stringify({ error: "Authentication required." }), {
-        status: 401,
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return new Response(JSON.stringify({ error: "Invalid request body" }), {
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const { data: allowed, error: rateLimitError } = await supabaseClient.rpc(
-      "check_ai_rate_limit",
-      { p_key: `itinerary:${user.id}`, p_limit: RATE_LIMIT_PER_HOUR, p_window_minutes: 60 }
-    );
-    if (rateLimitError) throw new Error(`Rate limit check failed: ${rateLimitError.message}`);
-    if (!allowed) {
-      return new Response(
-        JSON.stringify({ error: "You've reached your planning limit for this hour. Try again later." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const body = await req.json().catch(() => ({}));
     const {
       trip_type,       // e.g. "trekking", "wildlife", "culture", "wellness"
       duration_days,    // e.g. 7
@@ -114,13 +88,50 @@ serve(async (req) => {
       prompt,           // free-text mode: the whole string, replaces the fields above
       confirmed,        // true on the traveler's follow-up after accepting a suggested substitute
     } = body;
+    if (
+      !isOptionalText(prompt, 1500) ||
+      !isOptionalText(trip_type, 80) ||
+      !isOptionalText(pace, 40) ||
+      !isOptionalText(interests, 500) ||
+      !isOptionalText(group_type, 40) ||
+      (duration_days != null &&
+        (!Number.isInteger(duration_days) || duration_days < 1 || duration_days > 30)) ||
+      (budget_npr != null &&
+        (!Number.isSafeInteger(budget_npr) || budget_npr < 0 || budget_npr > 1_000_000_000)) ||
+      (confirmed != null && typeof confirmed !== "boolean")
+    ) {
+      return new Response(JSON.stringify({ error: "Invalid itinerary preferences" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const tripType = typeof trip_type === "string" ? trip_type.trim() : "";
+    const tripPace = typeof pace === "string" ? pace.trim() : "";
+    const tripInterests = typeof interests === "string" ? interests.trim() : "";
+    const groupType = typeof group_type === "string" ? group_type.trim() : "";
     const isConfirmed = confirmed === true;
 
     const freeText = typeof prompt === "string" ? prompt.trim() : "";
-    if (!freeText && (!trip_type || !duration_days)) {
+    if (!freeText && (!tripType || duration_days == null)) {
       return new Response(
         JSON.stringify({ error: "Missing required fields: trip_type, duration_days (or a free-text prompt)" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { data: aiFlag, error: aiFlagError } = await supabaseClient
+      .from("feature_flags")
+      .select("enabled")
+      .eq("key", "ai_itinerary")
+      .maybeSingle();
+    if (aiFlagError) {
+      console.error("AI itinerary flag lookup failed", aiFlagError.message);
+    }
+    if (aiFlagError || aiFlag?.enabled !== true) {
+      return new Response(
+        JSON.stringify({ error: "AI itinerary planning is temporarily unavailable." }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -156,17 +167,46 @@ Shape "direct" — the normal case, and always once confirmed:
 Catalog (JSON array of available experiences):
 ${JSON.stringify(catalog)}`
       : `Traveler preferences:
-- Trip type: ${trip_type}
+- Trip type: ${tripType}
 - Duration: ${duration_days} days
-- Pace: ${pace ?? "not specified"}
-- Budget: ${budget_npr ? `NPR ${budget_npr}` : "not specified"}
-- Group: ${group_type ?? "not specified"}
-- Interests: ${interests ?? "not specified"}
+- Pace: ${tripPace || "not specified"}
+- Budget: ${budget_npr != null ? `NPR ${budget_npr}` : "not specified"}
+- Group: ${groupType || "not specified"}
+- Interests: ${tripInterests || "not specified"}
 
 Catalog (JSON array of available experiences):
 ${JSON.stringify(catalog)}`;
 
-    const aiResponse = await fetchWithRetry(
+    const geminiKey = Deno.env.get("GEMINI_API_KEY");
+    if (!geminiKey) {
+      return new Response(
+        JSON.stringify({ error: "AI itinerary generation is not configured yet." }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const quotas = [
+      { key: `itinerary:user:${user.id}:hour`, limit: 10, minutes: 60 },
+      { key: `itinerary:user:${user.id}:day`, limit: 30, minutes: 1440 },
+      { key: "itinerary:global:hour", limit: 100, minutes: 60 },
+      { key: "itinerary:global:day", limit: 500, minutes: 1440 },
+    ];
+    const retryAfter = await consumeRateLimits(supabaseClient, quotas);
+    if (retryAfter != null) {
+      return new Response(
+        JSON.stringify({ error: "AI planning limit reached. Try again later." }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": String(retryAfter),
+          },
+        },
+      );
+    }
+
+    const aiResponse = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${geminiKey}`,
       {
         method: "POST",
@@ -246,10 +286,19 @@ ${JSON.stringify(catalog)}`;
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err: any) {
-    console.error("generate-itinerary error", err);
+  } catch (err: unknown) {
+    if (err instanceof AuthenticationError) {
+      return new Response(JSON.stringify({ error: err.message }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    console.error(
+      "generate-itinerary error",
+      err instanceof Error ? err.message : "unknown error",
+    );
     return new Response(
-      JSON.stringify({ error: err.message ?? "Failed to generate itinerary" }),
+      JSON.stringify({ error: "Failed to generate itinerary" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

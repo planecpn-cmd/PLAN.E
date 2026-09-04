@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AppSupabaseClient {
@@ -21,31 +19,12 @@ class AppSupabaseClient {
   static Future<void> initialize() async {
     if (_initialized) return;
 
-    String url = const String.fromEnvironment('SUPABASE_URL');
-    String anonKey = const String.fromEnvironment('SUPABASE_ANON_KEY');
-    // Load any missing value from env/local.json. A --dart-define can override
-    // either setting independently without discarding the other local value.
-    if (url.isEmpty || anonKey.isEmpty) {
-      try {
-        final String jsonStr = await rootBundle.loadString('env/local.json');
-        final Map<String, dynamic> config =
-            jsonDecode(jsonStr) as Map<String, dynamic>;
-        if (url.isEmpty) {
-          url = config['SUPABASE_URL'] as String? ?? '';
-        }
-        if (anonKey.isEmpty) {
-          anonKey = config['SUPABASE_ANON_KEY'] as String? ?? '';
-        }
-      } catch (e) {
-        throw StateError(
-          'Failed to load Supabase configuration from env/local.json or --dart-define: $e',
-        );
-      }
-    }
+    const url = String.fromEnvironment('SUPABASE_URL');
+    const anonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
 
     if (url.isEmpty || anonKey.isEmpty) {
       throw StateError(
-        'SUPABASE_URL or SUPABASE_ANON_KEY is empty. Provide real keys in env/local.json or --dart-define.',
+        'SUPABASE_URL or SUPABASE_ANON_KEY is empty. Provide both with --dart-define.',
       );
     }
 

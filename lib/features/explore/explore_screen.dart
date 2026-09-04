@@ -372,9 +372,11 @@ class _ExploreHeaderDelegate extends SliverPersistentHeaderDelegate {
               fit: StackFit.expand,
               children: [
                 Image.asset(
-                  'assets/images/home_experiences_hero.png',
+                  'assets/images/photo_29306578.webp',
                   fit: BoxFit.cover,
-                  alignment: const Alignment(0.35, 0.2),
+                  alignment: const Alignment(0, -0.4),
+                  semanticLabel:
+                      'Traveller exploring a stupa in Ghandruk, Nepal',
                 ),
                 const DecoratedBox(
                   decoration: BoxDecoration(color: AppColors.overlay),

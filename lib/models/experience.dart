@@ -123,7 +123,7 @@ class Experience {
     this.bringList = const [],
     this.thingsToKnow = const [],
     this.permitsRequired = const [],
-    this.bestSeason = const [3, 4, 5, 9, 10, 11],
+    this.bestSeason = const [],
     this.ratingAvg = 0.0,
     this.ratingCount = 0,
     this.status = ExperienceStatus.draft,
@@ -142,7 +142,11 @@ class Experience {
       summary: json['summary'] as String?,
       description: json['description'] as String?,
       coverImageUrl: json['cover_image_url'] as String,
-      gallery: (json['gallery'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const [],
+      gallery:
+          (json['gallery'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
       locationName: json['location_name'] as String?,
       meetingPoint: json['meeting_point'] as String?,
       lat: (json['lat'] as num?)?.toDouble(),
@@ -156,11 +160,31 @@ class Experience {
       pricePaisa: (json['price_paisa'] as num).toInt(),
       childPricePaisa: (json['child_price_paisa'] as num?)?.toInt(),
       currency: (json['currency'] as String?) ?? 'NPR',
-      included: (json['included'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const [],
-      bringList: (json['bring_list'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const [],
-      thingsToKnow: (json['things_to_know'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const [],
-      permitsRequired: (json['permits_required'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const [],
-      bestSeason: (json['best_season'] as List<dynamic>?)?.map((e) => (e as num).toInt()).toList() ?? const [3, 4, 5, 9, 10, 11],
+      included:
+          (json['included'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      bringList:
+          (json['bring_list'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      thingsToKnow:
+          (json['things_to_know'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      permitsRequired:
+          (json['permits_required'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      bestSeason:
+          (json['best_season'] as List<dynamic>?)
+              ?.map((e) => (e as num).toInt())
+              .toList() ??
+          const [],
       ratingAvg: (json['rating_avg'] as num?)?.toDouble() ?? 0.0,
       ratingCount: (json['rating_count'] as num?)?.toInt() ?? 0,
       status: ExperienceStatus.fromString(json['status'] as String?),

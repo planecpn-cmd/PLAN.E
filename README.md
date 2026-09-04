@@ -6,7 +6,7 @@ The Android project has one application ID: `com.plane.plan_e`. There are no
 product flavors, so a normal run always installs or updates the same app:
 
 ```sh
-flutter run -d <DEVICE_ID>
+flutter run --dart-define-from-file=env/local.json -d <DEVICE_ID>
 ```
 
 To let physical devices on the same Wi-Fi use the Supabase stack running on
@@ -18,11 +18,16 @@ this Mac, run the LAN setup whenever the Mac's Wi-Fi address changes:
 
 The script updates the ignored client and edge-function environment files,
 restarts local Supabase so payment callbacks use the LAN address, and verifies
-the REST endpoint. Then use plain `flutter run`; no flavor or ADB reverse is
-required. Keep the Mac awake, Docker Desktop and Supabase running, and allow
+the REST endpoint. Then run with `--dart-define-from-file=env/local.json`; no flavor or ADB
+reverse is required. Keep the Mac awake, Docker Desktop and Supabase running, and allow
 incoming connections to port `54341` in the macOS firewall.
 
-For a hosted backend or an explicit override, the app still supports:
+The app reads Supabase configuration at build time. For the hosted backend,
+keep the matching project URL and current public/publishable key in the ignored
+`env/local.json`, then use the command above. Rebuild after changing either value.
+Do not commit this local configuration.
+
+For an explicit override, the app also supports:
 
 ```sh
 flutter run -d <DEVICE_ID> \

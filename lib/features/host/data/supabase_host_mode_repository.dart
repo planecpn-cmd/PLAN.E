@@ -537,12 +537,10 @@ class SupabaseHostModeRepository extends UnavailableHostModeRepository {
 
   @override
   Future<HostProfileDraft> getHostProfile() async {
-    final user = await _requireApprovedHost();
-    final row = await _client
-        .from('profiles')
-        .select('full_name,bio,location,language')
-        .eq('id', user.id)
-        .single();
+    await _requireApprovedHost();
+    final rows = await _client.rpc('get_my_profile') as List<dynamic>;
+    if (rows.isEmpty) throw StateError('Host profile not found.');
+    final row = Map<String, dynamic>.from(rows.first as Map);
     return HostProfileDraft(
       displayName: row['full_name']?.toString() ?? 'Host',
       bio: row['bio']?.toString() ?? '',

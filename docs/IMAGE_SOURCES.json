@@ -1,0 +1,1250 @@
+[
+  {
+    "asset": "assets/images/photo_11734366.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/mountain-climbers-with-hiking-gears-11734366/",
+    "photographer": "Volker Meyer",
+    "represents": "Hikers on a Nepal trail",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home hero",
+        "old_path": "assets/images/home_experiences_hero.png"
+      }
+    ],
+    "bytes": 285106,
+    "sha256": "c92dbb83c506f74f3e15ace9ed47538483b427420dafb3f36a1c77dea7f4157c",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 933
+  },
+  {
+    "asset": "assets/images/photo_29306578.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/hiker-at-buddhist-stupa-in-ghandruk-nepal-29306578/",
+    "photographer": "Namal Siriwardana",
+    "represents": "Hiker at a Ghandruk stupa",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Explore hero",
+        "old_path": "assets/images/home_experiences_hero.png"
+      }
+    ],
+    "bytes": 210016,
+    "sha256": "3d8b44cf6b6b5c5c77b07e6077f3d06f33d03a8eaea7936ebfd023ff38100e7d",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 933,
+    "height": 1400
+  },
+  {
+    "asset": "assets/images/photo_20315033.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/backpackers-on-trail-in-mountains-20315033/",
+    "photographer": "Marina Zvada",
+    "represents": "Group hiking in Nepal",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Explore category tile",
+        "family_slug": "adventure-together",
+        "old_path": "family.coverImageUrl, falling back to assets/images/explore_header_mountains.png (adventure) or transformed crops of assets/images/home_experiences_hero.png"
+      }
+    ],
+    "bytes": 495008,
+    "sha256": "17d07b36e84942e96635fcc521845aa704b1894a745972c0d16e04f36de7ca56",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1050,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_20315033.webp"
+  },
+  {
+    "asset": "assets/images/photo_14663618.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/men-doing-hiking-14663618/",
+    "photographer": "kumar dulal",
+    "represents": "Hikers in Annapurna",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "annapurna-base-camp-trek",
+        "title": "Annapurna Base Camp Trek",
+        "old_path": "https://images.unsplash.com/photo-1585016495481-91613a3ab1bc?q=80&w=1000"
+      }
+    ],
+    "bytes": 194270,
+    "sha256": "734a7d33e3c18512f9791a2da34136c3d0a1eb4aae14a2f7389104edd5d8c140",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 933,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_14663618.webp"
+  },
+  {
+    "asset": "assets/images/photo_20088012.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/hands-and-clay-20088012/",
+    "photographer": "Arun Hamal",
+    "represents": "Hands shaping pottery in Bhaktapur",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "bhaktapur-pottery-workshop",
+        "title": "Bhaktapur Pottery Workshop",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=800"
+      },
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "bhaktapur-pottery-workshop",
+        "title": "Bhaktapur Living Heritage & Pottery Workshop",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=800"
+      }
+    ],
+    "bytes": 43096,
+    "sha256": "d39332a1dc316ae8bd2414337a491888a14e75020fab444956b58c2e052a869e",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 788,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_20088012.webp"
+  },
+  {
+    "asset": "assets/images/photo_11052970.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/a-man-making-a-clay-pot-11052970/",
+    "photographer": "ANJAN",
+    "represents": "Nepal artisan making pottery",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Explore category tile",
+        "family_slug": "live-like-a-local",
+        "old_path": "family.coverImageUrl, falling back to assets/images/explore_header_mountains.png (adventure) or transformed crops of assets/images/home_experiences_hero.png"
+      }
+    ],
+    "bytes": 98814,
+    "sha256": "eb29dc667c17c6aae22fddda7833b19c839d6977d711d643e4013654c47378a4",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1039,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_11052970.webp"
+  },
+  {
+    "asset": "assets/images/photo_34740796.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/paraglider-soars-through-the-nepalese-sky-34740796/",
+    "photographer": "Subash Thapa",
+    "represents": "Paraglider in Nepal; exact launch site unverified",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "pokhara-paragliding",
+        "title": "Pokhara Tandem Paragliding",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      },
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "pokhara-paragliding",
+        "title": "Pokhara Tandem Paragliding over Fewa Lake",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      }
+    ],
+    "bytes": 52036,
+    "sha256": "4e415f89d8375ac673fd4a0dbba5bbb5f761e00b86858bf7750dd0b69ba7902c",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 992,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_34740796.webp"
+  },
+  {
+    "asset": "assets/images/photo_31758766.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/exciting-whitewater-rafting-in-nepal-s-rapids-31758766/",
+    "photographer": "Suman Granja",
+    "represents": "Rafting in Nepal; river unverified",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "bhotekoshi-whitewater-rafting",
+        "title": "Bhotekoshi White Water Rafting",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      },
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "bhotekoshi-whitewater-rafting",
+        "title": "Bhotekoshi Class III-IV White Water Rafting Adventure",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      }
+    ],
+    "bytes": 331024,
+    "sha256": "7439b81ddae5132af4ca9ecd29d821da7ca3de8583c781780bca4f097152c6f5",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 933,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_31758766.webp"
+  },
+  {
+    "asset": "assets/images/photo_3544322.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/healing-music-3544322/",
+    "photographer": "Magicbowls",
+    "represents": "Singing bowl played by hand; representative activity, location unverified",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "himalayan-sound-healing",
+        "title": "Himalayan Sound Healing",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      },
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "himalayan-sound-healing",
+        "title": "Himalayan Singing Bowl Sound Healing & Meditation",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      }
+    ],
+    "bytes": 40628,
+    "sha256": "843ac491496a323b12d1f92559e62cbaa4364e24dee07be35bc11400d5622339",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 950,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_3544322.webp"
+  },
+  {
+    "asset": "assets/images/photo_29788527.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/outdoor-yoga-session-with-diverse-group-practicing-29788527/",
+    "photographer": "Akshi Yogashala",
+    "represents": "Outdoor group yoga; representative activity, not verified at Rara",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "rara-lake-wilderness-trek",
+        "title": "Rara Lakeside Yoga Weekend",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      }
+    ],
+    "bytes": 166304,
+    "sha256": "5332620165437befee4ce9e47408ea66a25f22fb870b3eed64f6e61abd91077a",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 933,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_29788527.webp"
+  },
+  {
+    "asset": "assets/images/photo_9257175.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/two-monks-wearing-orange-robes-sitting-9257175/",
+    "photographer": "Nabinjan Maharjan",
+    "represents": "Buddhist meditation in Lumbini",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Explore category tile",
+        "family_slug": "mind-soul",
+        "old_path": "family.coverImageUrl, falling back to assets/images/explore_header_mountains.png (adventure) or transformed crops of assets/images/home_experiences_hero.png"
+      }
+    ],
+    "bytes": 129596,
+    "sha256": "ec83179f4f1535dab8373047c00db25308a95da55f071dc89b88d5bbe86b77ff",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 934,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_9257175.webp"
+  },
+  {
+    "asset": "assets/images/photo_11398341.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/people-sitting-on-a-concrete-floor-11398341/",
+    "photographer": "Mehmet Turgut Kirkgoz",
+    "represents": "Village street conversation; representative community interaction, not verified in Mustang",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "upper-mustang-trek",
+        "title": "Mustang Culture Exchange Meetup",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=800"
+      }
+    ],
+    "bytes": 285338,
+    "sha256": "9b95d42ff15db15f3a270cd9e86896cec383cebd54955911face90371023aea1",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 1050,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_11398341.webp"
+  },
+  {
+    "asset": "assets/images/photo_28657144.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/elderly-men-sitting-in-traditional-nepalese-setting-28657144/",
+    "photographer": "Lisanne W",
+    "represents": "Two men spending time together in Bhaktapur",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Explore category tile",
+        "family_slug": "meet-people",
+        "old_path": "family.coverImageUrl, falling back to assets/images/explore_header_mountains.png (adventure) or transformed crops of assets/images/home_experiences_hero.png"
+      }
+    ],
+    "bytes": 339852,
+    "sha256": "c9186664778d0b7675988ee96b0c9fb325d4d3fbdaf933776c8148402ffab077",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 1048,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_28657144.webp"
+  },
+  {
+    "asset": "assets/images/photo_11599230.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/young-people-on-a-volunteer-work-11599230/",
+    "photographer": "Minh Ngọc",
+    "represents": "Volunteers collaboratively painting tires; exact project/location unverified",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "helambu-circuit-trek",
+        "title": "Helambu School Support Week",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      },
+      {
+        "screen": "Explore category tile",
+        "family_slug": "give-back",
+        "old_path": "family.coverImageUrl, falling back to assets/images/explore_header_mountains.png (adventure) or transformed crops of assets/images/home_experiences_hero.png"
+      }
+    ],
+    "bytes": 235972,
+    "sha256": "4fd4c58118da1dc92297ce4f57791bedc361abf85c4c996a962b9b7ca035080c",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 932,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_11599230.webp"
+  },
+  {
+    "asset": "assets/images/photo_20434913.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/aerial-view-of-a-farming-village-20434913/",
+    "photographer": "Raju Shrestha",
+    "represents": "Panauti farming village; destination context, not a photograph of the host family",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "panauti-community-homestay",
+        "title": "Panauti Community Homestay",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=800"
+      },
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "panauti-community-homestay",
+        "title": "Panauti Community Organic Homestay",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=800"
+      }
+    ],
+    "bytes": 324822,
+    "sha256": "9f14f496947bdebc718aeb6f1a47ab164832e8cbbfc50c042624bc50d15061ac",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 788,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_20434913.webp"
+  },
+  {
+    "asset": "assets/images/photo_13404007.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/a-person-wearing-a-bull-costume-13404007/",
+    "photographer": "Deekshyant",
+    "represents": "Masked dance in Lo Manthang; exact festival edition unverified",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "tiji-festival-mustang",
+        "title": "Tiji Festival Cultural Experience",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=800"
+      },
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "tiji-festival-mustang",
+        "title": "Lo Manthang Tiji Festival & Sacred Mask Dances",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=800"
+      }
+    ],
+    "bytes": 225540,
+    "sha256": "5053b86691bc364b344cb6e4c525c0e5c36281493ae47bc1a65517143e6441d8",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 933,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_13404007.webp"
+  },
+  {
+    "asset": "assets/images/photo_5011236.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/low-angle-view-of-a-man-climbing-on-ice-5011236/",
+    "photographer": "INFINITY ADVENTURE NEPAL",
+    "represents": "Ice climbing in Manang; representative climbing, not Island Peak",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "island-peak-climbing",
+        "title": "Island Peak (Imja Tse) 6,189m Mountaineering Expedition",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=1000"
+      },
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "island-peak-climbing",
+        "title": "Island Peak Climbing Expedition",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=1000"
+      }
+    ],
+    "bytes": 121146,
+    "sha256": "8d4e145aa7736ce9b83daa408a4d9b658a012e671a54a68b871c5230b743a3b3",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 933,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_5011236.webp"
+  },
+  {
+    "asset": "assets/images/photo_36096444.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/indian-rhinoceros-grazing-in-chitwan-national-park-36096444/",
+    "photographer": "Max Turek",
+    "represents": "One-horned rhinoceros in Chitwan",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "chitwan-jungle-safari",
+        "title": "Chitwan Wildlife Safari & Tharu Culture",
+        "old_path": "https://images.unsplash.com/photo-1534177616072-ef7dc120449d?q=80&w=800"
+      },
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "chitwan-jungle-safari",
+        "title": "Chitwan Wildlife and Culture Tour",
+        "old_path": "https://images.unsplash.com/photo-1534177616072-ef7dc120449d?q=80&w=800"
+      }
+    ],
+    "bytes": 580992,
+    "sha256": "10efe0ab8a16f4449222ef97d65dcd4c7faf9adb42b49bd1d60208066ca60db8",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1050,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_36096444.webp"
+  },
+  {
+    "asset": "assets/images/photo_5807633.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/men-riding-bicycles-on-the-road-5807633/",
+    "photographer": "Pavel Danilyuk",
+    "represents": "Group cycling through forest; representative activity, not verified in Kathmandu",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "phulchowki-mountain-biking",
+        "title": "Phulchowki 2,760m Mountain Bike Singletrack Descent",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      },
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "phulchowki-mountain-biking",
+        "title": "Kathmandu Cycling Social",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      }
+    ],
+    "bytes": 213616,
+    "sha256": "5f5984a506cd99f73698900b79d04a308e9f7bd43b5a73d2a05e792121a32f54",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 935,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_5807633.webp"
+  },
+  {
+    "asset": "assets/images/photo_34973191.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/hikers-on-mountain-trail-in-annapurna-region-34973191/",
+    "photographer": "Bhaskar Bisht",
+    "represents": "Trail journey in Annapurna",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Explore category tile",
+        "family_slug": "trips-tours",
+        "old_path": "family.coverImageUrl, falling back to assets/images/explore_header_mountains.png (adventure) or transformed crops of assets/images/home_experiences_hero.png"
+      }
+    ],
+    "bytes": 242786,
+    "sha256": "ca14ad0806c2f22b89725e989465543af3b8837c66ef6855bd5bd80105083fea",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1050,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_34973191.webp"
+  },
+  {
+    "asset": "assets/images/photo_18647876.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/aerial-view-of-houses-in-a-mountain-village-of-ghandruk-in-nepal-18647876/",
+    "photographer": "Santosh Maharjan",
+    "represents": "Traditional Ghandruk village",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "ghandruk-homestay-experience",
+        "title": "Ghandruk Village Homestay",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=800"
+      },
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "ghandruk-homestay-experience",
+        "title": "Ghandruk Heritage Village & Homestay",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=800"
+      }
+    ],
+    "bytes": 222846,
+    "sha256": "5be7fc3649b6d9e1d0420c730a6c2c3f3be95ed34c23239bb63eda3ca4073267",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 787,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_18647876.webp"
+  },
+  {
+    "asset": "assets/images/photo_13319054.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/houses-on-a-mountainside-in-bandipur-nepal-13319054/",
+    "photographer": "Anjan Karki",
+    "represents": "Bandipur village",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "bandipur-cultural-walk",
+        "title": "Bandipur Living Culture Experience",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=800"
+      },
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "bandipur-cultural-walk",
+        "title": "Bandipur Living Museum Newari Cultural Experience",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=800"
+      }
+    ],
+    "bytes": 174926,
+    "sha256": "61e446cc2a24575d628d10f878dd30031e02ff0672d2cdf1471f9414ea867cc3",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1050,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_13319054.webp"
+  },
+  {
+    "asset": "assets/images/photo_34912011.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/helicopter-flying-over-snowy-himalayan-peaks-in-nepal-34912011/",
+    "photographer": "Kunal Prabhakar",
+    "represents": "Helicopter above Himalayan peaks in Koshi; exact flight/operator unverified",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "everest-heli-tour",
+        "title": "Everest Helicopter Tour",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=1000"
+      },
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "everest-heli-tour",
+        "title": "Everest Base Camp Helicopter Tour with Champagne Breakfast",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=1000"
+      }
+    ],
+    "bytes": 286736,
+    "sha256": "d490048b2065f42e4985c1237c7d455717738ecbcfa49f37b5f77ae9904cf8df",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1050,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_34912011.webp"
+  },
+  {
+    "asset": "assets/images/photo_24389610.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/world-peace-pagoda-in-nepal-24389610/",
+    "photographer": "Bimal Chhetry",
+    "represents": "Visitors at World Peace Pagoda, Nepal",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "pokhara-peace-stupa-hike",
+        "title": "World Peace Pagoda Boat & Forest Hike",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      },
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "pokhara-peace-stupa-hike",
+        "title": "Pokhara Peace Stupa Day Tour",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      }
+    ],
+    "bytes": 148570,
+    "sha256": "2f3abd687150794a80c100bfc9a5bbffda47cf38f6fe4a6929de6631415f4e4e",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 933,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_24389610.webp"
+  },
+  {
+    "asset": "assets/images/photo_16681482.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/people-hiking-in-mountains-16681482/",
+    "photographer": "Sandesh Pandey",
+    "represents": "Walking in Langtang Valley; not a photograph of the retreat",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "langtang-valley-trek",
+        "title": "Langtang Valley & Kyanjin Gompa Trek",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1000"
+      }
+    ],
+    "bytes": 277464,
+    "sha256": "52bf359a00916648c9dab88be962042312e8ca1feae870ef51575d0ed5d805d9",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 1050,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_16681482.webp"
+  },
+  {
+    "asset": "assets/images/photo_9225402.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/woman-meditating-outdoors-9225402/",
+    "photographer": "Ron Lach",
+    "represents": "Forest meditation; representative activity, not verified in Shivapuri",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "shivapuri-peak-hike",
+        "title": "Shivapuri Forest Meditation Morning",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      }
+    ],
+    "bytes": 106544,
+    "sha256": "97c438c51cc9cc93d79e85076cb39c7a30143c3e8be11499c7d3a717e30123bd",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 933,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_9225402.webp"
+  },
+  {
+    "asset": "assets/images/photo_6787406.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/a-person-meditating-6787406/",
+    "photographer": "Marcus Aurelius",
+    "represents": "Meditation hands; representative practice, not verified at Namobuddha",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "dhulikhel-namobuddha-hike",
+        "title": "Namobuddha Mindfulness Retreat",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=800"
+      }
+    ],
+    "bytes": 31042,
+    "sha256": "081610f74d9c0ee06c7f0802f5aa89943310020b76a5d7b8c61e12aaf7824f8f",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 933,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_6787406.webp"
+  },
+  {
+    "asset": "assets/images/photo_19877800.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/people-hiking-on-footpath-in-mountains-19877800/",
+    "photographer": "Marina Zvada",
+    "represents": "Group walking a Nepal mountain trail; exact route unverified",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "mardi-himal-trek",
+        "title": "Pokhara Sunrise Social Walk",
+        "old_path": "https://images.unsplash.com/photo-1585016495481-91613a3ab1bc?q=80&w=800"
+      }
+    ],
+    "bytes": 239528,
+    "sha256": "b5326b9e8c1942f30d11ec360a964d7ce99fb1841c0513742f733e4548595189",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1050,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_19877800.webp"
+  },
+  {
+    "asset": "assets/images/photo_10807657.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/people-sitting-around-a-bonfire-10807657/",
+    "photographer": "Maël BALLAND",
+    "represents": "Group around a forest campfire; representative activity, not verified at Dhampus",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "australian-camp-overnight",
+        "title": "Australian Camp & Dhampus Himalayan Camping",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      },
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "australian-camp-overnight",
+        "title": "Dhampus Campfire Community Night",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      }
+    ],
+    "bytes": 65290,
+    "sha256": "6ad69795994239b77b1280b6338add88d1231ea134ac61533c07124631af3521",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 933,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_10807657.webp"
+  },
+  {
+    "asset": "assets/images/photo_8241416.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/man-in-blue-t-shirt-using-binoculars-8241416/",
+    "photographer": "Manoj Poosam",
+    "represents": "Nature observation with binoculars; representative monitoring/tracking, not verified at Bardia",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "bardia-tiger-tracking",
+        "title": "Bardia Wildlife Conservation Day",
+        "old_path": "https://images.unsplash.com/photo-1534177616072-ef7dc120449d?q=80&w=800"
+      },
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "bardia-tiger-tracking",
+        "title": "Bardia National Park Wild Tiger Tracking Expedition",
+        "old_path": "https://images.unsplash.com/photo-1534177616072-ef7dc120449d?q=80&w=800"
+      }
+    ],
+    "bytes": 59726,
+    "sha256": "28709ddb8d4e426431c62ee995ea50da391751652a0344ebcdf40198eb553a19",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 933,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_8241416.webp"
+  },
+  {
+    "asset": "assets/images/photo_6677380.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/man-with-rope-standing-by-climbing-wall-6677380/",
+    "photographer": "cottonbro studio",
+    "represents": "Climbing gear preparation in a gym; representative safety practice, not the mountain project",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "mera-peak-climbing",
+        "title": "Mountain Safety Skill-Sharing Project",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=1000"
+      }
+    ],
+    "bytes": 138148,
+    "sha256": "f0c867caa5a8cfc3f4808365a79d172e08c8e6052602762692796def3debdb12",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 933,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_6677380.webp"
+  },
+  {
+    "asset": "assets/images/photo_9543400.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/people-holding-white-garbage-bag-in-the-forest-9543400/",
+    "photographer": "Ron Lach",
+    "represents": "Two people collecting forest litter; representative cleanup, not Gokyo",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "gokyo-lakes-trek",
+        "title": "Gokyo Community Clean-up Project",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=1000"
+      }
+    ],
+    "bytes": 445126,
+    "sha256": "2c613c34d1b77da440984e343ea5dd0edfd044198f80d431f3ba042d01cdb14b",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 933,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_9543400.webp"
+  },
+  {
+    "asset": "assets/images/photo_9543734.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/a-person-in-brown-sweater-holding-a-trash-bag-9543734/",
+    "photographer": "Ron Lach",
+    "represents": "Litter collection; representative environmental work, not Tilicho",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "tilicho-lake-annapurna-circuit",
+        "title": "Tilicho Watershed Conservation Project",
+        "old_path": "https://images.unsplash.com/photo-1585016495481-91613a3ab1bc?q=80&w=1000"
+      }
+    ],
+    "bytes": 129384,
+    "sha256": "b2121bf0e2ef66d2af5c0e971feafabf5606ef2f046d82697d7241a5f6658b23",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 933,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_9543734.webp"
+  },
+  {
+    "asset": "assets/images/photo_419530.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/aerial-photography-of-mountains-419530/",
+    "photographer": "Saurav Bajracharya",
+    "represents": "Misty mountain sunrise; exact viewpoint unverified",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "nagarkot-sunrise-hike",
+        "title": "Nagarkot Himalayan Sunrise & Changunarayan Day Hike",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      },
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "nagarkot-sunrise-hike",
+        "title": "Nagarkot Sunrise Day Trip",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      }
+    ],
+    "bytes": 298478,
+    "sha256": "8520f429473ff34b9e7158c728be69290fa37feb32a2f0fd64c15ad091b55d2a",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 1050,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_419530.webp"
+  },
+  {
+    "asset": "assets/images/photo_11339115.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/elderly-people-resting-on-the-ground-11339115/",
+    "photographer": "Mehmet Turgut Kirkgoz",
+    "represents": "Adults spending time together in a courtyard; representative social scene, not verified at Manaslu",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "manaslu-circuit-trek",
+        "title": "Manaslu Travelers Community Evening",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=800"
+      }
+    ],
+    "bytes": 246154,
+    "sha256": "622cce690ece2ac13faf838d8189c43d317aaf5da49d6544c26b4a2b1770017c",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 1050,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_11339115.webp"
+  },
+  {
+    "asset": "assets/images/photo_8163772.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/person-hiking-on-ama-dablam-mountains-in-nepal-8163772/",
+    "photographer": "Riddho Datta",
+    "represents": "Trekker and Ama Dablam in Khumbu, Everest region",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "everest-base-camp-trek",
+        "title": "Everest Base Camp Trek",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=1000"
+      }
+    ],
+    "bytes": 269890,
+    "sha256": "aeaceebc62821620df65968e7d27b8e6088ae997d41cbcd80113096246283ea7",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1081,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_8163772.webp"
+  },
+  {
+    "asset": "assets/images/photo_9586148.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/lake-and-forest-behind-9586148/",
+    "photographer": "Ashok J Kshetri",
+    "represents": "Rara Lake",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "rara-lake-wilderness-trek",
+        "title": "Rara Lake Queen of Lakes Wilderness Trek",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      }
+    ],
+    "bytes": 104520,
+    "sha256": "1b363cc38506cec944000f38785c3257f9492a66591d6b07be7e07e27a74f5c5",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 933,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_9586148.webp"
+  },
+  {
+    "asset": "assets/images/photo_24486626.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/shrine-under-manaslu-mountains-in-nepal-24486626/",
+    "photographer": "Sanjay Prakash",
+    "represents": "Shrine and Mount Manaslu",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "manaslu-circuit-trek",
+        "title": "Manaslu Circuit & Larkya La Pass Trek",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=800"
+      }
+    ],
+    "bytes": 320926,
+    "sha256": "1368d6ec454a63d58d7488c2e14fcacedf46e4d9fb38134fb094ee6f1695c2ac",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 1050,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_24486626.webp"
+  },
+  {
+    "asset": "assets/images/photo_4032145.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/scenic-view-of-mount-mardi-himal-in-nepal-4032145/",
+    "photographer": "Ashok J Kshetri",
+    "represents": "Machapuchare view associated with Mardi Himal; not the summit of Mardi Himal",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "mardi-himal-trek",
+        "title": "Mardi Himal High Ridge Trek",
+        "old_path": "https://images.unsplash.com/photo-1585016495481-91613a3ab1bc?q=80&w=800"
+      }
+    ],
+    "bytes": 95076,
+    "sha256": "d8eb763a9da71aa09457f54e7b67815787401c9404a8a55caf0856d2ec9bfe4b",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 933,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_4032145.webp"
+  },
+  {
+    "asset": "assets/images/photo_12319272.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/fallen-eaves-covering-the-forest-ground-12319272/",
+    "photographer": "Ali Alcántara",
+    "represents": "Forest trail; representative forest, exact location unverified",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "shivapuri-peak-hike",
+        "title": "Shivapuri Peak & Nagi Gompa Nature Hike",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      }
+    ],
+    "bytes": 383688,
+    "sha256": "6b630c2b35a5766e6085abea1a70a86e131f1815392dc6dda2f68a05bbbbbaad",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 933,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_12319272.webp"
+  },
+  {
+    "asset": "assets/images/photo_34766892.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/stupa-with-prayer-flags-in-namobuddha-nepal-34766892/",
+    "photographer": "BiZay Sunuwar",
+    "represents": "Namobuddha stupa",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "dhulikhel-namobuddha-hike",
+        "title": "Dhulikhel to Namobuddha Sacred Stupa Hike",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=800"
+      }
+    ],
+    "bytes": 186160,
+    "sha256": "a2b233306e099050cd1f243a2ee4390a28baaf12934b89cd4a3025ef9fb6e103",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1050,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_34766892.webp"
+  },
+  {
+    "asset": "assets/images/photo_37358046.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/mountaineer-ascending-snowy-peak-in-nepal-37358046/",
+    "photographer": "Bijaya Rana",
+    "represents": "Mountaineer ascending a Nepal snow peak; exact peak unverified",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "mera-peak-climbing",
+        "title": "Mera Peak 6,476m Highest Trekking Peak Expedition",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=1000"
+      }
+    ],
+    "bytes": 134360,
+    "sha256": "191122618bb68f529ff91bee0990b878d16d3485c0f152ee46e7f68a8ab48395",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 933,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_37358046.webp"
+  },
+  {
+    "asset": "assets/images/photo_24959911.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/gokyo-lakes-in-nepal-at-dawn-24959911/",
+    "photographer": "Lipot Repaszky",
+    "represents": "Gokyo Lakes",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "gokyo-lakes-trek",
+        "title": "Turquoise Gokyo Lakes & Gokyo Ri Summit Trek",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=1000"
+      }
+    ],
+    "bytes": 176722,
+    "sha256": "42e874f24d9b11069858f4f6f75f2dfcaa1da03fdd484c5737757a73e5d1ab77",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 910,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_24959911.webp"
+  },
+  {
+    "asset": "assets/images/photo_34700366.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/majestic-mountain-peak-in-helambu-nepal-34700366/",
+    "photographer": "Sajal Niraula",
+    "represents": "Helambu mountain landscape",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "helambu-circuit-trek",
+        "title": "Helambu Hyolmo Heritage Circuit Trek",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      }
+    ],
+    "bytes": 322100,
+    "sha256": "2002075c8f3710552c6f7394102f5eec94a094b29751775be60ca6f195295d21",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1054,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_34700366.webp"
+  },
+  {
+    "asset": "assets/images/photo_34022824.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/breathtaking-landscape-in-upper-mustang-nepal-34022824/",
+    "photographer": "Ashok J Kshetri",
+    "represents": "Upper Mustang terrain and settlement",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "upper-mustang-trek",
+        "title": "Upper Mustang Forbidden Kingdom Trek",
+        "old_path": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=800"
+      }
+    ],
+    "bytes": 306290,
+    "sha256": "38cd5bf99101764b88b80df50f4e3ed4255dc995b46fd24416598cfb2a7e0dea",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 933,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_34022824.webp"
+  },
+  {
+    "asset": "assets/images/photo_6359258.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/perso-walking-along-a-rocky-mountain-slope-6359258/",
+    "photographer": "knoMe",
+    "represents": "Hiker on a Manang slope; exact section of the Tilicho route unverified",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "tilicho-lake-annapurna-circuit",
+        "title": "Tilicho High Lake & Thorong La Pass Circuit",
+        "old_path": "https://images.unsplash.com/photo-1585016495481-91613a3ab1bc?q=80&w=1000"
+      }
+    ],
+    "bytes": 374250,
+    "sha256": "ca7ed24b90dc5e85a26b864b4e10a7fb8877ef0d80e937405f92dceb44c9f3d3",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1050,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_6359258.webp"
+  },
+  {
+    "asset": "assets/images/photo_7457199.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/a-close-up-shot-of-a-person-harvesting-strawberries-7457199/",
+    "photographer": "Kindel Media",
+    "represents": "Strawberry harvest; representative food/farm activity, not verified at Kakani",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "kakani-trout-strawberry",
+        "title": "Kakani Farm and Food Day Trip",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      },
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "kakani-trout-strawberry",
+        "title": "Kakani Hilltop Rainbow Trout & Organic Strawberry Tasting",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800"
+      }
+    ],
+    "bytes": 132762,
+    "sha256": "4383abf41df2dcd09c3c7f440e28510f7633d27eeee136288e6f4e82d8b28318",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 1400,
+    "height": 789,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_7457199.webp"
+  },
+  {
+    "asset": "assets/images/photo_3059892.webp",
+    "platform": "Pexels",
+    "source_url": "https://www.pexels.com/photo/photo-of-woman-doing-meditation-3059892/",
+    "photographer": "RF._.studio _",
+    "represents": "Outdoor seated meditation; representative practice, not verified in Langtang",
+    "license": "Pexels License: free commercial/app use, modifications allowed; no implied endorsement.",
+    "license_url": "https://www.pexels.com/license/",
+    "verified_on": "2026-09-04",
+    "uses": [
+      {
+        "screen": "Home experience rails / Explore experience results",
+        "experience_slug": "langtang-valley-trek",
+        "title": "Langtang Mindfulness Retreat",
+        "old_path": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1000"
+      }
+    ],
+    "bytes": 140000,
+    "sha256": "4deb710a85082fd185a9c9dc015abe7250fc86c18e23a60b819bb5f46fcbf059",
+    "processing": "EXIF orientation applied; resized to fit 1400 x 1400; WebP quality 85; no generated content or color filter.",
+    "width": 934,
+    "height": 1400,
+    "storage_url": "https://dtebgbrqynxahuzmbtbc.supabase.co/storage/v1/object/public/catalog-images/plane-catalog-upload/photo_3059892.webp"
+  }
+]

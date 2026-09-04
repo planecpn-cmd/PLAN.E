@@ -269,6 +269,12 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                   spacing: AppSpacing.sm8,
                   runSpacing: AppSpacing.sm8,
                   children: [
+                    FilterChipPill(
+                      label: 'Any',
+                      isSelected: _selectedDifficulty == null,
+                      onSelected: (_) =>
+                          setState(() => _selectedDifficulty = null),
+                    ),
                     _buildDifficultyChip('easy', l10n.easy),
                     _buildDifficultyChip('moderate', l10n.moderate),
                     _buildDifficultyChip('challenging', l10n.challenging),

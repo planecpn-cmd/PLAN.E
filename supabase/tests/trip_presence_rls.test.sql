@@ -2,6 +2,14 @@
 
 begin;
 
+-- Local Realtime only pre-creates a short rolling window of partitions.
+-- Keep this authorization probe deterministic and roll it back with the test.
+set local role supabase_admin;
+create table realtime.messages_plan_e_test
+  partition of realtime.messages
+  for values from ('2099-01-01 00:00:00') to ('2099-01-02 00:00:00');
+reset role;
+
 do $$
 declare
   v_host uuid := '96000000-0000-4000-8000-000000000001';
@@ -74,12 +82,13 @@ begin
     'trip-presence:96000000-0000-4000-8000-000000000008',
     true
   );
-  insert into realtime.messages (topic, extension, private, payload)
+  insert into realtime.messages (topic, extension, private, payload, inserted_at)
   values (
     'trip-presence:96000000-0000-4000-8000-000000000008',
     'presence',
     true,
-    '{"typing":true}'::jsonb
+    '{"typing":true}'::jsonb,
+    '2099-01-01 12:00:00'
   );
   select count(*) into v_count
   from realtime.messages
@@ -116,12 +125,13 @@ begin
   where topic = 'trip-presence:96000000-0000-4000-8000-000000000008'
     and extension = 'presence';
   begin
-    insert into realtime.messages (topic, extension, private, payload)
+    insert into realtime.messages (topic, extension, private, payload, inserted_at)
     values (
       'trip-presence:96000000-0000-4000-8000-000000000008',
       'presence',
       true,
-      '{"typing":true}'::jsonb
+      '{"typing":true}'::jsonb,
+      '2099-01-01 12:00:00'
     );
     v_inserted := true;
   exception when insufficient_privilege then

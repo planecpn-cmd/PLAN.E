@@ -125,12 +125,10 @@ void main() {
     test(
       'network fails, cache has data → returns the cached reviews',
       () async {
-        await OfflineCache.write('experience_reviews:exp-1', [
+        await OfflineCache.write('experience_reviews:v2:exp-1', [
           Review(
             id: 'rev-1',
-            bookingId: 'bk-1',
             experienceId: 'exp-1',
-            userId: 'user-1',
             rating: 5,
             body: 'Incredible trek, highly recommend.',
             createdAt: _now,
