@@ -183,7 +183,7 @@ class _PlanEAppState extends ConsumerState<PlanEApp>
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Plan E by rabina',
+      title: 'PLAN E',
       theme: AppTheme.lightTheme,
       routerConfig: router,
       builder: (context, child) =>

@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.plane" "\0"
-            VALUE "FileDescription", "Plan E by rabina" "\0"
+            VALUE "FileDescription", "PLAN E" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "plan_e" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.plane. All rights reserved." "\0"
             VALUE "OriginalFilename", "plan_e.exe" "\0"
-            VALUE "ProductName", "Plan E by rabina" "\0"
+            VALUE "ProductName", "PLAN E" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
