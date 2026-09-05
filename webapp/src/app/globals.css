@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+/* Mirrors src/design/tokens.ts — keep both in sync. */
+:root {
+  --color-forest: #18372d;
+  --color-deep: #01251c;
+  --color-ivory: #ffffff;
+  --color-sage: #e7ece7;
+  --color-ink: #24312d;
+  --color-gold: #8f5e1b;
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-success: #2e6c40;
+  --color-success-container: #d2e8d4;
+  --color-warning: #7d5200;
+  --color-warning-container: #ffddb3;
+  --color-border: #cbd5ce;
+  --color-border-subtle: #e2e8e4;
+  --color-card: #ffffff;
+  --color-card-alt: #faf8f5;
+  --color-skeleton-base: #e3e8e4;
+  --color-skeleton-highlight: #f2f5f3;
+
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-40: 40px;
+}
+
+@theme inline {
+  --color-forest: var(--color-forest);
+  --color-deep: var(--color-deep);
+  --color-ivory: var(--color-ivory);
+  --color-sage: var(--color-sage);
+  --color-ink: var(--color-ink);
+  --color-gold: var(--color-gold);
+  --color-error: var(--color-error);
+  --color-error-container: var(--color-error-container);
+  --color-success: var(--color-success);
+  --color-success-container: var(--color-success-container);
+  --color-warning: var(--color-warning);
+  --color-warning-container: var(--color-warning-container);
+  --color-border: var(--color-border);
+  --color-border-subtle: var(--color-border-subtle);
+  --color-card: var(--color-card);
+  --color-card-alt: var(--color-card-alt);
+  --color-skeleton-base: var(--color-skeleton-base);
+  --color-skeleton-highlight: var(--color-skeleton-highlight);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-pill: var(--radius-pill);
+
+  --font-display: var(--font-playfair);
+  --font-sans: var(--font-inter);
+}
+
+body {
+  background: var(--color-ivory);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+/* PlanEBackground: ivory with a faint contour-line texture. */
+.plan-e-background {
+  background-color: var(--color-ivory);
+  background-image: repeating-radial-gradient(
+    circle at 20% 20%,
+    transparent 0,
+    transparent 34px,
+    rgba(24, 55, 45, 0.07) 36px,
+    transparent 38px
+  );
+  background-size: 180px 180px;
+}
+
+/* Legal document pages: readable when printed (people print these). */
+@media print {
+  header,
+  footer,
+  nav[aria-label="On this page"],
+  details {
+    display: none !important;
+  }
+  .legal-prose {
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #000;
+  }
+  .legal-prose a {
+    color: #000;
+    text-decoration: underline;
+  }
+  .legal-prose h1,
+  .legal-prose h2,
+  .legal-prose h3 {
+    break-after: avoid;
+  }
+  .legal-prose table,
+  .legal-prose blockquote,
+  .legal-prose li {
+    break-inside: avoid;
+  }
+}
+
+/* OrnamentDivider: gold hairline with a centered rotated-square accent. */
+.ornament-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ornament-divider::before,
+.ornament-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-gold);
+  opacity: 0.4;
+}
+.ornament-divider__diamond {
+  width: 6px;
+  height: 6px;
+  background: var(--color-gold);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
