@@ -80,7 +80,7 @@ export default async function ExplorePage() {
       </section>
 
       <div className="mx-auto max-w-6xl px-4 pb-16 lg:px-6">
-        <section className="mt-6">
+        <section className="mt-3">
           <div className="flex items-end justify-between gap-4">
             <div>
               <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold lg:text-2xl">
