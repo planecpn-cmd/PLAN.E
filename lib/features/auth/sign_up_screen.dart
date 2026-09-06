@@ -10,6 +10,7 @@ import '../../widgets/app_button.dart';
 import '../../widgets/app_text_field.dart';
 import '../../widgets/app_toast.dart';
 import '../../widgets/brand_icons.dart';
+import '../legal/legal_acceptance_line.dart';
 import 'auth_repository.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
@@ -44,6 +45,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     final name = _nameController.text.trim();
     final email = _emailPhoneController.text.trim();
     final password = _passwordController.text;
+
+    // No session exists yet (email OTP verification comes next), so stash the
+    // three sign-up acceptances with this timestamp; LegalGate flushes them to
+    // legal_acceptances on the first authenticated launch.
+    await ref.read(legalRepositoryProvider).stashSignupAcceptance();
 
     final success = await ref
         .read(authNotifierProvider.notifier)
@@ -99,6 +105,22 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         message: 'Could not open sign-in. Please try again.',
         variant: AppToastVariant.error,
       );
+    }
+  }
+
+  /// Native Google sign-in. On success main.dart's onAuthStateChange listener
+  /// (gated on oauthInFlightProvider) handles navigation onward, matching the
+  /// browser OAuth flow.
+  Future<void> _handleGoogleSignIn() async {
+    ref.read(oauthInFlightProvider.notifier).state = true;
+    final ok = await ref
+        .read(authNotifierProvider.notifier)
+        .signInWithGoogleNative();
+    if (ok || !mounted) return;
+    ref.read(oauthInFlightProvider.notifier).state = false;
+    final message = ref.read(authNotifierProvider).errorMessage;
+    if (message != null) {
+      AppToast.show(context, message: message, variant: AppToastVariant.error);
     }
   }
 
@@ -268,6 +290,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 ),
                 const SizedBox(height: AppSpacing.xxl24),
 
+                const LegalAcceptanceLine.signUp(),
+                const SizedBox(height: AppSpacing.md12),
+
                 // Submit Button
                 AppButton(
                   label: l10n.createAccount,
@@ -306,7 +331,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   iconWidget: const GoogleMark(),
                   isFullWidth: true,
                   minHeight: AppTouchTarget.minSize,
-                  onPressed: () => _handleOAuthSignIn(OAuthProvider.google),
+                  onPressed: _handleGoogleSignIn,
                 ),
                 const SizedBox(height: AppSpacing.sm8),
                 if (isApplePlatform)

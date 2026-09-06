@@ -128,6 +128,13 @@ class _TripChatScreenState extends ConsumerState<TripChatScreen> {
           icon: const Icon(Icons.arrow_back, color: AppColors.ink),
           onPressed: () => context.pop(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.emergency_outlined, color: AppColors.error),
+            tooltip: 'Emergency',
+            onPressed: () => context.push('/emergency'),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(

@@ -38,6 +38,22 @@ class _AuthRequiredSheetState extends ConsumerState<AuthRequiredSheet> {
     }
   }
 
+  /// Native Google sign-in. On success main.dart's onAuthStateChange listener
+  /// (gated on oauthInFlightProvider) handles navigation onward, matching the
+  /// browser OAuth flow.
+  Future<void> _handleGoogleSignIn() async {
+    ref.read(oauthInFlightProvider.notifier).state = true;
+    final ok = await ref
+        .read(authNotifierProvider.notifier)
+        .signInWithGoogleNative();
+    if (ok || !mounted) return;
+    ref.read(oauthInFlightProvider.notifier).state = false;
+    final message = ref.read(authNotifierProvider).errorMessage;
+    if (message != null) {
+      AppToast.show(context, message: message, variant: AppToastVariant.error);
+    }
+  }
+
   void _dismiss() {
     ref.read(deferredActionProvider.notifier).clear();
     if (context.canPop()) {
@@ -158,7 +174,7 @@ class _AuthRequiredSheetState extends ConsumerState<AuthRequiredSheet> {
                         isFullWidth: true,
                         minHeight: 47,
                         borderRadius: AppRadii.borderPill,
-                        onPressed: () => _handleOAuthSignIn(OAuthProvider.google),
+                        onPressed: _handleGoogleSignIn,
                       ),
                       if (isApplePlatform) ...[
                         const SizedBox(height: 7),

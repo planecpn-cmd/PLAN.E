@@ -1,6 +1,7 @@
 // RM-21 Settings Screen
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/app_version.dart';
 import '../../theme/theme.dart';
@@ -187,23 +188,9 @@ class _MoreSettingsScreenState extends ConsumerState<MoreSettingsScreen> {
               child: Column(
                 children: [
                   _LinkTile(
-                    title: 'Terms of Service',
-                    icon: Icons.description_outlined,
-                    onTap: () => AppStubSheet.show(
-                      context,
-                      title: 'Terms of Service',
-                      featureName: 'Legal & Service Agreements (Stage B)',
-                    ),
-                  ),
-                  const Divider(height: 1, color: AppColors.borderSubtle),
-                  _LinkTile(
-                    title: 'Privacy Policy',
-                    icon: Icons.privacy_tip_outlined,
-                    onTap: () => AppStubSheet.show(
-                      context,
-                      title: 'Privacy Policy',
-                      featureName: 'Data Privacy & Security Policies (Stage B)',
-                    ),
+                    title: 'Legal & Policies',
+                    icon: Icons.gavel_outlined,
+                    onTap: () => context.push('/legal'),
                   ),
                   const Divider(height: 1, color: AppColors.borderSubtle),
                   _LinkTile(

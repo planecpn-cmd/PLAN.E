@@ -77,6 +77,10 @@ import 'features/host/domain/host_mode_models.dart';
 import 'features/dev/routes_screen.dart';
 import 'features/notifications/notification_feed_screen.dart';
 import 'features/ai_itinerary/ai_itinerary_screen.dart';
+import 'features/legal/legal_index_screen.dart';
+import 'features/legal/legal_viewer_screen.dart';
+import 'features/legal/risk_acknowledgment_screen.dart';
+import 'features/legal/emergency_info_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> _shellNavigatorKey =
@@ -375,6 +379,27 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/ai-planner',
       builder: (context, state) => const AiItineraryScreen(),
+    ),
+    GoRoute(
+      path: '/legal',
+      builder: (context, state) => const LegalIndexScreen(),
+    ),
+    // Two segments — does not collide with '/legal/:slug'. bookingId comes from
+    // the path so the acceptance row is always tied to a real booking.
+    GoRoute(
+      path: '/legal/risk-acknowledgment/:bookingId',
+      builder: (context, state) => RiskAcknowledgmentScreen(
+        bookingId: state.pathParameters['bookingId'] ?? '',
+      ),
+    ),
+    GoRoute(
+      path: '/legal/:slug',
+      builder: (context, state) =>
+          LegalViewerScreen(slug: state.pathParameters['slug'] ?? ''),
+    ),
+    GoRoute(
+      path: '/emergency',
+      builder: (context, state) => const EmergencyInfoScreen(),
     ),
     GoRoute(
       path: '/host',

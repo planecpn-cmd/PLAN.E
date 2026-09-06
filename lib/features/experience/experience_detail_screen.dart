@@ -824,6 +824,21 @@ class _ExperienceDetailScreenState
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          const _LegalLinkRow(
+            icon: Icons.event_busy_outlined,
+            label: 'Cancellation Policy',
+            slug: 'cancellation-policy',
+          ),
+          if (experience.difficulty != DifficultyLevel.easy ||
+              (experience.maxAltitudeM ?? 0) > 3000) ...[
+            const SizedBox(height: 6),
+            const _LegalLinkRow(
+              icon: Icons.health_and_safety_outlined,
+              label: 'Safety and Risk Policy',
+              slug: 'safety-and-risk-policy',
+            ),
+          ],
         ],
       ),
     );
@@ -1176,6 +1191,44 @@ class _InfoTile extends StatelessWidget {
             style: const TextStyle(fontSize: 10, color: AppColors.disabledText),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Inline link to a legal document (Cancellation, Safety & Risk, ...).
+class _LegalLinkRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String slug;
+
+  const _LegalLinkRow({
+    required this.icon,
+    required this.label,
+    required this.slug,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => context.push("/legal/$slug"),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: AppColors.gold),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.gold,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

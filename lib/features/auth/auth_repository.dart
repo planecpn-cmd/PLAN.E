@@ -1,9 +1,21 @@
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/supabase_client.dart';
 import '../../providers/app_providers.dart';
+
+/// OAuth client IDs for the native Google sign-in flow, supplied via
+/// --dart-define (same pattern as SUPABASE_URL). The *web* client ID is the
+/// audience Supabase verifies the returned ID token against; the iOS client
+/// ID is only consumed by the Google SDK on Apple platforms. Android needs
+/// neither here — it matches on the SHA-1 + package registered in the
+/// Android OAuth client.
+class GoogleAuthConfig {
+  static const webClientId = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
+  static const iosClientId = String.fromEnvironment('GOOGLE_IOS_CLIENT_ID');
+}
 
 /// Sign in with Apple only makes sense — and is only enabled — on Apple's
 /// own platforms; Android has no Apple account integration to offer.
@@ -86,6 +98,41 @@ class AuthRepository {
       redirectTo: AppSupabaseClient.authRedirectUrl,
       authScreenLaunchMode: LaunchMode.externalApplication,
     );
+  }
+
+  /// Native Google sign-in: the OS account picker appears in-app (no browser,
+  /// no redirect deep link), and the Google ID token it returns is exchanged
+  /// for a Supabase session via signInWithIdToken. Returns false when the user
+  /// dismisses the picker without choosing an account.
+  Future<bool> signInWithGoogleNative() async {
+    if (GoogleAuthConfig.webClientId.isEmpty) {
+      throw StateError(
+        'GOOGLE_WEB_CLIENT_ID is empty. Provide it with --dart-define.',
+      );
+    }
+    final googleSignIn = GoogleSignIn(
+      clientId: GoogleAuthConfig.iosClientId.isEmpty
+          ? null
+          : GoogleAuthConfig.iosClientId,
+      serverClientId: GoogleAuthConfig.webClientId,
+    );
+    // Clear any cached account so the picker is always shown rather than
+    // silently reusing a stale selection.
+    await googleSignIn.signOut();
+    final account = await googleSignIn.signIn();
+    if (account == null) return false;
+
+    final auth = await account.authentication;
+    final idToken = auth.idToken;
+    if (idToken == null) {
+      throw const AuthException('Google did not return an ID token.');
+    }
+    await _client.auth.signInWithIdToken(
+      provider: OAuthProvider.google,
+      idToken: idToken,
+      accessToken: auth.accessToken,
+    );
+    return true;
   }
 
   Future<AuthResponse> verifySignupOtp({
@@ -265,6 +312,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
       await _repository.signInWithOAuth(provider);
     } catch (e) {
       state = state.copyWith(errorMessage: friendlyAuthError(e));
+    }
+  }
+
+  /// Returns true when a Supabase session was established, false when the user
+  /// dismissed the Google account picker. On failure the message lands in
+  /// [AuthState.errorMessage].
+  Future<bool> signInWithGoogleNative() async {
+    state = state.copyWith(errorMessage: null);
+    try {
+      return await _repository.signInWithGoogleNative();
+    } catch (e) {
+      state = state.copyWith(errorMessage: friendlyAuthError(e));
+      return false;
     }
   }
 

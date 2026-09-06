@@ -20,6 +20,8 @@ import '../../widgets/price_bottom_bar.dart';
 import '../../widgets/progress_steps.dart';
 import '../../widgets/offline_banner.dart';
 import '../../providers/app_providers.dart';
+import '../../models/legal_document.dart';
+import '../legal/legal_acceptance_line.dart';
 import 'booking_providers.dart';
 import 'payment_webview_screen.dart';
 
@@ -75,6 +77,28 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
     return (subtotalPaisa * 0.05).round(); // 5% platform service fee
   }
 
+  static const _riskCategorySlugs = {
+    'climbing',
+    'rafting',
+    'paragliding',
+    'canyoning',
+  };
+
+  /// Risk Acknowledgment is required for difficulty Moderate/Challenging/
+  /// Strenuous, altitude above 3,000 m, or the climbing / rafting / paragliding
+  /// / canyoning categories (Risk Acknowledgment doc, plan-e-legal §11).
+  bool _needsRiskAcknowledgment(Experience experience) {
+    if (experience.difficulty != DifficultyLevel.easy) return true;
+    if ((experience.maxAltitudeM ?? 0) > 3000) return true;
+    final categories = ref.read(categoriesProvider).valueOrNull ?? const [];
+    for (final c in categories) {
+      if (c.id == experience.categoryId) {
+        return _riskCategorySlugs.contains(c.slug);
+      }
+    }
+    return false;
+  }
+
   Future<void> _handleProceedToPayment(Experience experience) async {
     if (_selectedDeparture == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -104,19 +128,38 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
         paymentProvider: _selectedGateway,
       );
 
-      if (mounted) {
-        setState(() => _isCreatingIntent = false);
-        // Read, not watch — this is a one-shot decision at the moment the
-        // sheet opens, not something the already-open sheet needs to react
-        // to live if the flag flips mid-checkout.
-        final esewaEnabled =
-            ref.read(featureFlagProvider('payment_esewa')) ?? true;
-        _showPaymentIntentModalSheet(
-          experience,
-          intent,
-          esewaEnabled: esewaEnabled,
+      // Record the booking-terms + cancellation-policy acceptance against this
+      // booking BEFORE payment. If consent cannot be recorded, abort here —
+      // the user has not paid yet.
+      await ref
+          .read(legalRepositoryProvider)
+          .recordAcceptances(
+            kCheckoutAcceptanceSlugs,
+            bookingId: intent.bookingId,
+          );
+
+      if (!mounted) return;
+      setState(() => _isCreatingIntent = false);
+
+      // High-risk experiences: full-screen Risk Acknowledgment between the form
+      // and the payment sheet. Backing out cancels checkout.
+      if (_needsRiskAcknowledgment(experience)) {
+        final accepted = await context.push<bool>(
+          '/legal/risk-acknowledgment/${intent.bookingId}',
         );
+        if (accepted != true || !mounted) return;
       }
+
+      // Read, not watch — this is a one-shot decision at the moment the
+      // sheet opens, not something the already-open sheet needs to react
+      // to live if the flag flips mid-checkout.
+      final esewaEnabled =
+          ref.read(featureFlagProvider('payment_esewa')) ?? true;
+      _showPaymentIntentModalSheet(
+        experience,
+        intent,
+        esewaEnabled: esewaEnabled,
+      );
     } catch (e) {
       if (mounted) {
         setState(() => _isCreatingIntent = false);
@@ -854,10 +897,27 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    AppLocalizations.of(context)!.serviceFee,
-                                    style: AppTypography.caption.copyWith(
-                                      color: AppColors.disabledText,
+                                  InkWell(
+                                    onTap: () =>
+                                        context.push('/legal/payment-policy'),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          AppLocalizations.of(
+                                            context,
+                                          )!.serviceFee,
+                                          style: AppTypography.caption.copyWith(
+                                            color: AppColors.disabledText,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const Icon(
+                                          Icons.info_outline,
+                                          size: 13,
+                                          color: AppColors.gold,
+                                        ),
+                                      ],
                                     ),
                                   ),
                                   Text(
@@ -894,6 +954,8 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                             ],
                           ),
                         ),
+                        const SizedBox(height: AppSpacing.lg16),
+                        const LegalAcceptanceLine.checkout(),
                         const SizedBox(height: AppSpacing.xxxl32),
                       ],
                     ),

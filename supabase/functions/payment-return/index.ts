@@ -1,19 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-// Pure landing marker. The in-app WebView intercepts navigation to this URL
-// before it loads and reads the query params itself (pidx, transaction_uuid,
-// status) to trigger server-side verification. This page only renders when a
-// user opens the payment link outside the app (e.g. external browser).
+// Landing marker shared by both clients. The in-app WebView intercepts
+// navigation to this URL *before* the request is ever sent (see
+// lib/features/booking/payment_webview_screen.dart's onNavigationRequest),
+// so this code only ever runs for a real browser hit from the web app.
+// Forward it to verify-payment-return, which does the actual server-side
+// verification and finalization, then redirects to planenepal.com.
 serve((req) => {
   const url = new URL(req.url);
-  const provider = url.searchParams.get("provider") ?? "";
-  const status = url.searchParams.get("status") ?? (provider === "khalti" ? "unknown" : "unknown");
-
-  const html = `<!doctype html>
-<html><body style="font-family: sans-serif; text-align: center; padding-top: 3rem;">
-<h2>Payment received</h2>
-<p>Status: ${status}. You can return to the PLAN E app now.</p>
-</body></html>`;
-
-  return new Response(html, { status: 200, headers: { "Content-Type": "text/html" } });
+  const target = new URL(`${url.origin}/functions/v1/verify-payment-return${url.search}`);
+  return new Response(null, { status: 302, headers: { Location: target.toString() } });
 });

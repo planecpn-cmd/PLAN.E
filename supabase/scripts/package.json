@@ -1,0 +1,13 @@
+{
+  "name": "plan-e-legal-seed",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "seed": "node seed-legal.mjs",
+    "seed:dry": "node seed-legal.mjs --dry",
+    "test": "node seed-legal.test.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.115.0"
+  }
+}

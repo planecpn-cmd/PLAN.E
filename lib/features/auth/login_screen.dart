@@ -89,6 +89,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  /// Native Google sign-in. On success main.dart's onAuthStateChange listener
+  /// (gated on oauthInFlightProvider) handles navigation onward, matching the
+  /// browser OAuth flow.
+  Future<void> _handleGoogleSignIn() async {
+    ref.read(oauthInFlightProvider.notifier).state = true;
+    final ok = await ref
+        .read(authNotifierProvider.notifier)
+        .signInWithGoogleNative();
+    if (ok || !mounted) return;
+    ref.read(oauthInFlightProvider.notifier).state = false;
+    final message = ref.read(authNotifierProvider).errorMessage;
+    if (message != null) {
+      AppToast.show(context, message: message, variant: AppToastVariant.error);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -263,7 +279,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   iconWidget: const GoogleMark(),
                   isFullWidth: true,
                   minHeight: AppTouchTarget.minSize,
-                  onPressed: () => _handleOAuthSignIn(OAuthProvider.google),
+                  onPressed: _handleGoogleSignIn,
                 ),
                 const SizedBox(height: AppSpacing.sm8),
                 if (isApplePlatform) ...[

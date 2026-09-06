@@ -1,0 +1,26 @@
+{
+  "_comment": "Fill every value a document needs before it can be seeded. seed-legal.mjs refuses to seed any document that still contains an unresolved [PLACEHOLDER]. Blank values are treated as unresolved. EFFECTIVE_DATE must be an ISO date (YYYY-MM-DD) - it also becomes legal_documents.effective_at.",
+
+  "EFFECTIVE DATE": "",
+  "SUPPORT EMAIL": "",
+  "SUPPORT PHONE": "",
+  "REGISTERED ADDRESS": "",
+  "COMPANY REG NO": "",
+  "PAN/VAT NO": "",
+  "GRIEVANCE OFFICER NAME": "",
+  "GRIEVANCE EMAIL": "",
+  "HOURS": "",
+  "DPO EMAIL": "",
+  "EMERGENCY HOTLINE": "",
+  "NTB NUMBER": "",
+  "SUPABASE REGION — CONFIRM": "",
+  "SUPABASE REGION": "",
+  "PAYOUT TIMING — CONFIRM: e.g. within X working days after the experience has been delivered": "",
+  "PAYOUT TIMING": "",
+  "X": "",
+  "ANALYTICS PROVIDER": "",
+  "MAP TILE PROVIDER": "",
+  "INSURANCE POSITION": "",
+  "GRIEVANCE EMAIL ": "",
+  "DOMAIN": ""
+}

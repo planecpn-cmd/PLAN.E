@@ -82,6 +82,20 @@
 				<string>planee</string>
 			</array>
 		</dict>
+		<!-- Native Google sign-in (google_sign_in). The Google SDK opens the
+		     account picker in-app and calls back on the *reversed* iOS OAuth
+		     client ID scheme. Replace the value below with the reversed form of
+		     GOOGLE_IOS_CLIENT_ID: for client ID
+		     123456789-abcdef.apps.googleusercontent.com the scheme is
+		     com.googleusercontent.apps.123456789-abcdef -->
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.planee.google</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.REPLACE_WITH_REVERSED_IOS_CLIENT_ID</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

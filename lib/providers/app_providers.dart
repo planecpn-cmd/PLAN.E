@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 export 'trip_tools_providers.dart';
 export 'remote_config_providers.dart';
+export 'legal_providers.dart';
 
 import '../core/supabase_client.dart';
 import '../models/booking.dart';

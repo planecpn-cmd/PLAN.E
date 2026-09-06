@@ -43,6 +43,22 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     }
   }
 
+  /// Native Google sign-in. On success main.dart's onAuthStateChange listener
+  /// (gated on oauthInFlightProvider) handles navigation onward, matching the
+  /// browser OAuth flow.
+  Future<void> _handleGoogleSignIn() async {
+    ref.read(oauthInFlightProvider.notifier).state = true;
+    final ok = await ref
+        .read(authNotifierProvider.notifier)
+        .signInWithGoogleNative();
+    if (ok || !mounted) return;
+    ref.read(oauthInFlightProvider.notifier).state = false;
+    final message = ref.read(authNotifierProvider).errorMessage;
+    if (message != null) {
+      AppToast.show(context, message: message, variant: AppToastVariant.error);
+    }
+  }
+
   Future<void> _handleGuest() async {
     await OnboardingPreferences.markCompleted();
     if (mounted) context.go('/home');
@@ -192,8 +208,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                         isFullWidth: true,
                         minHeight: 47,
                         borderRadius: AppRadii.borderPill,
-                        onPressed: () =>
-                            _handleOAuthSignIn(OAuthProvider.google),
+                        onPressed: _handleGoogleSignIn,
                       ),
                       if (isApplePlatform) ...[
                         const SizedBox(height: 7),

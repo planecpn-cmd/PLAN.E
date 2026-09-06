@@ -1,6 +1,7 @@
 // RM-20 Help & Support Screen
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/native_intents.dart';
 import '../../theme/theme.dart';
@@ -167,6 +168,44 @@ class HelpSupportScreen extends ConsumerWidget {
                       to: _kSupportEmail,
                       subject: 'PLAN E Support Request',
                     ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md12),
+            AppCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.gavel_outlined,
+                        color: AppColors.forest),
+                    title: Text(
+                      'Grievance & Complaint Policy',
+                      style: AppTypography.bodyLarge
+                          .copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text(
+                      'How to raise a complaint, timelines, and escalation',
+                      style: AppTypography.caption
+                          .copyWith(color: AppColors.disabledText),
+                    ),
+                    trailing: const Icon(Icons.chevron_right,
+                        color: AppColors.disabledText),
+                    onTap: () => context.push('/legal/grievance-policy'),
+                  ),
+                  const Divider(height: 1, color: AppColors.borderSubtle),
+                  ListTile(
+                    leading: const Icon(Icons.emergency_outlined,
+                        color: AppColors.error),
+                    title: Text(
+                      'Emergency numbers',
+                      style: AppTypography.bodyLarge
+                          .copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    trailing: const Icon(Icons.chevron_right,
+                        color: AppColors.disabledText),
+                    onTap: () => context.push('/emergency'),
                   ),
                 ],
               ),

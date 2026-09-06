@@ -202,6 +202,19 @@ class _LeaveReviewScreenState extends ConsumerState<LeaveReviewScreen> {
                 isLoading: _isSubmitting,
                 onPressed: _submit,
               ),
+              const SizedBox(height: 12),
+              Center(
+                child: GestureDetector(
+                  onTap: () => context.push('/legal/community-guidelines'),
+                  child: Text(
+                    'Reviews must follow our Community Guidelines',
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.gold,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),

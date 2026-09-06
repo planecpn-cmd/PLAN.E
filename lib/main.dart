@@ -17,6 +17,7 @@ import 'l10n/app_localizations.dart';
 import 'providers/app_providers.dart';
 import 'theme/app_theme.dart';
 import 'widgets/version_gate.dart';
+import 'features/legal/legal_gate.dart';
 import 'router.dart';
 
 void main() async {
@@ -186,8 +187,9 @@ class _PlanEAppState extends ConsumerState<PlanEApp>
       title: 'PLAN E',
       theme: AppTheme.lightTheme,
       routerConfig: router,
-      builder: (context, child) =>
-          ScaledAppViewport(child: VersionGate(child: child!)),
+      builder: (context, child) => ScaledAppViewport(
+        child: VersionGate(child: LegalGate(child: child!)),
+      ),
       debugShowCheckedModeBanner: false,
       localizationsDelegates: const [
         AppLocalizations.delegate,

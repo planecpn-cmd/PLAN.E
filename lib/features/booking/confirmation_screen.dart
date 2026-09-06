@@ -296,10 +296,49 @@ class ConfirmationScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 10),
+                  const Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 16,
+                    children: [
+                      _PolicyLink(
+                        label: 'Cancellation Policy',
+                        slug: 'cancellation-policy',
+                      ),
+                      _PolicyLink(
+                        label: 'Refund Policy',
+                        slug: 'refund-policy',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
                 ],
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+class _PolicyLink extends StatelessWidget {
+  final String label;
+  final String slug;
+
+  const _PolicyLink({required this.label, required this.slug});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/legal/$slug'),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: AppColors.gold,
+          decoration: TextDecoration.underline,
         ),
       ),
     );

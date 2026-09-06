@@ -421,6 +421,13 @@ verify_jwt = false
 [functions.payment-return]
 verify_jwt = false
 
+# Browser-redirect landing point from Khalti/eSewa for the web checkout flow
+# (see payment-return, which forwards here). No user session is available on
+# a plain gateway redirect, so this runs as service-role and re-verifies the
+# payment with the gateway itself before trusting anything in the query string.
+[functions.verify-payment-return]
+verify_jwt = false
+
 # Server-to-server scheduled job authenticated with X-Cron-Secret.
 [functions.complete-trips-cron]
 verify_jwt = false
