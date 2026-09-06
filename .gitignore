@@ -58,3 +58,6 @@ env/*.json
 
 # Incoming raw external extracts
 _incoming/
+
+# Node deps in helper script dirs
+supabase/scripts/node_modules/
