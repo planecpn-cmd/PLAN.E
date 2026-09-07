@@ -50,6 +50,9 @@ class HostRepository {
     return path;
   }
 
+  Future<String> createHostDocumentSignedUrl(String path) =>
+      _client.storage.from('host-documents').createSignedUrl(path, 300);
+
   /// Submit host application via Edge Function 'submit-host-application'.
   Future<bool> submitHostApplication(HostApplicationData data) async {
     if (_client.auth.currentUser == null) {
@@ -86,6 +89,62 @@ class HostRepository {
       final data = response.data;
       final message = data is Map<String, dynamic>
           ? data['error']?.toString()
+          : null;
+      throw StateError(message ?? 'Host application submission failed.');
+    }
+    return true;
+  }
+
+  Future<Map<String, dynamic>?> getQuestionnaireDraft() async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return null;
+    final row = await _client
+        .from('host_applications')
+        .select('current_step, application_data, status')
+        .eq('user_id', userId)
+        .maybeSingle();
+    if (row == null) return null;
+    return Map<String, dynamic>.from(row);
+  }
+
+  Future<void> saveQuestionnaireDraft({
+    required int currentStep,
+    required Map<String, dynamic> data,
+  }) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      throw const AuthException('Authentication is required to save a draft.');
+    }
+    await _client.from('host_applications').upsert({
+      'user_id': userId,
+      'current_step': currentStep.clamp(1, 8),
+      'application_data': data,
+      'title': data['organization_name'] ?? data['hosting_type'],
+      'description': data['description'],
+      'location': [
+        data['locality'],
+        data['district'],
+        data['province'],
+      ].whereType<String>().where((value) => value.isNotEmpty).join(', '),
+      'photos': data['photo_paths'] ?? const <String>[],
+      'verification_doc_path': data['identity_front_path'],
+    }, onConflict: 'user_id');
+  }
+
+  Future<bool> submitQuestionnaire(Map<String, dynamic> data) async {
+    if (_client.auth.currentUser == null) {
+      throw const AuthException(
+        'Authentication is required to submit a host application.',
+      );
+    }
+    final response = await _client.functions.invoke(
+      'submit-host-application',
+      body: {'applicationData': data},
+    );
+    if (response.status != 200 && response.status != 201) {
+      final payload = response.data;
+      final message = payload is Map<String, dynamic>
+          ? payload['error']?.toString()
           : null;
       throw StateError(message ?? 'Host application submission failed.');
     }

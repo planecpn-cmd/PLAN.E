@@ -67,15 +67,6 @@ class _PlanEAppState extends ConsumerState<PlanEApp>
     with WidgetsBindingObserver {
   StreamSubscription<AuthState>? _authSub;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
-  DateTime? _pausedAt;
-
-  // How long the app has to sit backgrounded before returning to it replays
-  // the splash animation. Not zero: payment (Khalti/eSewa) hands off to an
-  // external app or browser and comes straight back via deep link — that's
-  // a background/resume cycle too, just a few seconds long, and shouldn't
-  // yank the user back to the splash mid-checkout. A genuine "reopened the
-  // app later" gap is comfortably longer than this.
-  static const Duration _splashReplayThreshold = Duration(seconds: 15);
 
   @override
   void initState() {
@@ -152,24 +143,6 @@ class _PlanEAppState extends ConsumerState<PlanEApp>
     // uses its own table-scoped Realtime stream.
     if (state == AppLifecycleState.resumed) {
       unawaited(ref.read(remoteConfigProvider.notifier).refresh());
-    }
-
-    // Splash as a boot identity, not just a one-time first-launch screen —
-    // replay it whenever the app returns to the foreground after being
-    // backgrounded for a while, not only on a genuine cold start. Any
-    // non-resumed state counts as "backgrounded" here (not just paused) —
-    // some Android versions/launchers only reach `inactive` on a quick
-    // app-switch without ever hitting `paused`, and that still needs to
-    // start the background-duration clock.
-    if (state != AppLifecycleState.resumed) {
-      _pausedAt ??= DateTime.now();
-    } else {
-      final pausedAt = _pausedAt;
-      _pausedAt = null;
-      if (pausedAt != null &&
-          DateTime.now().difference(pausedAt) >= _splashReplayThreshold) {
-        router.go('/');
-      }
     }
   }
 

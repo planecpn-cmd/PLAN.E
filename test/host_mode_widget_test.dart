@@ -16,10 +16,36 @@ import 'package:plan_e/features/host/presentation/host_experience_detail_screen.
 import 'package:plan_e/features/host/presentation/host_messages_screen.dart';
 import 'package:plan_e/features/host/presentation/host_mode_providers.dart';
 import 'package:plan_e/features/host/presentation/host_profile_screen.dart';
+import 'package:plan_e/features/host/presentation/widgets/host_mode_access_gate.dart';
 import 'package:plan_e/theme/app_theme.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets('host gate refreshes cached access when opened', (tester) async {
+    final repository = _RefreshingHostRepository();
+    final container = ProviderContainer(
+      overrides: [hostModeRepositoryProvider.overrideWithValue(repository)],
+    );
+    addTearDown(container.dispose);
+    expect(
+      (await container.read(hostAccessProvider.future)).canEnterHostMode,
+      isFalse,
+    );
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: HostModeAccessGate(child: Text('Host dashboard')),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Host dashboard'), findsOneWidget);
+    expect(repository.accessChecks, 2);
+  });
 
   Future<void> setPhoneSize(WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
@@ -334,6 +360,42 @@ void main() {
   });
 
   testWidgets(
+    'bookings screen separates booking details and payment transactions',
+    (tester) async {
+      await setPhoneSize(tester);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            hostModeRepositoryProvider.overrideWithValue(
+              MockHostModeRepository(),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: const HostBookingsScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Booking details'), findsOneWidget);
+      expect(find.text('Payments'), findsOneWidget);
+
+      await tester.tap(find.text('Payments'));
+      await tester.pumpAndSettle();
+      expect(find.text('Payment summary'), findsOneWidget);
+      expect(find.text('Advance collected'), findsWidgets);
+      expect(find.text('Remaining'), findsWidgets);
+      await tester.scrollUntilVisible(
+        find.textContaining('KHALTI-DEMO-003'),
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      expect(find.textContaining('KHALTI-DEMO-003'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     'operational and business screens render at 9:16 without overflow',
     (tester) async {
       await setPhoneSize(tester);
@@ -372,6 +434,23 @@ void main() {
       }
     },
   );
+}
+
+class _RefreshingHostRepository extends MockHostModeRepository {
+  int accessChecks = 0;
+
+  @override
+  Future<HostAccess> getHostAccess() async {
+    accessChecks++;
+    if (accessChecks == 1) {
+      return const HostAccess(
+        isApproved: false,
+        isActive: false,
+        label: 'Pending review',
+      );
+    }
+    return super.getHostAccess();
+  }
 }
 
 Widget _app(GoRouter router) => ProviderScope(

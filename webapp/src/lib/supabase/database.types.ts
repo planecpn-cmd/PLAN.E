@@ -26,6 +26,29 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
         Relationships: [];
       };
+      host_applications: {
+        Row: {
+          id: string;
+          user_id: string;
+          status: "draft" | "submitted" | "under_review" | "action_required" | "verification" | "approved" | "rejected";
+          current_step: number;
+          category_id: string | null;
+          title: string | null;
+          description: string | null;
+          location: string | null;
+          photos: string[];
+          verification_doc_path: string | null;
+          application_data: Json;
+          submitted_at: string | null;
+          reviewed_at: string | null;
+          reviewer_note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["host_applications"]["Row"]> & { user_id: string };
+        Update: Partial<Database["public"]["Tables"]["host_applications"]["Row"]>;
+        Relationships: [];
+      };
       interests: {
         Row: {
           id: string;

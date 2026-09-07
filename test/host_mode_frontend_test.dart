@@ -35,6 +35,8 @@ void main() {
         expect(dashboard.upcomingExperience?.title, 'Mardi Himal Trek');
         expect(experiences, hasLength(5));
         expect(bookings, isNotEmpty);
+        expect(bookings[2].advanceCollectedNpr, 12000);
+        expect(bookings[2].remainingNpr, 12500);
       },
     );
 

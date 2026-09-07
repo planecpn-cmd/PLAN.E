@@ -29,6 +29,7 @@ const paths: Record<string, string> = {
   forest: "M9 4 5 11h3l-4 6h6v3h4v-3h6l-4-6h3L15 4l-2 4-1-2-1 2-2-4Z",
   bank: "M3 21h18M4 21V10M20 21V10M2 10l10-6 10 6M8 10v11M12 10v11M16 10v11",
   star: "M12 2.5l2.9 6 6.6.9-4.8 4.6 1.1 6.5L12 17.4l-5.8 3.1 1.1-6.5-4.8-4.6 6.6-.9Z",
+  shield: "M12 3 5 6v5c0 4.6 2.8 8.1 7 10 4.2-1.9 7-5.4 7-10V6l-7-3Zm-3 9 2 2 4-4",
 };
 
 export type IconName = keyof typeof paths;

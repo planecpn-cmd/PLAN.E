@@ -61,3 +61,4 @@ _incoming/
 
 # Node deps in helper script dirs
 supabase/scripts/node_modules/
+.pnpm-store/

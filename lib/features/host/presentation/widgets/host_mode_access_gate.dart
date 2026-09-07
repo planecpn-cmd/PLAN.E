@@ -8,16 +8,31 @@ import '../host_mode_providers.dart';
 
 /// Access is derived from the authenticated account and backend-approved host
 /// status. Database RLS remains the final authorization boundary.
-class HostModeAccessGate extends ConsumerWidget {
+class HostModeAccessGate extends ConsumerStatefulWidget {
   const HostModeAccessGate({super.key, required this.child});
   final Widget child;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HostModeAccessGate> createState() => _HostModeAccessGateState();
+}
+
+class _HostModeAccessGateState extends ConsumerState<HostModeAccessGate> {
+  bool _refreshed = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_refreshed) return;
+    _refreshed = true;
+    ref.invalidate(hostAccessProvider);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return AsyncValueView(
       value: ref.watch(hostAccessProvider),
       data: (access) {
-        if (access.canEnterHostMode) return child;
+        if (access.canEnterHostMode) return widget.child;
         return Scaffold(
           body: SafeArea(
             child: EmptyStateView(

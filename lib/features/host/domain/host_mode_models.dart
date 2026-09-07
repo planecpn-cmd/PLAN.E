@@ -176,6 +176,7 @@ class HostBookingRequest {
   final List<HostTraveler> travelers;
   final Map<String, String> applicationAnswers;
   final String? conversationId;
+  final List<HostPaymentTransaction> payments;
   const HostBookingRequest({
     required this.id,
     required this.experienceId,
@@ -191,7 +192,12 @@ class HostBookingRequest {
     this.travelers = const [],
     this.applicationAnswers = const {},
     this.conversationId,
+    this.payments = const [],
   });
+  int get advanceCollectedNpr => payments
+      .where((payment) => payment.status == 'paid')
+      .fold(0, (sum, payment) => sum + payment.amountNpr);
+  int get remainingNpr => (totalNpr - advanceCollectedNpr).clamp(0, totalNpr);
   HostBookingRequest copyWith({HostBookingStatus? status}) =>
       HostBookingRequest(
         id: id,
@@ -208,7 +214,28 @@ class HostBookingRequest {
         travelers: travelers,
         applicationAnswers: applicationAnswers,
         conversationId: conversationId,
+        payments: payments,
       );
+}
+
+class HostPaymentTransaction {
+  final String id;
+  final String provider;
+  final String? providerRef;
+  final int amountNpr;
+  final String status;
+  final DateTime createdAt;
+  final DateTime? paidAt;
+
+  const HostPaymentTransaction({
+    required this.id,
+    required this.provider,
+    required this.amountNpr,
+    required this.status,
+    required this.createdAt,
+    this.providerRef,
+    this.paidAt,
+  });
 }
 
 class HostMessage {

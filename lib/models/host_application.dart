@@ -3,6 +3,7 @@ enum HostAppStatus {
   submitted,
   underReview,
   verification,
+  actionRequired,
   approved,
   rejected;
 
@@ -16,6 +17,8 @@ enum HostAppStatus {
         return HostAppStatus.verification;
       case 'approved':
         return HostAppStatus.approved;
+      case 'action_required':
+        return HostAppStatus.actionRequired;
       case 'rejected':
         return HostAppStatus.rejected;
       case 'draft':
@@ -34,6 +37,8 @@ enum HostAppStatus {
         return 'verification';
       case HostAppStatus.approved:
         return 'approved';
+      case HostAppStatus.actionRequired:
+        return 'action_required';
       case HostAppStatus.rejected:
         return 'rejected';
       case HostAppStatus.draft:
@@ -87,7 +92,8 @@ class HostApplication {
       title: json['title'] as String?,
       description: json['description'] as String?,
       location: json['location'] as String?,
-      photos: (json['photos'] as List<dynamic>?)
+      photos:
+          (json['photos'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           const [],

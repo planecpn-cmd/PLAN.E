@@ -149,6 +149,17 @@ class MockHostModeRepository implements HostModeRepository {
       submittedAt: DateTime(2026, 8, 11, 9, 5),
       totalNpr: 24500,
       status: HostBookingStatus.confirmed,
+      payments: [
+        HostPaymentTransaction(
+          id: 'mock-payment-3',
+          provider: 'khalti',
+          providerRef: 'KHALTI-DEMO-003',
+          amountNpr: 12000,
+          status: 'paid',
+          createdAt: DateTime(2026, 8, 11, 9, 10),
+          paidAt: DateTime(2026, 8, 11, 9, 12),
+        ),
+      ],
       travelers: const [
         HostTraveler(
           id: 'mock-traveler-daniel',
@@ -171,6 +182,17 @@ class MockHostModeRepository implements HostModeRepository {
       submittedAt: DateTime(2026, 8, 10, 12, 45),
       totalNpr: 49000,
       status: HostBookingStatus.confirmed,
+      payments: [
+        HostPaymentTransaction(
+          id: 'mock-payment-4',
+          provider: 'esewa',
+          providerRef: 'ESEWA-DEMO-004',
+          amountNpr: 49000,
+          status: 'paid',
+          createdAt: DateTime(2026, 8, 10, 12, 50),
+          paidAt: DateTime(2026, 8, 10, 12, 52),
+        ),
+      ],
       travelers: const [
         HostTraveler(
           id: 'mock-traveler-sofia',
@@ -193,6 +215,17 @@ class MockHostModeRepository implements HostModeRepository {
       submittedAt: DateTime(2026, 5, 1),
       totalNpr: 17000,
       status: HostBookingStatus.completed,
+      payments: [
+        HostPaymentTransaction(
+          id: 'mock-payment-5',
+          provider: 'khalti',
+          providerRef: 'KHALTI-DEMO-005',
+          amountNpr: 17000,
+          status: 'paid',
+          createdAt: DateTime(2026, 5, 1, 10),
+          paidAt: DateTime(2026, 5, 1, 10, 2),
+        ),
+      ],
     ),
     HostBookingRequest(
       id: 'mock-booking-6',

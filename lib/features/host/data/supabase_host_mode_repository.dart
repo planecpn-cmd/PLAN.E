@@ -154,6 +154,7 @@ class SupabaseHostModeRepository extends UnavailableHostModeRepository {
         .whereType<String>()
         .toList();
     final participantsByBooking = <String, List<Map<String, dynamic>>>{};
+    final paymentsByBooking = <String, List<HostPaymentTransaction>>{};
     if (bookingIds.isNotEmpty) {
       final participantRows = await _client
           .from('booking_participants')
@@ -165,6 +166,27 @@ class SupabaseHostModeRepository extends UnavailableHostModeRepository {
         if (bookingId != null) {
           participantsByBooking.putIfAbsent(bookingId, () => []).add(row);
         }
+      }
+      final paymentRows = await _client.rpc(
+        'host_booking_payment_transactions',
+      );
+      for (final raw in paymentRows as List) {
+        final row = Map<String, dynamic>.from(raw as Map);
+        final bookingId = row['booking_id']?.toString();
+        if (bookingId == null || !bookingIds.contains(bookingId)) continue;
+        paymentsByBooking
+            .putIfAbsent(bookingId, () => [])
+            .add(
+              HostPaymentTransaction(
+                id: row['payment_id']?.toString() ?? '',
+                provider: row['provider']?.toString() ?? 'unknown',
+                providerRef: row['provider_ref']?.toString(),
+                amountNpr: _integer(row['amount_paisa']) ~/ 100,
+                status: row['payment_status']?.toString() ?? 'initiated',
+                createdAt: _date(row['created_at']) ?? DateTime.now(),
+                paidAt: _date(row['paid_at']),
+              ),
+            );
       }
     }
 
@@ -203,6 +225,7 @@ class SupabaseHostModeRepository extends UnavailableHostModeRepository {
               'No structured application-answer fields are stored yet.',
         },
         conversationId: id,
+        payments: paymentsByBooking[id] ?? const [],
       );
     }).toList();
   }

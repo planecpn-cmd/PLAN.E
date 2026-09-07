@@ -47,10 +47,6 @@ import 'features/profile/my_reviews_screen.dart';
 import 'features/profile/moderation_queue_screen.dart';
 
 import 'features/host/become_host_screen.dart';
-import 'features/host/host_step_1_screen.dart';
-import 'features/host/host_step_2_screen.dart';
-import 'features/host/host_step_3_screen.dart';
-import 'features/host/host_step_4_screen.dart';
 import 'features/host/application_submitted_screen.dart';
 import 'features/host/host_dashboard_screen.dart';
 import 'features/host/presentation/host_experiences_screen.dart';
@@ -69,6 +65,7 @@ import 'features/host/presentation/host_guest_list_screen.dart';
 import 'features/host/presentation/host_traveler_detail_screen.dart';
 import 'features/host/presentation/widgets/host_mode_access_gate.dart';
 import 'features/host/presentation/widgets/host_application_auth_gate.dart';
+import 'features/host/host_questionnaire_screen.dart';
 import 'features/host/presentation/host_business_screen.dart';
 import 'features/host/presentation/edit_host_profile_screen.dart';
 import 'features/host/presentation/host_departure_detail_screen.dart';
@@ -581,23 +578,27 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: '/host/step-1',
-      builder: (context, state) =>
-          const HostApplicationAuthGate(child: HostStep1Screen()),
+      redirect: (context, state) => '/host/application/1',
+    ),
+    GoRoute(
+      path: '/host/application/:step',
+      builder: (context, state) => HostApplicationAuthGate(
+        child: HostQuestionnaireScreen(
+          initialStep: int.tryParse(state.pathParameters['step'] ?? '') ?? 1,
+        ),
+      ),
     ),
     GoRoute(
       path: '/host/step-2',
-      builder: (context, state) =>
-          const HostApplicationAuthGate(child: HostStep2Screen()),
+      redirect: (context, state) => '/host/application/2',
     ),
     GoRoute(
       path: '/host/step-3',
-      builder: (context, state) =>
-          const HostApplicationAuthGate(child: HostStep3Screen()),
+      redirect: (context, state) => '/host/application/3',
     ),
     GoRoute(
       path: '/host/step-4',
-      builder: (context, state) =>
-          const HostApplicationAuthGate(child: HostStep4Screen()),
+      redirect: (context, state) => '/host/application/4',
     ),
     GoRoute(
       path: '/host/submitted',

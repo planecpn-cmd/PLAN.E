@@ -1,10 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plan_e/features/host/host_provider.dart';
+import 'package:plan_e/features/host/host_questionnaire_screen.dart';
 import 'package:plan_e/models/host_application.dart';
 
 void main() {
   group('Phase 10 - Host Application Models & Provider', () {
+    test('questionnaire validates email and document number formats', () {
+      expect(isValidHostEmail('host@example.com'), isTrue);
+      expect(isValidHostEmail('host@invalid'), isFalse);
+      expect(isValidIdentityDocumentNumber('12-34-56/789'), isTrue);
+      expect(isValidIdentityDocumentNumber('??'), isFalse);
+    });
+
     test('HostApplication model deserialization and status parsing', () {
       final json = {
         'id': 'ha-100',
@@ -59,6 +67,10 @@ void main() {
         equals(HostAppStatus.approved),
       );
       expect(
+        HostAppStatus.fromString('action_required'),
+        equals(HostAppStatus.actionRequired),
+      );
+      expect(
         HostAppStatus.fromString('rejected'),
         equals(HostAppStatus.rejected),
       );
@@ -66,6 +78,7 @@ void main() {
 
       expect(HostAppStatus.submitted.toJson(), equals('submitted'));
       expect(HostAppStatus.underReview.toJson(), equals('under_review'));
+      expect(HostAppStatus.actionRequired.toJson(), equals('action_required'));
     });
 
     test('HostApplicationNotifier updates all steps', () {

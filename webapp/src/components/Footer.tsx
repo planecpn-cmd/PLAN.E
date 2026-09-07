@@ -33,7 +33,7 @@ export function Footer() {
             <Link href="/explore" className={linkClass}>
               Explore
             </Link>
-            <Link href="/become-a-host" className={linkClass}>
+            <Link href="/host" className={linkClass}>
               Become a host
             </Link>
             <Link href="/profile/help" className={linkClass}>
