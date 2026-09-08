@@ -1,0 +1,67 @@
+{
+  "_comment": [
+    "Authorization classification for every SECURITY DEFINER function in schemas public and private.",
+    "Source of truth for supabase/tests/security_definer_grants.test.sql.",
+    "Rebuilt/audited in P0.6 after 20260816130000 was found to use `revoke ... from public` alone,",
+    "which no longer strips the CLI's default EXECUTE grant to anon/authenticated.",
+    "When you add or change a SECURITY DEFINER function: update this file AND the .test.sql list."
+  ],
+  "audited_at": "2026-09-08",
+  "audited_against_migration": "20260906140000 + 20260908090000_lock_service_role_only_functions",
+
+  "service_role_only": [
+    "public.check_ai_rate_limit(text, integer, integer)",
+    "public.consume_payment_redirect_token(text)",
+    "public.finalize_verified_payment(uuid, uuid, payment_provider, text, jsonb)",
+    "public.claim_trip_push_deliveries(uuid)"
+  ],
+
+  "authenticated_callable": [
+    "public.get_my_profile()",
+    "public.current_host_access()",
+    "public.host_booking_payment_transactions()",
+    "public.register_trip_message_attachment(uuid, text, text, bigint)",
+    "public.mark_trip_conversation_read(uuid)",
+    "public.edit_trip_message(uuid, text)",
+    "public.delete_trip_message(uuid)",
+    "public.report_trip_message(uuid, text, text)",
+    "public.block_trip_participant(uuid, uuid)",
+    "public.unblock_trip_participant(uuid)",
+    "public.get_trip_conversation_safety(uuid)",
+    "public.register_trip_push_device(text, text, text)",
+    "public.unregister_trip_push_device(text, text)",
+    "public.is_trip_member(uuid)",
+    "private.is_approved_active_host(uuid)",
+    "private.is_trip_member_by_booking(uuid, uuid)",
+    "private.is_trip_member_user(uuid, uuid)",
+    "private.trip_messaging_is_blocked(uuid, uuid)",
+    "private.can_join_trip_presence(text, uuid)"
+  ],
+
+  "admin_gated_in_body": [
+    "public.get_trip_moderation_queue()",
+    "public.review_trip_message_report(uuid, text, text)"
+  ],
+
+  "intentionally_public": [
+    "public.get_public_experience_reviews(uuid)",
+    "public.get_public_host_profile(uuid)"
+  ],
+
+  "trigger_only": [
+    "public.handle_new_user()",
+    "public.update_experience_rating_stats()",
+    "public.log_config_change()",
+    "private.create_trip_message_receipts()",
+    "private.enqueue_trip_message_push()",
+    "private.shadow_trip_conversation_for_booking()",
+    "private.sync_host_account_from_application()"
+  ],
+
+  "notes": {
+    "public.claim_trip_push_deliveries(uuid)": "P0.6 fix: 20260816130000 granted it (via weak revoke) to anon+authenticated. 20260908090000 revokes execute from public, anon, authenticated. NOT YET DEPLOYED TO HOSTED — needs a prompt separate hosted deploy.",
+    "public.register_trip_push_device / unregister_trip_push_device": "anon retains a stray EXECUTE from the same weak revoke. Harmless: body raises 'Authentication required' when auth.uid() is null. Left as-is; classified authenticated_callable.",
+    "public.get_trip_moderation_queue / review_trip_message_report": "anon retains a stray EXECUTE. Harmless: body raises 'Admin access required' unless public.is_admin(). Not tightened in P0.6 to avoid scope creep; tracked as admin_gated_in_body.",
+    "trigger_only": "EXECUTE grants to anon/authenticated are inert — these take/return `trigger` and cannot be invoked directly with a useful signature."
+  }
+}
