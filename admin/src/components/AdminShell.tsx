@@ -5,8 +5,9 @@ import type { Scope } from "@/lib/scopes";
 // never sees the link; hitting the URL directly is still refused by the page
 // (requireScope) and by withAdmin for its API routes — both layers.
 const NAV: { href: string; label: string; scope: Scope }[] = [
+  { href: "/host-applications", label: "Host applications", scope: "hosts:review" },
   { href: "/config", label: "Config & feature flags", scope: "content:manage" },
-  // host review, bookings, payments, finance screens land in P2 / P3.
+  // bookings, payments, finance screens land in P3.
 ];
 
 export function AdminShell({

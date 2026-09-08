@@ -136,4 +136,24 @@ describe("withAdmin", () => {
     await makeWithAdmin(d)("content:manage", async () => ok())(req());
     expect(dbSpy).not.toHaveBeenCalled();
   });
+
+  // P2 scope split — layer one: the decide endpoint rejects a hosts:review-only
+  // staff member. (Layer two — a direct-JWT decision-row / status write being
+  // refused by RLS + the status trigger — is supabase/tests/host_review_rls.test.sql.)
+  it("hosts:decide handler is 403 for a hosts:review-only staff member; handler never runs", async () => {
+    const { d, audits } = deps({
+      loadStaff: async () => ({ status: "active", scopes: ["hosts:review"] }),
+    });
+    const handler = vi.fn(async () => ok());
+    const res = await makeWithAdmin(d)("hosts:decide", handler, { mutating: true })(req());
+    expect(res.status).toBe(403);
+    expect(handler).not.toHaveBeenCalled();
+    expect(audits).toHaveLength(0);
+  });
+
+  it("hosts:review handler runs for a hosts:review staff member", async () => {
+    const { d } = deps({ loadStaff: async () => ({ status: "active", scopes: ["hosts:review"] }) });
+    const res = await makeWithAdmin(d)("hosts:review", async () => Response.json({ ok: true }))(req());
+    expect(res.status).toBe(200);
+  });
 });
