@@ -32,4 +32,28 @@ jobs:
       - name: Build
         run: npm run build
 
-  # admin/ workspace is added in P1; wire its typecheck + build here then.
+  admin:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin
+    env:
+      # Placeholders. Real values are Cloudflare Worker secrets. The build/test
+      # paths exercised here never call Supabase.
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: build-placeholder-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: build-placeholder-service-role-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: admin/package-lock.json
+      - run: npm ci
+      - name: Unit tests (withAdmin suite + service-role import boundary)
+        run: npm run test
+      - name: Lint (incl. service-role import ban)
+        run: npm run lint
+      - name: Build (also typechecks)
+        run: npm run build
