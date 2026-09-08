@@ -7,11 +7,19 @@ import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/widgets.dart';
 
-/// Route gate for `/admin/*`. The moderation RPCs already enforce `is_admin()`
-/// server-side, but the route used to render for any signed-in user and rely
-/// entirely on that. This stops a non-admin from reaching the screen at all —
-/// same widget-wrapper pattern as [host_application_auth_gate] /
-/// [host_mode_access_gate].
+/// Route gate for `/admin/message-moderation`.
+///
+/// Message moderation is **founder-only**: the underlying RPCs
+/// (`get_trip_moderation_queue`, `review_trip_message_report`) are gated on
+/// `public.is_admin()` server-side (migration `20260816170000`), and there is no
+/// trip-moderation scope in the staff model — so `role == admin` (which, after
+/// `20260908140000`, only founders hold) is exactly the right check here. A
+/// moderator-reachable version would need a new scope AND those RPCs changed to
+/// accept it. Until then this stays role-based, matching the RPC boundary.
+///
+/// The route used to render for any signed-in user and rely entirely on the RPC
+/// check. Same widget-wrapper pattern as [HostApplicationAuthGate] /
+/// [HostModeAccessGate].
 class AdminAccessGate extends ConsumerWidget {
   const AdminAccessGate({super.key, required this.child});
 

@@ -6,8 +6,8 @@
     "which no longer strips the CLI's default EXECUTE grant to anon/authenticated.",
     "When you add or change a SECURITY DEFINER function: update this file AND the .test.sql list."
   ],
-  "audited_at": "2026-09-08",
-  "audited_against_migration": "20260906140000 + 20260908090000_lock_service_role_only_functions",
+  "audited_at": "2026-09-09",
+  "audited_against_migration": "20260906140000 + 20260908090000 + 20260908140000_scope_aware_admin_policies",
 
   "service_role_only": [
     "public.check_ai_rate_limit(text, integer, integer)",
@@ -17,6 +17,7 @@
   ],
 
   "authenticated_callable": [
+    "public.has_scope(text)",
     "public.get_my_profile()",
     "public.current_host_access()",
     "public.host_booking_payment_transactions()",
@@ -59,6 +60,7 @@
   ],
 
   "notes": {
+    "public.has_scope(text)": "Added 20260908140000. Backs the scope-gated admin SELECT policies. authenticated_callable is correct: it is an RLS helper (must be executable by the RLS evaluator running as `authenticated`), and a direct caller learns only whether THEY hold a scope — no cross-user disclosure, and inferable anyway from which queries succeed. Same class as is_approved_active_host / current_host_access. NOT service-role-only.",
     "public.claim_trip_push_deliveries(uuid)": "P0.6 fix: 20260816130000 granted it (via weak revoke) to anon+authenticated. 20260908090000 revokes execute from public, anon, authenticated. NOT YET DEPLOYED TO HOSTED — needs a prompt separate hosted deploy.",
     "public.register_trip_push_device / unregister_trip_push_device": "anon retains a stray EXECUTE from the same weak revoke. Harmless: body raises 'Authentication required' when auth.uid() is null. Left as-is; classified authenticated_callable.",
     "public.get_trip_moderation_queue / review_trip_message_report": "anon retains a stray EXECUTE. Harmless: body raises 'Admin access required' unless public.is_admin(). Not tightened in P0.6 to avoid scope creep; tracked as admin_gated_in_body.",

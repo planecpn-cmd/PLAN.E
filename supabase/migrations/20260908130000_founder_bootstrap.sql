@@ -3,12 +3,18 @@
 --
 -- ┌─────────────────────────────────────────────────────────────────────────┐
 -- │  GATE 2 PLACEHOLDER — v_emails is intentionally EMPTY.                   │
--- │  Fill it with the founder email addresses exactly as they appear in     │
+-- │  Fill it with the FOUNDER email addresses exactly as they appear in     │
 -- │  auth.users, then this migration grants each of them profiles.role =    │
 -- │  'admin' + a staff_members row with all eight scopes.                   │
 -- │  An empty list is a clean no-op (the FOREACH body never runs).          │
 -- │  An email with no matching auth.users row is skipped with a NOTICE,     │
 -- │  never an error.                                                        │
+-- │                                                                         │
+-- │  FOUNDERS ONLY. profiles.role = 'admin' is a founder privilege (it      │
+-- │  gates config_audit_log / admin_audit_log reads and the                 │
+-- │  message-moderation RPCs). Moderators are added later through the        │
+-- │  staff:manage UI as a staff_members row with a scope subset and NEVER   │
+-- │  role = 'admin'. See 20260908140000 and admin/README.md.                │
 -- └─────────────────────────────────────────────────────────────────────────┘
 
 do $$

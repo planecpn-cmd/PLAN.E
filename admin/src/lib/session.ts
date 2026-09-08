@@ -3,10 +3,11 @@ import { redirect } from "next/navigation";
 import { createAnonServerClient } from "./supabase/server";
 import type { Scope } from "./scopes";
 
-// Page/layout-side session. Uses ONLY the anon session client: staff_members
-// RLS is `using (is_admin())`, so a non-admin session reads zero rows and a
-// staff member reads their own. The service-role client never enters the
-// rendering tree — it lives only in with-admin.server.ts for API routes.
+// Page/layout-side session. Uses ONLY the anon session client. staff_members
+// has a self-read RLS policy (user_id = auth.uid(), from 20260908140000), so a
+// staff member reads their own row and their own scopes without needing
+// profiles.role = 'admin'. The service-role client never enters the rendering
+// tree — it lives only in with-admin.server.ts for API routes.
 
 export interface AdminSession {
   userId: string;

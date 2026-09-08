@@ -181,6 +181,14 @@ begin
     quote_expires_at = excluded.quote_expires_at, completed_at = excluded.completed_at,
     updated_at = now();
 
+  -- ---- staff: the admin fixture is a founder (all scopes) so a manual dev
+  --      using this seed can actually sign in to admin/ ----------------------
+  insert into public.staff_members (user_id, status, scopes)
+  values (v_admin, 'active', array[
+    'hosts:review','hosts:decide','bookings:read','payments:read',
+    'payments:act','finance:read','content:manage','staff:manage'])
+  on conflict (user_id) do update set status = 'active', scopes = excluded.scopes;
+
   -- ---- payments: initiated / paid / failed (one per booking) --------------
   insert into public.payments (
     id, booking_id, provider, provider_ref, idempotency_key, amount_paisa,

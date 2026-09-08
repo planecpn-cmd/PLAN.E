@@ -6,12 +6,30 @@ key must never share a bundle with public pages.
 
 ## Security model (P1)
 
-- **`profiles.role = 'admin'`** — the coarse gate the `is_admin()` RLS policies use.
-- **`staff_members.scopes`** — the fine gate, enforced in the backend by
-  `withAdmin()`. Scopes: `hosts:review`, `hosts:decide`, `bookings:read`,
-  `payments:read`, `payments:act`, `finance:read`, `content:manage`,
-  `staff:manage` (mirrors the DB CHECK in
-  `supabase/migrations/20260908120000_*`).
+- **`staff_members.status` + `staff_members.scopes`** — the authorization
+  record. A staff member is `active` with a set of scopes:
+  `hosts:review`, `hosts:decide`, `bookings:read`, `payments:read`,
+  `payments:act`, `finance:read`, `content:manage`, `staff:manage` (mirrors the
+  DB CHECK in `20260908120000_*` and `src/lib/scopes.ts`).
+- **Every business-table read is gated by the matching scope, in RLS.**
+  `20260908140000` replaced bare `is_admin()` with
+  `public.has_scope(<scope>)` on `bookings` / `booking_participants` /
+  `experience_departures` / `legal_acceptances` (`bookings:read`), `payments`
+  (`payments:read`), `host_applications` / `host_accounts` (`hosts:review`),
+  `experiences` / `reviews` (`content:manage`). So a `hosts:review`-only
+  moderator hitting the REST API with their own JWT reads host applications and
+  **nothing else** — the scope model is no longer withAdmin-only.
+- **`staff_members` self-read** (`user_id = auth.uid()`) lets a staff member log
+  in and see their own scopes **without** `profiles.role = 'admin'`. Reading
+  *other* staff rows needs `is_admin()` or the `staff:manage` scope.
+- **`profiles.role = 'admin'` is founder-only.** The founder bootstrap
+  (`20260908130000`) sets it for founders and gives them all eight scopes.
+  Moderators get a `staff_members` row with a subset of scopes and **never**
+  `role = 'admin'`. `role = 'admin'` still gates: `config_audit_log` /
+  `admin_audit_log` reads, direct-JWT config-table writes, and the Flutter
+  message-moderation RPCs (`get_trip_moderation_queue` etc.).
+- **`withAdmin()`** re-checks the scope for every API route regardless — the RLS
+  scope gate and the withAdmin scope gate are defence in depth, not either/or.
 - **`src/lib/service-role.ts`** — the only module that reads
   `SUPABASE_SERVICE_ROLE_KEY`. Reachable only through `src/lib/with-admin.server.ts`.
   Enforced by `eslint` (`no-restricted-imports`) **and**
@@ -38,14 +56,18 @@ You need a local staff member. With the local stack running, either fill
 `supabase db reset`, or run once against the local DB:
 
 ```sql
--- as postgres, local only
+-- as postgres, local only.
 select set_config('request.jwt.claims', '{"role":"service_role"}', true);
-update public.profiles set role = 'admin' where id = '<your-local-auth-uid>';
 insert into public.staff_members (user_id, status, scopes)
 values ('<your-local-auth-uid>', 'active', array[
   'hosts:review','hosts:decide','bookings:read','payments:read',
   'payments:act','finance:read','content:manage','staff:manage'])
-on conflict (user_id) do update set scopes = excluded.scopes;
+on conflict (user_id) do update set status = 'active', scopes = excluded.scopes;
+
+-- role = 'admin' is NOT required to sign in (staff_members self-read handles
+-- that). Add it only if you also need config_audit_log / admin_audit_log reads
+-- or the message-moderation RPCs locally:
+-- update public.profiles set role = 'admin' where id = '<your-local-auth-uid>';
 ```
 
 ## Checks

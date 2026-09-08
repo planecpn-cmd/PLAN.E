@@ -11,7 +11,8 @@
 --      booking they own -- because there is no non-admin payment-read policy.
 --   2. anon is denied outright (never granted).
 --   3. payments has exactly ONE SELECT-permitting policy and its qual is the
---      is_admin() check. Adding any broader SELECT policy to payments fails here.
+--      has_scope('payments:read') check (20260908140000 replaced is_admin()
+--      here). Adding any broader SELECT policy to payments fails this.
 -- =============================================================================
 
 begin;
@@ -84,25 +85,25 @@ begin
   end if;
 end $$;
 
--- 3. exactly one SELECT-permitting policy on payments, and it is the is_admin() gate
+-- 3. exactly one SELECT-permitting policy on payments, gated by has_scope('payments:read')
 do $$
 declare
   v_select_policies int;
-  v_non_admin int;
+  v_ungated int;
 begin
   select count(*) into v_select_policies
   from pg_policies
   where schemaname = 'public' and tablename = 'payments'
     and cmd in ('SELECT', 'ALL');
 
-  select count(*) into v_non_admin
+  select count(*) into v_ungated
   from pg_policies
   where schemaname = 'public' and tablename = 'payments'
     and cmd in ('SELECT', 'ALL')
-    and coalesce(qual, '') not like '%is_admin()%';
+    and coalesce(qual, '') not like '%has_scope(''payments:read''%';
 
-  if v_select_policies <> 1 or v_non_admin <> 0 then
-    raise exception 'FAIL: payments has % SELECT/ALL policy(ies), % of them not is_admin()-gated -- expected exactly 1, is_admin() only', v_select_policies, v_non_admin;
+  if v_select_policies <> 1 or v_ungated <> 0 then
+    raise exception 'FAIL: payments has % SELECT/ALL policy(ies), % not gated on has_scope(''payments:read'') -- expected exactly 1, that scope only', v_select_policies, v_ungated;
   end if;
 end $$;
 
