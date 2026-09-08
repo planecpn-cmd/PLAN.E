@@ -6,6 +6,7 @@ on:
   push:
     branches: [main]
     paths: ["webapp/**", "admin/**", ".github/workflows/web.yml"]
+  workflow_dispatch:
 
 jobs:
   webapp:
