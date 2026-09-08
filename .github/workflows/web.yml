@@ -1,0 +1,34 @@
+name: web
+
+on:
+  pull_request:
+    paths: ["webapp/**", "admin/**", ".github/workflows/web.yml"]
+  push:
+    branches: [main]
+    paths: ["webapp/**", "admin/**", ".github/workflows/web.yml"]
+
+jobs:
+  webapp:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: webapp
+    env:
+      # Build-time placeholders. The webapp reads NEXT_PUBLIC_* at build; real
+      # values are Cloudflare Worker vars, never committed.
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: build-placeholder-anon-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: webapp/package-lock.json
+      - run: npm ci
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Build
+        run: npm run build
+
+  # admin/ workspace is added in P1; wire its typecheck + build here then.
