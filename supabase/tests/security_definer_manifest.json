@@ -7,7 +7,7 @@
     "When you add or change a SECURITY DEFINER function: update this file AND the .test.sql list."
   ],
   "audited_at": "2026-09-09",
-  "audited_against_migration": "20260906140000 + 20260908090000 + 20260908140000_scope_aware_admin_policies",
+  "audited_against_migration": "20260908140000_scope_aware_admin_policies + 20260909120000_host_review_workflow",
 
   "service_role_only": [
     "public.check_ai_rate_limit(text, integer, integer)",
@@ -56,7 +56,12 @@
     "private.create_trip_message_receipts()",
     "private.enqueue_trip_message_push()",
     "private.shadow_trip_conversation_for_booking()",
-    "private.sync_host_account_from_application()"
+    "private.sync_host_account_from_application()",
+    "private.sync_host_documents_from_application()"
+  ],
+
+  "internal_helper": [
+    "private.upsert_host_document(uuid, text, text)  — called only by private.sync_host_documents_from_application(); revoked from public/anon/authenticated"
   ],
 
   "notes": {
