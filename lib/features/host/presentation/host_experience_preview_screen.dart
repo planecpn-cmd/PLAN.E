@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../theme/theme.dart';
 import '../../../widgets/widgets.dart';
 import '../domain/host_experience_validator.dart';
 import 'host_mode_providers.dart';
-import 'widgets/host_mode_scaffold.dart';
 
 class HostExperiencePreviewScreen extends ConsumerStatefulWidget {
   const HostExperiencePreviewScreen({super.key});
@@ -177,8 +177,8 @@ class _HostExperiencePreviewScreenState
               const SizedBox(width: 10),
               Expanded(
                 child: AppButton(
-                  label: 'Submit for review',
-                  onPressed: _submit,
+                  label: _submitting ? 'Submitting…' : 'Submit for review',
+                  onPressed: _submitting ? null : _submit,
                   isFullWidth: true,
                 ),
               ),
@@ -189,20 +189,38 @@ class _HostExperiencePreviewScreenState
     );
   }
 
-  // H0 stopgap: submitting an experience for review is not wired to a backend
-  // yet (see docs/H1_HOST_WRITE_PATH.md). Validate for feedback, then show a
-  // clear notice instead of calling the repository, whose submitForReview
-  // throws an unhandled StateError in production.
-  void _submit() {
+  bool _submitting = false;
+
+  Future<void> _submit() async {
     final draft = ref.read(hostCreateExperienceProvider);
     final errors = HostExperienceValidator.validateForSubmission(draft);
+    final messenger = ScaffoldMessenger.of(context);
     if (errors.isNotEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(errors.values.first)));
+      messenger.showSnackBar(SnackBar(content: Text(errors.values.first)));
       return;
     }
-    showUnavailableNotice(context, 'Submitting experiences for review');
+    setState(() => _submitting = true);
+    try {
+      await ref.read(hostModeRepositoryProvider).submitForReview(draft);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      // The RPC returns actionable messages (e.g. "Add at least one photo…").
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            error is PostgrestException
+                ? error.message
+                : 'Could not submit for review. Try again.',
+          ),
+        ),
+      );
+      return;
+    }
+    ref.invalidate(hostExperiencesProvider);
+    ref.invalidate(hostDashboardProvider);
+    ref.read(hostCreateExperienceProvider.notifier).reset();
+    if (mounted) context.go('/host/experiences/submitted');
   }
 }
 

@@ -205,6 +205,21 @@ class SupabaseHostModeRepository extends UnavailableHostModeRepository {
   }
 
   @override
+  Future<HostExperience> submitForReview(HostExperienceDraft draft) async {
+    await _requireApprovedHost();
+    // Persist the latest edits first, then flip draft -> pending_review. The
+    // RPC never reaches 'published' (admin content:manage does that) and
+    // rejects an incomplete draft with an actionable message.
+    final saved = await saveDraft(draft);
+    await _client.rpc(
+      'host_submit_experience_for_review',
+      params: {'p_experience_id': saved.id},
+    );
+    final reviewed = await getExperience(saved.id);
+    return reviewed ?? saved;
+  }
+
+  @override
   Future<List<HostBookingRequest>> getBookings() async {
     await _requireApprovedHost();
     final experiences = await getExperiences();

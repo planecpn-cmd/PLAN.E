@@ -140,9 +140,10 @@ void main() {
     expect(find.textContaining('Could not save the draft'), findsOneWidget);
   });
 
-  testWidgets('Submit for review (preview) does not hit the write path', (
+  testWidgets('Submit for review (preview) handles a write failure', (
     tester,
   ) async {
+    // RPC-backed since H1(4/4): a failed submit is caught and shown.
     await _pump(
       tester,
       _host(const HostExperiencePreviewScreen(), draft: _validDraft()),
@@ -152,7 +153,7 @@ void main() {
       tester,
       () => _tapAndSettle(tester, find.text('Submit for review')),
     );
-    expect(find.textContaining(_notice), findsOneWidget);
+    expect(find.textContaining('Could not submit for review'), findsOneWidget);
   });
 
   testWidgets('Pause listing (experience detail) handles a write failure', (
