@@ -1,6 +1,6 @@
 // G8: no horizontal overflow at 360 / 390 / 768 / 1280 on any IA route.
 import { test, expect } from "@playwright/test";
-import { iaRoutes } from "./lib";
+import { iaRoutes, settle } from "./lib";
 
 const WIDTHS = [360, 390, 768, 1280];
 
@@ -10,7 +10,7 @@ test("gate-viewports: no horizontal overflow on IA routes", async ({ page }) => 
   for (const width of WIDTHS) {
     await page.setViewportSize({ width, height: 900 });
     for (const route of routes) {
-      await page.goto(route, { waitUntil: "load" });
+      await settle(page, route);
       const { scroll, client } = await page.evaluate(() => ({
         scroll: document.documentElement.scrollWidth,
         client: document.documentElement.clientWidth,

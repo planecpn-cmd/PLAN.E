@@ -3,7 +3,7 @@
 // resolved to a Supabase query; the gate fails if the query returns fewer
 // rows than displayed.
 import { test, expect, type Page } from "@playwright/test";
-import { readableCount, nepalDate, publishedExperiences, openDepartures, type Dep } from "./lib";
+import { settle, readableCount, nepalDate, publishedExperiences, openDepartures, type Dep } from "./lib";
 
 const LIST_PAGES = ["/", "/explore", "/search", "/map", "/collection/recommended", "/collection/trending"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -23,7 +23,7 @@ async function context(): Promise<Ctx> {
 }
 
 async function checkPage(page: Page, route: string, ctx: Ctx): Promise<string[]> {
-  await page.goto(route, { waitUntil: "load" });
+  await settle(page, route);
   return analyse(page, route, ctx);
 }
 
@@ -75,7 +75,7 @@ async function analyse(page: Page, route: string, ctx: Ctx): Promise<string[]> {
 
 async function checkSpots(page: Page, slug: string, ctx: Ctx): Promise<string[]> {
   const route = `/experience/${slug}`;
-  await page.goto(route, { waitUntil: "load" });
+  await settle(page, route);
   const text = await page.locator("body").innerText();
   const out: string[] = [];
   const id = ctx.idBySlug.get(slug);

@@ -37,6 +37,19 @@ export async function readableCount(table: string): Promise<number> {
   return r.count ?? r.rows?.length ?? 0;
 }
 
+/**
+ * Navigate and wait until the page has finished streaming: `load`, then no
+ * loading skeleton (`.animate-pulse`, only ever rendered by loading states)
+ * left in the DOM. Reading earlier would judge a skeleton, which could make
+ * the gates pass or fail on timing. networkidle is not used; the site holds
+ * connections open, so it never settles.
+ */
+export async function settle(page: import("@playwright/test").Page, route: string) {
+  const res = await page.goto(route, { waitUntil: "load" });
+  await page.waitForFunction(() => !document.querySelector(".animate-pulse"), null, { timeout: 30_000 });
+  return res;
+}
+
 /** Departures are Nepal-local calendar dates. */
 export function nepalDate(offsetDays = 0): string {
   const d = new Date(Date.now() + offsetDays * 86_400_000);

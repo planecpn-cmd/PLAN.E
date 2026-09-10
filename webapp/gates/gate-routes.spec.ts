@@ -1,11 +1,11 @@
 // G2: every route in the IA returns 200 and renders non-empty main content.
 import { test, expect } from "@playwright/test";
-import { iaRoutes } from "./lib";
+import { iaRoutes, settle } from "./lib";
 
 test("gate-routes: every IA route returns 200 with non-empty main content", async ({ page }) => {
   const failures: string[] = [];
   for (const route of await iaRoutes()) {
-    const res = await page.goto(route, { waitUntil: "domcontentloaded" });
+    const res = await settle(page, route);
     const status = res?.status() ?? 0;
     // Pages without a <main> landmark (auth) fall back to <body>.
     const region = (await page.locator("main").count()) > 0 ? page.locator("main").first() : page.locator("body");
