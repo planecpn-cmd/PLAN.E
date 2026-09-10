@@ -11,7 +11,6 @@ import '../../../widgets/widgets.dart';
 import '../domain/host_experience_validator.dart';
 import '../domain/host_mode_models.dart';
 import 'host_mode_providers.dart';
-import 'widgets/host_mode_scaffold.dart';
 
 class CreateHostExperienceScreen extends ConsumerStatefulWidget {
   const CreateHostExperienceScreen({super.key, this.experienceId});
@@ -159,13 +158,26 @@ class _CreateHostExperienceScreenState
     return error == null;
   }
 
-  // H0 stopgap: experience writes are not wired to a backend yet
-  // (see docs/H1_HOST_WRITE_PATH.md). Keep the wizard's edits in local state and
-  // surface a clear notice instead of calling the repository, whose write
-  // methods throw an unhandled StateError in production.
-  void _saveDraft() {
+  Future<void> _saveDraft() async {
     _commit();
-    showUnavailableNotice(context, 'Saving experience drafts');
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final saved = await ref
+          .read(hostModeRepositoryProvider)
+          .saveDraft(ref.read(hostCreateExperienceProvider));
+      ref
+          .read(hostCreateExperienceProvider.notifier)
+          .update(ref.read(hostCreateExperienceProvider).copyWith(id: saved.id));
+      ref.invalidate(hostExperiencesProvider);
+      if (!mounted) return;
+      setState(() => dirty = false);
+      messenger.showSnackBar(const SnackBar(content: Text('Draft saved.')));
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Could not save the draft. Try again.')),
+      );
+    }
   }
 
   Future<bool> _confirmExit() async {

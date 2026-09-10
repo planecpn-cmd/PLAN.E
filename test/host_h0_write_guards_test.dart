@@ -127,16 +127,17 @@ Future<void> _tapAndSettle(WidgetTester tester, Finder finder) async {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('Save draft (create experience) does not hit the write path', (
+  testWidgets('Save draft (create experience) handles a write failure', (
     tester,
   ) async {
+    // RPC-backed since H1(3/4): a failed save is caught and shown, not escaped.
     await _pump(tester, _host(const CreateHostExperienceScreen()));
 
     await expectNoWritePathError(
       tester,
       () => _tapAndSettle(tester, find.text('Save draft')),
     );
-    expect(find.textContaining(_notice), findsOneWidget);
+    expect(find.textContaining('Could not save the draft'), findsOneWidget);
   });
 
   testWidgets('Submit for review (preview) does not hit the write path', (

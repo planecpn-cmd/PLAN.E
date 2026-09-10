@@ -170,6 +170,41 @@ class SupabaseHostModeRepository extends UnavailableHostModeRepository {
   }
 
   @override
+  Future<HostExperience> saveDraft(HostExperienceDraft draft) async {
+    await _requireApprovedHost();
+    // SECURITY DEFINER RPC: only ever writes status = 'draft'. Photos stay
+    // local for now (no experience-photo bucket yet); only already-hosted
+    // http gallery URLs are forwarded.
+    final payload = <String, dynamic>{
+      if (draft.id != null) 'id': draft.id,
+      'title': draft.title,
+      'location': draft.location,
+      'description': draft.description,
+      'trip_details': draft.tripDetails,
+      'meeting_point': draft.meetingPoint,
+      'price_npr': draft.priceNpr,
+      'capacity': draft.capacity,
+      'start_date': draft.startDate?.toIso8601String().split('T').first,
+      'end_date': draft.endDate?.toIso8601String().split('T').first,
+      'itinerary': draft.itinerary,
+      'included': draft.included,
+      'bring': draft.bring,
+      'gallery': draft.photoAssets.where((p) => p.startsWith('http')).toList(),
+    };
+    final id =
+        await _client.rpc(
+              'host_save_experience_draft',
+              params: {'p': payload},
+            )
+            as String;
+    final saved = await getExperience(id);
+    if (saved == null) {
+      throw StateError('The draft was saved but could not be reloaded.');
+    }
+    return saved;
+  }
+
+  @override
   Future<List<HostBookingRequest>> getBookings() async {
     await _requireApprovedHost();
     final experiences = await getExperiences();
