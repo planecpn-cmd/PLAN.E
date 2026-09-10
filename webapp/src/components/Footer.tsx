@@ -36,9 +36,6 @@ export function Footer() {
             <Link href="/host" className={linkClass}>
               Become a host
             </Link>
-            <Link href="/profile/help" className={linkClass}>
-              Help
-            </Link>
           </nav>
         </div>
         <div className="mt-6 border-t border-[var(--color-border-subtle)] pt-4">

@@ -63,15 +63,6 @@ export function TopNav() {
           >
             <Icon name="search" size={18} />
           </Link>
-          {!loading && user && (
-            <Link
-              href="/notifications"
-              aria-label="Notifications"
-              className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-ink)]/70 hover:bg-[var(--color-sage)]"
-            >
-              <Icon name="bell" size={18} />
-            </Link>
-          )}
           {!loading &&
             (user ? (
               <button
@@ -82,13 +73,6 @@ export function TopNav() {
               </button>
             ) : (
               <>
-                <Link
-                  href="/notifications"
-                  aria-label="Notifications"
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-ink)]/70 hover:bg-[var(--color-sage)]"
-                >
-                  <Icon name="bell" size={18} />
-                </Link>
                 <Link href="/auth/sign-up" className="text-sm font-medium text-[var(--color-ink)]/70 hover:text-[var(--color-forest)]">
                   Sign up
                 </Link>

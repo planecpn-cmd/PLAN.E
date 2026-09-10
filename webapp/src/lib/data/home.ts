@@ -28,7 +28,7 @@ export const homeSections: HomeSectionSpec[] = [
   },
   {
     slug: "mind-soul",
-    title: "Soul & Mind",
+    title: "Mind & Soul",
     description: "Wellness, reflection, healing and creativity",
     filters: [
       { label: "Yoga", categories: ["yoga"], terms: ["yoga"] },
