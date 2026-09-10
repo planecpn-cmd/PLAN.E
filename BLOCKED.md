@@ -59,7 +59,13 @@ Rule 1: render nothing and log the exact query.
 
 # P0-CRIT (2026-09-10)
 
-Run B6, then B7, then (after your decision) B8. Each block is a single transaction. Run them in the Supabase SQL editor as `postgres`. The anon key cannot write any of this.
+**Update (INFRA node):** B6 and B7 now ship as `supabase/migrations/20260910200000_close_past_departures_unpublish_demo.sql`. B8 ships as `supabase/migrations/20260910200100_recategorise_mislabelled_listings.sql`, commented out until you decide. `deploy.yml` applies them on merge to `main`, so **do not also run the SQL below by hand**. Two differences from the SQL below:
+- The migration's past-departure cutoff is the fixed audit date `2026-09-10`, not `now()`. This makes it exact and reversible.
+- B8 matches rows with `is distinct from`, so re-running it is a no-op.
+
+Pushing and PR setup is in `SETUP.md`.
+
+Original instructions (kept for reference): run B6, then B7, then (after your decision) B8. Each block is a single transaction. Run them in the Supabase SQL editor as `postgres`. The anon key cannot write any of this.
 
 ## B4: PRs for items 1–4 could not be opened
 
