@@ -174,4 +174,13 @@ describe("withAdmin", () => {
     const res = await makeWithAdmin(d)("content:manage", async () => Response.json({ ok: true }))(req());
     expect(res.status).toBe(200);
   });
+
+  // P3: users:manage is its own gate, distinct from the booking/payment read scopes.
+  it("users:manage handler is 403 for a bookings:read-only staff member", async () => {
+    const { d } = deps({ loadStaff: async () => ({ status: "active", scopes: ["bookings:read"] }) });
+    const handler = vi.fn(async () => ok());
+    const res = await makeWithAdmin(d)("users:manage", handler, { mutating: true })(req());
+    expect(res.status).toBe(403);
+    expect(handler).not.toHaveBeenCalled();
+  });
 });

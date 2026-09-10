@@ -7,8 +7,10 @@ import type { Scope } from "@/lib/scopes";
 const NAV: { href: string; label: string; scope: Scope }[] = [
   { href: "/host-applications", label: "Host applications", scope: "hosts:review" },
   { href: "/experiences", label: "Experiences", scope: "content:manage" },
+  { href: "/bookings", label: "Bookings", scope: "bookings:read" },
+  { href: "/payments", label: "Payments", scope: "payments:read" },
+  { href: "/users", label: "Users", scope: "bookings:read" },
   { href: "/config", label: "Config & feature flags", scope: "content:manage" },
-  // bookings, payments, finance screens land in P3.
 ];
 
 export function AdminShell({

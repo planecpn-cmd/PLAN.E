@@ -5,18 +5,18 @@ Every person with access to the admin panel has a **staff record** with a
 permission switches. A staff member sees a menu item and can use the matching
 tools only if they hold that scope; everything else is invisible and refused.
 
-**Founders hold all nine scopes.** A **moderator** holds only the scopes a
+**Founders hold all ten scopes.** A **moderator** holds only the scopes a
 founder grants them — usually two or three. Suspending a staff member's status
 removes all access at once, regardless of scopes.
 
 There is no "super-admin toggle" separate from this list. If a staff member can
-do something in the panel, it is because of one of these nine scopes (plus, for
+do something in the panel, it is because of one of these ten scopes (plus, for
 a couple of legacy config tools, a separate `role = admin` flag that only
 founders have).
 
 ---
 
-## The nine scopes
+## The ten scopes
 
 ### Host onboarding
 
@@ -39,14 +39,20 @@ alone.
 Same two-person split as host onboarding: `content:manage` recommends,
 `content:decide` publishes.
 
-### Bookings and money — *screens land in P3; the scopes exist so they can be granted ahead of time*
+### Bookings and money
 
 | Scope | Can see | Can change |
 |---|---|---|
-| **`bookings:read`** | Every booking: who booked, how many people, dates, the experience, contact details, payment state, and the legal terms they accepted. | Nothing (read-only). |
-| **`payments:read`** | Every payment record and its status (initiated / paid / failed). | Nothing (read-only). |
-| **`payments:act`** | (Also sees payments.) | **Acts on a payment** — issue a refund, resolve a stuck payment. *(Reserved — the tools are P3.)* |
+| **`bookings:read`** | Every booking: who booked, how many people, dates, the experience, contact details, payment state, and the legal terms they accepted. Also the user list (name, phone, booking count, total spent). | Nothing (read-only). |
+| **`payments:read`** | Every payment record and its status (initiated / paid / failed / refunded), the reconciliation view (what we think vs what the gateway says), the stuck-payment queue, and refund records. | Nothing (read-only). |
+| **`payments:act`** | (Also sees payments.) | **Acts on a booking's money:** re-verify a stuck payment with the gateway (runs the finalizer if the gateway confirms it), create a refund request, advance a refund through its states, and **cancel a booking** (with a mandatory reason). The live gateway *refund* call itself is behind an off-by-default switch — a refund is recorded as pending until the founder enables and tests it. |
 | **`finance:read`** | Settlement, payout, and invoice/tax data. | Nothing (read-only). *(Reserved — the data is P4/P5.)* |
+
+### Users
+
+| Scope | Can see | Can change |
+|---|---|---|
+| **`users:manage`** | (Also needs `bookings:read` to open the user list.) | **Suspend or reactivate a user account** — traveller or host — with a mandatory reason. One action: whether "block" should differ from "suspend", and whether either cancels confirmed bookings, is an open founder question. **Country is not collected anywhere in the product**, so it is shown as absent, never guessed. |
 
 ### Staff
 
@@ -71,16 +77,18 @@ enough to sign in, nothing more.
 | **Publish a listing / send it back** | ✅ | ❌ | ✅ |
 | Toggle feature flags, edit config | ✅ | ✅ | ✅ |
 | See all bookings & contact details | ✅ | ❌ (needs `bookings:read`) | ❌ |
-| See all payments | ✅ | ❌ (needs `payments:read`) | ❌ |
-| **Refund / resolve a payment** | ✅ *(when P3 ships)* | ❌ | ❌ |
+| See all payments & the reconciliation view | ✅ | ❌ (needs `payments:read`) | ❌ |
+| **Re-verify a stuck payment / create a refund / cancel a booking** | ✅ | ❌ (needs `payments:act`) | ❌ |
+| Search users, see spend & booking count | ✅ | ❌ (needs `bookings:read`) | ❌ |
+| **Suspend / reactivate a user account** | ✅ | ❌ (needs `users:manage`) | ❌ |
 | See / manage other staff | ✅ | ❌ (needs `staff:manage`) | ❌ |
 | See finance / settlement data | ✅ *(when it ships)* | ❌ | ❌ |
 
 Rule of thumb for granting: give a moderator the **read** scope for the area
 they work in, plus **`hosts:review`** or **`content:manage`** if they triage.
 Hold back the **decide/act** scopes (`hosts:decide`, `content:decide`,
-`payments:act`, `staff:manage`) for people you trust to make the final call
-alone.
+`payments:act`, `users:manage`, `staff:manage`) for people you trust to make the
+final call alone.
 
 ---
 
@@ -93,7 +101,7 @@ alone.
 - The **database** itself only shows a staff member the rows their scopes allow,
   even if they bypass the panel.
 
-All four layers check the same nine scopes. Changing what a staff member can do
+All four layers check the same ten scopes. Changing what a staff member can do
 is always: change their scopes.
 
 *Source of truth: the `staff_members_scopes_known` CHECK in
