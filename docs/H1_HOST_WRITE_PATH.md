@@ -19,6 +19,8 @@ Client doc says "3 EXPERIENCE AWAITING APPROVAL"; `experience_status` already ca
 
 **Why copy, not signed-URL-always:** copy keeps the public surface a single well-known bucket (`catalog-images`, already how seeded catalog imagery works — stable CDN-friendly URLs). A takedown is then one delete from that one bucket + set the experience `archived`; the private original is not publicly reachable so it needs no urgent action. Signed-URL-always also unpublishes cleanly but couples every catalog image read to short-lived URL minting forever to get that property, and diverges from the existing catalog delivery model. Rejected the "public bucket, rely on nothing linking to unpublished photos" option outright — that is obscurity and it publicly hosts unreviewed uploads on our domain.
 
+**Cleanup story (do not build now):** copy-on-approve leaves the private originals in `experience-photos` behind for the lifetime of the experience, including for **rejected / archived** listings that will never be approved. There is no reference-counting or TTL. For now this is an accepted, documented leak: a **manual periodic sweep** — delete `experience-photos/<host_id>/<experience_id>/` for any experience whose status has been `rejected` or `archived` for more than N days — run by an operator, not code. Wire an automated sweep (a cron edge function keyed off `experiences.status` + `updated_at`) only if storage cost or a data-retention requirement makes it worth it.
+
 ### D3 — taxonomy: NOT NULL status of the six columns (reported, per request)
 
 `public.experiences`, from `0005_experiences.sql`; **no later migration alters any of these**:
@@ -43,6 +45,29 @@ Recommend (a): keeps the live catalog's not-null invariant intact and needs no s
 ### D4 — `slug` uniqueness: retry-on-conflict
 
 `slug text unique not null`. Generate `slugify(title) + '-' + base36(short hash)`; on unique-violation, regenerate the hash and retry (bounded, e.g. 5 attempts). Do **not** repeat the `booking_ref` pattern of a unique column with no retry path.
+
+---
+
+## H1 core — build status (as of the H1 core commits)
+
+Four `SECURITY DEFINER` RPCs, each `revoke execute from public, anon` + `grant to authenticated`, each in `security_definer_manifest.json` under `authenticated_callable` with a reasoning note, each with a `*.test.sql` covering owner / non-owner / suspended / wrong-status. All check `auth.uid()`, `host_id = auth.uid()` ownership, and `private.is_approved_active_host(auth.uid())`. The client can only ever produce `draft` or `pending_review` — never `published`.
+
+| RPC | Migration | What it does | Screen re-wired from the H0 notice |
+|---|---|---|---|
+| `host_set_experience_paused(uuid, boolean)` | `20260909150000` | published ↔ paused for an owned listing | `host_experience_detail_screen` — confirm dialog + call + invalidate; failure caught |
+| `host_update_experience_availability(uuid, date, date, int)` | `20260909160000` | edits the **earliest open departure** (creates one if none); rejects capacity below booked count and date moves under active bookings | `host_availability_screen` — validate + call + pop; failure caught |
+| `host_save_experience_draft(jsonb)` | `20260909170000` | insert/update an experience **draft only**; rewrites `itinerary_items`; upserts the earliest open departure; server-generates the slug | `create_host_experience_screen` — "Save draft" calls the RPC, stores the returned id; failure caught |
+| `host_submit_experience_for_review(uuid)` | `20260909180000` | `draft` → `pending_review` after a completeness check; **no path to `published`** | `host_experience_preview_screen` — validate + submit + navigate; RPC error messages surfaced |
+
+**One-departure reconciliation (RPC 2 & 3):** no HALT. The RPCs deterministically target the earliest `status = 'open'` departure — exactly the one the flattened `HostExperience` model and the host UI already show — and create one if none exists. Managing multiple departures per experience is a separate future UI concern; these RPCs do not corrupt a many-departure experience.
+
+**Lossy draft mapping (RPC 3), documented in the migration:** `trip_details` → a single `things_to_know` element (no column for it); `category_id` / `region_id` / `difficulty` / `duration_hours` left to the admin at review (`duration_hours` is derived from the date span when both dates are present, else the column default).
+
+### Not done — the next H1 increments
+
+1. **Experience photo upload (D2).** `host_save_experience_draft` does **not** upload photos — the wizard's photo step is still local-only, drafts carry `cover_image_url = NULL`. Because `host_submit_experience_for_review` correctly requires a cover, **end-to-end "a host creates and submits an experience" is blocked** until this lands. Scope: the private `experience-photos` bucket + host-scoped storage RLS + a client upload path + threading `cover_image_url` / `gallery` through `saveDraft`. Estimate ~2–3 days.
+2. **N1 admin experience-review node.** `pending_review` rows now exist but nothing consumes them. A `content:manage` queue + a decision RPC (`pending_review` → `published`, with the copy-on-approve photo promotion from D2) + a host notification. Mirrors P2's host-application review; ~3–4 days.
+3. **`updateBookingStatus` — still deferred** (own node after N3). `booking_status` has no host-decision state; decline-with-refund needs the refund path; accept touches frozen `finalize_verified_payment`.
 
 ---
 
