@@ -9,8 +9,14 @@ key must never share a bundle with public pages.
 - **`staff_members.status` + `staff_members.scopes`** — the authorization
   record. A staff member is `active` with a set of scopes:
   `hosts:review`, `hosts:decide`, `bookings:read`, `payments:read`,
-  `payments:act`, `finance:read`, `content:manage`, `staff:manage` (mirrors the
-  DB CHECK in `20260908120000_*` and `src/lib/scopes.ts`).
+  `payments:act`, `finance:read`, `content:manage`, `content:decide`,
+  `staff:manage` (mirrors the DB CHECK in `20260908120000_*` /
+  `20260910120000_*` and `src/lib/scopes.ts`).
+  - `content:manage` — config, feature flags, catalog, and **recommending** on
+    the experience review queue.
+  - `content:decide` — **committing** a publish/reject decision on a listing and
+    normalising its taxonomy. The recommend/decide split from P2's
+    `hosts:review` / `hosts:decide`, kept for listings rather than collapsed.
 - **Every business-table read is gated by the matching scope, in RLS.**
   `20260908140000` replaced bare `is_admin()` with
   `public.has_scope(<scope>)` on `bookings` / `booking_participants` /
@@ -61,7 +67,7 @@ select set_config('request.jwt.claims', '{"role":"service_role"}', true);
 insert into public.staff_members (user_id, status, scopes)
 values ('<your-local-auth-uid>', 'active', array[
   'hosts:review','hosts:decide','bookings:read','payments:read',
-  'payments:act','finance:read','content:manage','staff:manage'])
+  'payments:act','finance:read','content:manage','content:decide','staff:manage'])
 on conflict (user_id) do update set status = 'active', scopes = excluded.scopes;
 
 -- role = 'admin' is NOT required to sign in (staff_members self-read handles
@@ -109,9 +115,24 @@ runs before the app even loads.
 Access is defence-in-depth on top of the app's own session + `staff_members` +
 scope checks — not a replacement for them.
 
-## Deliberately NOT built yet (P1 scope)
+## Built
 
-- Any host-review, bookings, payments, finance, or staff-management screen (P2/P3).
+- **Host application review** (P2) — `/host-applications` queue + detail,
+  `hosts:review` recommends / `hosts:decide` decides.
+- **Experience review** (N1) — `/experiences` queue (pending_review, oldest
+  first, age badge) + detail (submitted listing, departure, itinerary, photos
+  via signed URL). `content:manage` recommends; `content:decide` approves
+  (copy-on-approve promotes photos `experience-photos` → the public
+  `experience-photos-public` bucket, sets the public cover/gallery, normalises
+  `category_id` / `region_id` / `difficulty`, status → `published`) or
+  reject / request-changes (→ `draft`, reason mandatory, private originals kept).
+  Every decision writes an `experience_reviews` row + an `admin_audit_log` row
+  and calls `notifyExperienceDecision` (gated on `HOST_DECISION_COPY`).
+- **Config / feature flags** (P1).
+
+## Deliberately NOT built yet
+
+- Bookings, payments, finance, or staff-management screens (P3+).
 - Editing `app_config` / `remote_content` / `app_versions` (only `feature_flags`
   toggling is wired, to prove the `withAdmin` write path).
 - Admin INSERT/UPDATE/DELETE RLS policies — there are none; all writes are

@@ -67,6 +67,45 @@ export async function notifyHostDecision(opts: {
   return { sent: true };
 }
 
+// Same gate, same copy constant — an experience decision notifies the host on
+// the same path. Sends nothing until HOST_DECISION_COPY is filled.
+export async function notifyExperienceDecision(opts: {
+  db: SupabaseClient;
+  userId: string;
+  experienceId: string;
+  outcome: HostDecisionOutcome;
+  locale?: "en" | "ne";
+}): Promise<{ sent: boolean; reason?: string }> {
+  if (!HOST_DECISION_COPY) {
+    console.warn("[notifyExperienceDecision] copy not configured — no notification sent", {
+      experienceId: opts.experienceId,
+      outcome: opts.outcome,
+    });
+    return { sent: false, reason: "copy_unconfigured" };
+  }
+
+  const entry = HOST_DECISION_COPY[opts.outcome];
+  const loc = opts.locale === "ne" ? entry.ne : entry.en;
+
+  const { error } = await opts.db.from("notifications").insert({
+    user_id: opts.userId,
+    type: "experience",
+    title: loc.title,
+    body: loc.body,
+    entity_id: opts.experienceId,
+  });
+  if (error) console.error("[notifyExperienceDecision] notification row insert failed", error);
+
+  await sendHostDecisionPush(opts.db, opts.userId, loc.title, loc.body).catch((e) =>
+    console.error("[notifyExperienceDecision] push failed", e),
+  );
+  await sendHostDecisionEmail(opts.userId, loc.title, loc.body, HOST_DECISION_COPY.fromAddress).catch(
+    (e) => console.error("[notifyExperienceDecision] email failed", e),
+  );
+
+  return { sent: true };
+}
+
 async function sendHostDecisionPush(
   db: SupabaseClient,
   userId: string,

@@ -46,7 +46,7 @@ begin
   insert into public.staff_members (user_id, status, scopes)
   values
     (v_founder, 'active', array['hosts:review','hosts:decide','bookings:read','payments:read',
-                               'payments:act','finance:read','content:manage','staff:manage']),
+                               'payments:act','finance:read','content:manage','content:decide','staff:manage']),
     (v_reviewer, 'active',    array['hosts:review']),
     (v_decider,  'active',    array['hosts:review','hosts:decide']),
     (v_decideonly,'active',   array['hosts:decide']),

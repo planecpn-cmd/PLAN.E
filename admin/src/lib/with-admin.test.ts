@@ -156,4 +156,22 @@ describe("withAdmin", () => {
     const res = await makeWithAdmin(d)("hosts:review", async () => Response.json({ ok: true }))(req());
     expect(res.status).toBe(200);
   });
+
+  // N1 content review split — content:decide is a distinct gate from content:manage.
+  it("content:decide handler is 403 for a content:manage-only staff member", async () => {
+    const { d, audits } = deps({
+      loadStaff: async () => ({ status: "active", scopes: ["content:manage"] }),
+    });
+    const handler = vi.fn(async () => ok());
+    const res = await makeWithAdmin(d)("content:decide", handler, { mutating: true })(req());
+    expect(res.status).toBe(403);
+    expect(handler).not.toHaveBeenCalled();
+    expect(audits).toHaveLength(0);
+  });
+
+  it("content:manage handler runs for a content:manage staff member", async () => {
+    const { d } = deps({ loadStaff: async () => ({ status: "active", scopes: ["content:manage"] }) });
+    const res = await makeWithAdmin(d)("content:manage", async () => Response.json({ ok: true }))(req());
+    expect(res.status).toBe(200);
+  });
 });

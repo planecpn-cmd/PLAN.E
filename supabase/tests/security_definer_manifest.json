@@ -7,7 +7,7 @@
     "When you add or change a SECURITY DEFINER function: update this file AND the .test.sql list."
   ],
   "audited_at": "2026-09-09",
-  "audited_against_migration": "20260908140000_scope_aware_admin_policies + 20260909120000_host_review_workflow + 20260909150000-180000 host write path (H1 core 1-4/4)",
+  "audited_against_migration": "20260908140000_scope_aware_admin_policies + 20260909120000_host_review_workflow + 20260909150000-190000 host write path + photo slice + 20260910120000_experience_review_workflow (N1 -- no new SECURITY DEFINER functions; the decision logic is a service-role admin route)",
 
   "service_role_only": [
     "public.check_ai_rate_limit(text, integer, integer)",

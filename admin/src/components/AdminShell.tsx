@@ -6,6 +6,7 @@ import type { Scope } from "@/lib/scopes";
 // (requireScope) and by withAdmin for its API routes — both layers.
 const NAV: { href: string; label: string; scope: Scope }[] = [
   { href: "/host-applications", label: "Host applications", scope: "hosts:review" },
+  { href: "/experiences", label: "Experiences", scope: "content:manage" },
   { href: "/config", label: "Config & feature flags", scope: "content:manage" },
   // bookings, payments, finance screens land in P3.
 ];
