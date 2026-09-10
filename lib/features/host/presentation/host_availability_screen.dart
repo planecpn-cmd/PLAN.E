@@ -5,7 +5,6 @@ import '../../../theme/theme.dart';
 import '../../../widgets/widgets.dart';
 import '../domain/host_mode_models.dart';
 import 'host_mode_providers.dart';
-import 'widgets/host_mode_scaffold.dart';
 
 class HostAvailabilityScreen extends ConsumerStatefulWidget {
   const HostAvailabilityScreen({super.key, required this.id});
@@ -67,16 +66,14 @@ class _HostAvailabilityScreenState
             ),
             const SizedBox(height: 16),
             AppButton(
-              label: 'Update availability',
+              label: _saving ? 'Saving…' : 'Update availability',
               isFullWidth: true,
-              // H0 stopgap: editing availability is not wired to a backend yet
-              // (see docs/H1_HOST_WRITE_PATH.md).
-              onPressed: () =>
-                  showUnavailableNotice(context, 'Updating availability'),
+              onPressed: _saving ? null : _save,
             ),
             const SizedBox(height: 8),
             Text(
-              'Editing availability is not available yet.',
+              'Capacity cannot drop below the number already booked, and dates '
+              'cannot move once a departure has bookings.',
               style: AppTypography.caption.copyWith(
                 color: AppColors.disabledText,
               ),
@@ -87,6 +84,44 @@ class _HostAvailabilityScreenState
       },
     ),
   );
+
+  bool _saving = false;
+
+  Future<void> _save() async {
+    final count = int.tryParse(capacity.text.trim());
+    if (start == null ||
+        end == null ||
+        end!.isBefore(start!) ||
+        count == null ||
+        count < 1 ||
+        count > 100) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter valid dates and a capacity from 1 to 100.'),
+        ),
+      );
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      await ref
+          .read(hostModeRepositoryProvider)
+          .updateAvailability(widget.id, start!, end!, count);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not update availability. Try again.'),
+          ),
+        );
+      }
+      return;
+    }
+    ref.invalidate(hostExperienceProvider(widget.id));
+    ref.invalidate(hostExperiencesProvider);
+    if (mounted) Navigator.pop(context);
+  }
   Future<void> _pick(bool first) async {
     final value = await showDatePicker(
       context: context,

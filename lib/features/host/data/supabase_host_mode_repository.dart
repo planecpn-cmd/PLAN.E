@@ -148,6 +148,28 @@ class SupabaseHostModeRepository extends UnavailableHostModeRepository {
   }
 
   @override
+  Future<void> updateAvailability(
+    String id,
+    DateTime start,
+    DateTime end,
+    int capacity,
+  ) async {
+    await _requireApprovedHost();
+    // SECURITY DEFINER RPC: targets the earliest open departure (creates one if
+    // none), re-checks ownership + approved-active host, and rejects a capacity
+    // below the booked count or a date move while active bookings exist.
+    await _client.rpc(
+      'host_update_experience_availability',
+      params: {
+        'p_experience_id': id,
+        'p_start': start.toIso8601String().split('T').first,
+        'p_end': end.toIso8601String().split('T').first,
+        'p_total_spots': capacity,
+      },
+    );
+  }
+
+  @override
   Future<List<HostBookingRequest>> getBookings() async {
     await _requireApprovedHost();
     final experiences = await getExperiences();

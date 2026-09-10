@@ -171,7 +171,9 @@ void main() {
     expect(find.textContaining('Could not pause'), findsOneWidget);
   });
 
-  testWidgets('Update availability does not hit the write path', (tester) async {
+  testWidgets('Update availability handles a write failure', (tester) async {
+    // RPC-backed since H1(2/4): validate -> repo call. A failed call is caught
+    // and shown, not left to escape.
     await _pump(
       tester,
       _host(const HostAvailabilityScreen(id: 'mock-exp-mardi')),
@@ -181,7 +183,7 @@ void main() {
       tester,
       () => _tapAndSettle(tester, find.text('Update availability')),
     );
-    expect(find.textContaining(_notice), findsOneWidget);
+    expect(find.textContaining('Could not update availability'), findsOneWidget);
   });
 
   testWidgets('Accept / Decline (booking detail) do not hit the write path', (

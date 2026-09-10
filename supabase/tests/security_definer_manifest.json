@@ -7,7 +7,7 @@
     "When you add or change a SECURITY DEFINER function: update this file AND the .test.sql list."
   ],
   "audited_at": "2026-09-09",
-  "audited_against_migration": "20260908140000_scope_aware_admin_policies + 20260909120000_host_review_workflow + 20260909150000_host_set_experience_paused (H1 core 1/4)",
+  "audited_against_migration": "20260908140000_scope_aware_admin_policies + 20260909120000_host_review_workflow + 20260909150000/160000 host write path (H1 core 1-2/4)",
 
   "service_role_only": [
     "public.check_ai_rate_limit(text, integer, integer)",
@@ -21,6 +21,7 @@
     "public.get_my_profile()",
     "public.current_host_access()",
     "public.host_set_experience_paused(uuid, boolean)",
+    "public.host_update_experience_availability(uuid, date, date, integer)",
     "public.host_booking_payment_transactions()",
     "public.register_trip_message_attachment(uuid, text, text, bigint)",
     "public.mark_trip_conversation_read(uuid)",
@@ -68,6 +69,7 @@
   "notes": {
     "public.has_scope(text)": "Added 20260908140000. Backs the scope-gated admin SELECT policies. authenticated_callable is correct: it is an RLS helper (must be executable by the RLS evaluator running as `authenticated`), and a direct caller learns only whether THEY hold a scope — no cross-user disclosure, and inferable anyway from which queries succeed. Same class as is_approved_active_host / current_host_access. NOT service-role-only.",
     "public.host_set_experience_paused(uuid, boolean)": "Added 20260909150000 (H1 core 1/4). authenticated_callable is correct: it is the only client path to toggle experiences.status published<->paused (direct writes to experiences were revoked from authenticated in 20260823120000). The body re-checks auth.uid(), host_id = auth.uid() ownership, private.is_approved_active_host(auth.uid()), and that the current status permits the toggle. A caller can only affect their own already-published listing; nothing is disclosed. NOT service-role-only.",
+    "public.host_update_experience_availability(uuid, date, date, integer)": "Added 20260909160000 (H1 core 2/4). authenticated_callable: the only client path to write experience_departures (authenticated has SELECT only). Body re-checks auth.uid(), experiences.host_id = auth.uid() ownership, private.is_approved_active_host(auth.uid()); targets the earliest open departure (creates one if none); rejects a capacity below the booked count and a date move while active bookings exist. Never touches experiences.status. Affects only the caller's own experience. NOT service-role-only.",
     "public.claim_trip_push_deliveries(uuid)": "P0.6 fix: 20260816130000 granted it (via weak revoke) to anon+authenticated. 20260908090000 revokes execute from public, anon, authenticated. NOT YET DEPLOYED TO HOSTED — needs a prompt separate hosted deploy.",
     "public.register_trip_push_device / unregister_trip_push_device": "anon retains a stray EXECUTE from the same weak revoke. Harmless: body raises 'Authentication required' when auth.uid() is null. Left as-is; classified authenticated_callable.",
     "public.get_trip_moderation_queue / review_trip_message_report": "anon retains a stray EXECUTE. Harmless: body raises 'Admin access required' unless public.is_admin(). Not tightened in P0.6 to avoid scope creep; tracked as admin_gated_in_body.",
