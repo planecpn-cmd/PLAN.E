@@ -6,13 +6,15 @@
 -- is an admin action. Editing a row that is already published / pending_review
 -- is rejected here -- that path (a pending_review revision, N1) is a later node.
 --
--- Photos are deferred: the wizard holds local file paths until a later slice
--- adds the private experience-photos bucket. cover_image_url stays NULL for a
--- draft (20260909140000 made it optional below pending_review).
+-- cover_image_url / gallery hold experience-photos storage PATHS while the row
+-- is a draft (20260909140000 made cover optional below pending_review); the
+-- admin promotes them to public catalog-images URLs on approval (D2). They may
+-- also be NULL/empty -- a draft can be saved before photos are added.
 --
 -- Lossy field mapping documented inline: trip_details has no column and is
 -- stored as a single things_to_know element; category_id / region_id / difficulty
--- / duration_hours are left to the admin at review.
+-- / duration_hours are left to the admin at review. The single-departure
+-- limitation is tracked in docs/H1_HOST_WRITE_PATH.md under "Known limitations".
 
 create or replace function public.host_save_experience_draft(p jsonb)
 returns uuid

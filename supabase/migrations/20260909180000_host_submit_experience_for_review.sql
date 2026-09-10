@@ -5,13 +5,11 @@
 -- action (the review queue, N1, is a later node). This RPC just flips a
 -- complete draft into the queue.
 --
--- Completeness is checked with clear messages before the flip; the
--- experiences_cover_image_required CHECK (20260909140000) is the backstop.
---
--- NOTE: host_save_experience_draft (3/4) does not yet upload photos, so a
--- host-created draft has cover_image_url = NULL and this RPC will (correctly)
--- refuse it until the experience-photo bucket slice lands. End-to-end
--- "host submits an experience" is blocked on that, by design.
+-- Completeness is checked with clear messages before the flip (title,
+-- description, location, a cover photo, a positive price, an open departure);
+-- the experiences_cover_image_required CHECK (20260909140000) is the backstop.
+-- The cover check is satisfiable now that the photo slice (20260909190000)
+-- uploads real photos -- see host_write_end_to_end.test.sql.
 
 create or replace function public.host_submit_experience_for_review(
   p_experience_id uuid

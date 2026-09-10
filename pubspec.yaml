@@ -46,6 +46,9 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^5.0.0
   mocktail: ^1.0.4
+  # Test-only: fake the image picker platform for the host photo-upload step.
+  image_picker_platform_interface: ^2.10.0
+  plugin_platform_interface: ^2.1.0
 
 flutter:
   uses-material-design: true

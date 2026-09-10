@@ -1,10 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../theme/theme.dart';
 import '../../../widgets/widgets.dart';
@@ -24,6 +23,10 @@ class _CreateHostExperienceScreenState
     extends ConsumerState<CreateHostExperienceScreen> {
   int step = 0;
   bool dirty = false;
+  int _photoUploads = 0;
+  // Groups this session's uploads under <host_id>/<_photoKey>/... in the
+  // experience-photos bucket. In edit mode it is the real experience id.
+  late final String _photoKey;
   late final Map<String, TextEditingController> controllers;
   static const titles = [
     'Basic Information',
@@ -41,6 +44,7 @@ class _CreateHostExperienceScreenState
   void initState() {
     super.initState();
     final draft = ref.read(hostCreateExperienceProvider);
+    _photoKey = widget.experienceId ?? const Uuid().v4();
     controllers = {
       'title': TextEditingController(text: draft.title),
       'location': TextEditingController(text: draft.location),
@@ -342,113 +346,72 @@ class _CreateHostExperienceScreenState
           ],
         );
       case 1:
+        final photos = draft.photoAssets
+            .where((photo) => !photo.startsWith('assets/'))
+            .toList();
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Choose clear photos that accurately represent your experience.',
+              'Add clear photos that accurately represent your experience. '
+              'The first photo is the cover. JPG, PNG or WebP, up to 5 MB each.',
               style: AppTypography.bodyMedium,
             ),
             const SizedBox(height: 10),
             AppButton.secondary(
-              label: 'Open image picker',
+              label: _photoUploads > 0 ? 'Uploading…' : 'Add photos',
               icon: Icons.add_photo_alternate_outlined,
               isFullWidth: true,
-              onPressed: _showImagePicker,
+              onPressed: _photoUploads > 0 ? null : _showImagePicker,
             ),
-            const SizedBox(height: 12),
-            ...draft.photoAssets
-                .where((photo) => !photo.startsWith('assets/'))
-                .map(
-                  (photo) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: AppRadii.borderMd16,
-                          child: Image.file(
-                            File(photo),
-                            height: 150,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
-                                  height: 150,
-                                  color: AppColors.sage,
-                                  alignment: Alignment.center,
-                                  child: const Icon(
-                                    Icons.broken_image_outlined,
-                                  ),
-                                ),
-                          ),
-                        ),
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: IconButton.filled(
-                            tooltip: 'Remove photo',
-                            onPressed: () => _removePhoto(photo),
-                            icon: const Icon(Icons.close),
-                          ),
-                        ),
-                      ],
-                    ),
+            if (_photoUploads > 0) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   ),
-                ),
-            ...[
-              'assets/images/welcome_hero.jpg',
-              'assets/images/herosection.jpg',
-              'assets/images/explore_header_mountains.png',
-            ].indexed.map(
+                  const SizedBox(width: 10),
+                  Text(
+                    'Uploading $_photoUploads photo${_photoUploads == 1 ? '' : 's'}…',
+                    style: AppTypography.caption,
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 12),
+            if (photos.isEmpty && _photoUploads == 0)
+              const AppCard(child: Text('No photos yet.')),
+            ...photos.asMap().entries.map(
               (entry) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: Semantics(
-                  button: true,
-                  selected: draft.photoAssets.contains(entry.$2),
-                  label: 'Experience photo ${entry.$1 + 1}',
-                  child: InkWell(
-                    onTap: () {
-                      final photos = [...draft.photoAssets];
-                      photos.contains(entry.$2)
-                          ? photos.remove(entry.$2)
-                          : photos.add(entry.$2);
-                      ref
-                          .read(hostCreateExperienceProvider.notifier)
-                          .update(draft.copyWith(photoAssets: photos));
-                      setState(() => dirty = true);
-                    },
-                    child: Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: AppRadii.borderMd16,
-                          child: Image.asset(
-                            entry.$2,
-                            height: 120,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        Positioned(
-                          right: 10,
-                          top: 10,
-                          child: CircleAvatar(
-                            backgroundColor:
-                                draft.photoAssets.contains(entry.$2)
-                                ? AppColors.forest
-                                : AppColors.white,
-                            child: Icon(
-                              draft.photoAssets.contains(entry.$2)
-                                  ? Icons.check
-                                  : Icons.add,
-                              color: draft.photoAssets.contains(entry.$2)
-                                  ? Colors.white
-                                  : AppColors.forest,
-                            ),
-                          ),
-                        ),
-                      ],
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: AppRadii.borderMd16,
+                      child: _UploadedPhoto(path: entry.value, height: 150),
                     ),
-                  ),
+                    if (entry.key == 0)
+                      const Positioned(
+                        left: 8,
+                        top: 8,
+                        child: Chip(
+                          label: Text('Cover'),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: IconButton.filled(
+                        tooltip: 'Remove photo',
+                        onPressed: () => _removePhoto(entry.value),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -667,9 +630,9 @@ class _CreateHostExperienceScreenState
   }
 
   Future<void> _pickPhotos(ImageSource source) async {
+    final List<XFile> selected;
     try {
       final picker = ImagePicker();
-      final List<XFile> selected;
       if (source == ImageSource.gallery) {
         selected = await picker.pickMultiImage(
           maxWidth: 2000,
@@ -685,17 +648,6 @@ class _CreateHostExperienceScreenState
         );
         selected = photo == null ? const [] : [photo];
       }
-      if (selected.isEmpty || !mounted) return;
-
-      final draft = ref.read(hostCreateExperienceProvider);
-      final photos = [...draft.photoAssets];
-      for (final photo in selected) {
-        if (!photos.contains(photo.path)) photos.add(photo.path);
-      }
-      ref
-          .read(hostCreateExperienceProvider.notifier)
-          .update(draft.copyWith(photoAssets: photos));
-      setState(() => dirty = true);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -705,21 +657,65 @@ class _CreateHostExperienceScreenState
           ),
         ),
       );
+      return;
+    }
+    if (selected.isEmpty || !mounted) return;
+
+    final repo = ref.read(hostModeRepositoryProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _photoUploads += selected.length);
+    for (final file in selected) {
+      try {
+        final bytes = await file.readAsBytes();
+        final path = await repo.uploadExperiencePhoto(
+          bytes: bytes,
+          fileName: file.name,
+          experienceKey: _photoKey,
+        );
+        if (!mounted) return;
+        // Re-read: an upload that finished after another edit must not clobber
+        // the rest of the wizard's local state.
+        final current = ref.read(hostCreateExperienceProvider);
+        ref
+            .read(hostCreateExperienceProvider.notifier)
+            .update(
+              current.copyWith(photoAssets: [...current.photoAssets, path]),
+            );
+        setState(() => dirty = true);
+      } catch (error) {
+        if (!mounted) return;
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              error is ArgumentError
+                  ? '${file.name}: ${error.message}'
+                  : 'Could not upload ${file.name}. Try again.',
+            ),
+          ),
+        );
+      } finally {
+        if (mounted) setState(() => _photoUploads -= 1);
+      }
     }
   }
 
-  void _removePhoto(String photo) {
-    final draft = ref.read(hostCreateExperienceProvider);
+  Future<void> _removePhoto(String path) async {
+    final repo = ref.read(hostModeRepositoryProvider);
+    final current = ref.read(hostCreateExperienceProvider);
     ref
         .read(hostCreateExperienceProvider.notifier)
         .update(
-          draft.copyWith(
-            photoAssets: draft.photoAssets
-                .where((candidate) => candidate != photo)
+          current.copyWith(
+            photoAssets: current.photoAssets
+                .where((candidate) => candidate != path)
                 .toList(),
           ),
         );
     setState(() => dirty = true);
+    // Best effort; a stray object gets swept later (see H1_HOST_WRITE_PATH.md).
+    try {
+      await repo.deleteExperiencePhoto(path);
+    } catch (_) {}
   }
 
   Future<void> _addListItem(
@@ -879,6 +875,60 @@ class _StructuredListEditor extends StatelessWidget {
       ],
     );
   }
+}
+
+class _UploadedPhoto extends ConsumerStatefulWidget {
+  const _UploadedPhoto({required this.path, required this.height});
+  final String path;
+  final double height;
+  @override
+  ConsumerState<_UploadedPhoto> createState() => _UploadedPhotoState();
+}
+
+class _UploadedPhotoState extends ConsumerState<_UploadedPhoto> {
+  late final Future<String> _url;
+  @override
+  void initState() {
+    super.initState();
+    _url = ref
+        .read(hostModeRepositoryProvider)
+        .experiencePhotoSignedUrl(widget.path);
+  }
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<String>(
+    future: _url,
+    builder: (context, snap) {
+      final url = snap.data;
+      if (url == null) {
+        return Container(
+          height: widget.height,
+          width: double.infinity,
+          color: AppColors.sage,
+          alignment: Alignment.center,
+          child: snap.hasError
+              ? const Icon(Icons.broken_image_outlined)
+              : const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+        );
+      }
+      return Image.network(
+        url,
+        height: widget.height,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => Container(
+          height: widget.height,
+          color: AppColors.sage,
+          alignment: Alignment.center,
+          child: const Icon(Icons.broken_image_outlined),
+        ),
+      );
+    },
+  );
 }
 
 class _DateTile extends StatelessWidget {

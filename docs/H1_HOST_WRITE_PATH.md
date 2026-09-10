@@ -59,15 +59,37 @@ Four `SECURITY DEFINER` RPCs, each `revoke execute from public, anon` + `grant t
 | `host_save_experience_draft(jsonb)` | `20260909170000` | insert/update an experience **draft only**; rewrites `itinerary_items`; upserts the earliest open departure; server-generates the slug | `create_host_experience_screen` — "Save draft" calls the RPC, stores the returned id; failure caught |
 | `host_submit_experience_for_review(uuid)` | `20260909180000` | `draft` → `pending_review` after a completeness check; **no path to `published`** | `host_experience_preview_screen` — validate + submit + navigate; RPC error messages surfaced |
 
-**One-departure reconciliation (RPC 2 & 3):** no HALT. The RPCs deterministically target the earliest `status = 'open'` departure — exactly the one the flattened `HostExperience` model and the host UI already show — and create one if none exists. Managing multiple departures per experience is a separate future UI concern; these RPCs do not corrupt a many-departure experience.
+**One-departure handling (RPC 2 & 3):** no HALT. The RPCs deterministically target the earliest `status = 'open'` departure — exactly the one the flattened `HostExperience` model and the host UI already show — and create one if none exists. They do not corrupt a many-departure experience. See **Known limitations** below — multi-departure / a real availability calendar is a stated client-doc requirement, not a future nicety, and it stays open.
 
 **Lossy draft mapping (RPC 3), documented in the migration:** `trip_details` → a single `things_to_know` element (no column for it); `category_id` / `region_id` / `difficulty` / `duration_hours` left to the admin at review (`duration_hours` is derived from the date span when both dates are present, else the column default).
 
-### Not done — the next H1 increments
+### Photo slice — done (`20260909190000` + client rework)
 
-1. **Experience photo upload (D2).** `host_save_experience_draft` does **not** upload photos — the wizard's photo step is still local-only, drafts carry `cover_image_url = NULL`. Because `host_submit_experience_for_review` correctly requires a cover, **end-to-end "a host creates and submits an experience" is blocked** until this lands. Scope: the private `experience-photos` bucket + host-scoped storage RLS + a client upload path + threading `cover_image_url` / `gallery` through `saveDraft`. Estimate ~2–3 days.
-2. **N1 admin experience-review node.** `pending_review` rows now exist but nothing consumes them. A `content:manage` queue + a decision RPC (`pending_review` → `published`, with the copy-on-approve photo promotion from D2) + a host notification. Mirrors P2's host-application review; ~3–4 days.
-3. **`updateBookingStatus` — still deferred** (own node after N3). `booking_status` has no host-decision state; decline-with-refund needs the refund path; accept touches frozen `finalize_verified_payment`.
+- **Private bucket `experience-photos`**, path `<host_id>/<experience_key>/<file>`, `public = false`, server-enforced 5 MiB / `image/jpeg|png|webp` on the bucket row.
+- **Storage RLS** (`storage.objects`): upload only by an approved active host under their own uid prefix (`private.is_approved_active_host` in the `with check`); read by the owning host; read-all by `has_scope('content:manage')` — **never a bare `is_admin()`**; replace/delete by the owning host. Test: `experience_photos_storage_rls.test.sql`.
+- **Client:** `HostModeRepository.uploadExperiencePhoto` / `experiencePhotoSignedUrl` / `deleteExperiencePhoto`. The wizard photo step uploads on pick (per-file, with an in-flight count + progress), renders thumbnails via signed URL, removes = delete + drop from the list. **A failed upload shows an error and leaves the rest of the wizard's local state untouched** (`host_experience_photo_step_test.dart`). Bundled placeholder tiles removed.
+- **Threading:** `saveDraft` sends `gallery` = the uploaded storage paths and `cover_image_url` = the first; `submitForReview`'s cover check is now satisfiable.
+- **Exit condition met** — `host_write_end_to_end.test.sql`: empty wizard → `host_save_experience_draft` with a photo → `cover_image_url` set → `host_submit_experience_for_review` → row `pending_review`, the photo readable by a `content:manage` reviewer and **not** by another host.
+
+### Not done — the next increments
+
+1. **N1 admin experience-review node.** `pending_review` rows now exist but nothing consumes them. A `content:manage` queue + a decision RPC (`pending_review` → `published`) with the **copy-on-approve photo promotion** from D2 (copy `experience-photos/<path>` → public `catalog-images`, rewrite `cover_image_url` / `gallery`) + a host notification. Mirrors P2's host-application review; ~3–4 days. **This is the next dead end after the photo slice — a host submitting into a queue nobody reads.**
+2. **`updateBookingStatus` — still deferred** (own node after N3). `booking_status` has no host-decision state; decline-with-refund needs the refund path; accept touches frozen `finalize_verified_payment`.
+3. **D2 private-original cleanup** — manual sweep only, per the D2 note.
+
+---
+
+## Known limitations (open gaps, not deferred niceties)
+
+### One departure per experience
+
+Every host write path — `getExperiences` (reads `departures.first`), the availability screen, `host_update_experience_availability`, `host_save_experience_draft` — assumes and touches **a single departure**: the earliest `status = 'open'` one. The `experience_departures` table is one-to-many and travellers book against a specific `departure_id`, but the host has no way to see or manage more than one.
+
+The client doc's availability model asks for **closed dates, blocked dates, and "available anytime"** — i.e. a real availability calendar with multiple date ranges / recurring availability, not one start–end pair. That is a **stated requirement**, currently unmet. Closing it means: a host-facing departures/calendar UI, `host_*` RPCs that address a departure by id (the `HostExperience` model must stop flattening), and the traveller booking flow already supports many departures so no change there. Not scoped here; flagged so it stays visible.
+
+### Edit of a draft does not preserve existing photos
+
+`HostExperience` carries no `gallery`, so opening a saved draft in the wizard shows none of its stored photos; re-saving overwrites `gallery` with whatever was added in that session. Acceptable for the create flow (the exit condition); a gap for iterative editing. Fix rides with the N1 revision model.
 
 ---
 

@@ -1,13 +1,11 @@
 -- H1 core (2/4): host edits the dates + capacity of their experience's
 -- departure.
 --
--- One-departure reconciliation: the Flutter HostExperience model flattens an
--- experience to a single start/end/capacity (getExperiences reads the earliest
--- departure), and the host UI has no multi-departure management. This RPC
--- therefore targets THE EARLIEST status = 'open' departure and creates one if
--- none exists -- exactly the departure the UI surfaces. Managing multiple
--- departures is a separate future UI concern; nothing here corrupts a
--- many-departure experience, it just edits the one shown.
+-- Targets THE EARLIEST status = 'open' departure and creates one if none exists
+-- -- the single departure the flattened HostExperience model and the host UI
+-- surface. The one-departure limitation (and the client doc's real
+-- availability-calendar requirement) is tracked in docs/H1_HOST_WRITE_PATH.md
+-- under "Known limitations".
 --
 -- Booking-conflict rules are the point: capacity may not drop below the number
 -- already booked, and dates may not move while the departure has active

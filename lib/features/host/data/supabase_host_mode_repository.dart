@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -172,9 +173,13 @@ class SupabaseHostModeRepository extends UnavailableHostModeRepository {
   @override
   Future<HostExperience> saveDraft(HostExperienceDraft draft) async {
     await _requireApprovedHost();
-    // SECURITY DEFINER RPC: only ever writes status = 'draft'. Photos stay
-    // local for now (no experience-photo bucket yet); only already-hosted
-    // http gallery URLs are forwarded.
+    // SECURITY DEFINER RPC: only ever writes status = 'draft'.
+    // photoAssets holds experience-photos storage paths (or promoted http URLs);
+    // bundled placeholder assets from an edit-seed are not persisted. The first
+    // photo is the cover; on approval the admin promotes these to catalog-images.
+    final photos = draft.photoAssets
+        .where((p) => !p.startsWith('assets/'))
+        .toList();
     final payload = <String, dynamic>{
       if (draft.id != null) 'id': draft.id,
       'title': draft.title,
@@ -189,7 +194,8 @@ class SupabaseHostModeRepository extends UnavailableHostModeRepository {
       'itinerary': draft.itinerary,
       'included': draft.included,
       'bring': draft.bring,
-      'gallery': draft.photoAssets.where((p) => p.startsWith('http')).toList(),
+      'gallery': photos,
+      'cover_image_url': photos.isEmpty ? null : photos.first,
     };
     final id =
         await _client.rpc(
@@ -202,6 +208,54 @@ class SupabaseHostModeRepository extends UnavailableHostModeRepository {
       throw StateError('The draft was saved but could not be reloaded.');
     }
     return saved;
+  }
+
+  static const _experiencePhotoBucket = 'experience-photos';
+
+  @override
+  Future<String> uploadExperiencePhoto({
+    required Uint8List bytes,
+    required String fileName,
+    required String experienceKey,
+  }) async {
+    final user = await _requireApprovedHost();
+    final rawExt = fileName.contains('.')
+        ? fileName.split('.').last.toLowerCase()
+        : 'jpg';
+    final ext = const {'jpg', 'jpeg', 'png', 'webp'}.contains(rawExt)
+        ? rawExt
+        : 'jpg';
+    final contentType = switch (ext) {
+      'png' => 'image/png',
+      'webp' => 'image/webp',
+      _ => 'image/jpeg',
+    };
+    // Server enforces the 5 MiB / image-only limits on the bucket; this is a
+    // fast client-side reject so a too-large file fails before the round trip.
+    if (bytes.lengthInBytes > 5 * 1024 * 1024) {
+      throw ArgumentError('Each photo must be 5 MB or smaller.');
+    }
+    final path =
+        '${user.id}/$experienceKey/${DateTime.now().millisecondsSinceEpoch}.$ext';
+    await _client.storage
+        .from(_experiencePhotoBucket)
+        .uploadBinary(
+          path,
+          bytes,
+          fileOptions: FileOptions(upsert: false, contentType: contentType),
+        );
+    return path;
+  }
+
+  @override
+  Future<String> experiencePhotoSignedUrl(String path) => _client.storage
+      .from(_experiencePhotoBucket)
+      .createSignedUrl(path, 3600);
+
+  @override
+  Future<void> deleteExperiencePhoto(String path) async {
+    await _requireApprovedHost();
+    await _client.storage.from(_experiencePhotoBucket).remove([path]);
   }
 
   @override
