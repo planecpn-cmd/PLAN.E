@@ -13,7 +13,8 @@
     "public.check_ai_rate_limit(text, integer, integer)",
     "public.consume_payment_redirect_token(text)",
     "public.finalize_verified_payment(uuid, uuid, payment_provider, text, jsonb)",
-    "public.claim_trip_push_deliveries(uuid)"
+    "public.claim_trip_push_deliveries(uuid)",
+    "public.admin_apply_experience_revision(uuid, uuid, jsonb)"
   ],
 
   "authenticated_callable": [
@@ -75,6 +76,7 @@
     "public.host_save_experience_draft(jsonb)": "Added 20260909170000 (H1 core 3/4). authenticated_callable: the only client path to insert/update public.experiences (writes revoked from authenticated in 20260823120000). ONLY ever writes status = 'draft'; refuses to edit a row that is not 'draft'. Body re-checks auth.uid(), private.is_approved_active_host(auth.uid()), and (on update) host_id = auth.uid() ownership. Also rewrites the experience's itinerary_items and upserts its earliest open departure. Server-generates the slug. Affects only the caller's own draft. NOT service-role-only.",
     "public.host_submit_experience_for_review(uuid)": "Added 20260909180000 (H1 core 4/4). authenticated_callable: the only client path to move experiences.status draft -> pending_review. Has NO path to 'published' (admin content:manage / the N1 review queue does that). Body re-checks auth.uid(), private.is_approved_active_host(auth.uid()), host_id = auth.uid() ownership, that the row is a 'draft', and completeness (title/description/location/cover/price/departure) before the flip. Affects only the caller's own draft. NOT service-role-only.",
     "public.claim_trip_push_deliveries(uuid)": "P0.6 fix: 20260816130000 granted it (via weak revoke) to anon+authenticated. 20260908090000 revokes execute from public, anon, authenticated. NOT YET DEPLOYED TO HOSTED — needs a prompt separate hosted deploy.",
+    "public.admin_apply_experience_revision(uuid, uuid, jsonb)": "Added 20260910140000 (D1). service_role_only: the admin decision endpoint calls it (via the service-role ctx.db) to atomically apply an approved content revision to its live experiences row — copy content + itinerary, archive the revision, write an experience_reviews row on the live id. Revoked from public/anon/authenticated; a host can never invoke it.",
     "public.register_trip_push_device / unregister_trip_push_device": "anon retains a stray EXECUTE from the same weak revoke. Harmless: body raises 'Authentication required' when auth.uid() is null. Left as-is; classified authenticated_callable.",
     "public.get_trip_moderation_queue / review_trip_message_report": "anon retains a stray EXECUTE. Harmless: body raises 'Admin access required' unless public.is_admin(). Not tightened in P0.6 to avoid scope creep; tracked as admin_gated_in_body.",
     "trigger_only": "EXECUTE grants to anon/authenticated are inert — these take/return `trigger` and cannot be invoked directly with a useful signature."

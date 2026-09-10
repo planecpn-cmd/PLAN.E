@@ -55,7 +55,7 @@ export function POST(req: Request, { params }: { params: Promise<{ id: string }>
 
       const { data: exp } = await ctx.db
         .from("experiences")
-        .select("id,host_id,status,gallery,cover_image_url")
+        .select("id,host_id,status,gallery,cover_image_url,revision_of")
         .eq("id", id)
         .maybeSingle();
       if (!exp) return Response.json({ error: "not found" }, { status: 404 });
@@ -65,6 +65,7 @@ export function POST(req: Request, { params }: { params: Promise<{ id: string }>
           { status: 409 },
         );
       }
+      const isRevision = exp.revision_of != null;
 
       const toStatus = DECISION_TO_STATUS[decision];
       const update: Record<string, unknown> = {
@@ -106,6 +107,42 @@ export function POST(req: Request, { params }: { params: Promise<{ id: string }>
           sourceGallery,
           (p) => ctx.db.storage.from(PUBLIC_BUCKET).getPublicUrl(p).data.publicUrl,
         );
+
+        // ── approving a REVISION: swap it into the live row atomically ──
+        if (isRevision) {
+          const { data: liveId, error: applyErr } = await ctx.db.rpc(
+            "admin_apply_experience_revision",
+            {
+              p_revision_id: id,
+              p_reviewer: ctx.actorUserId,
+              p: {
+                cover: publicGallery[0],
+                gallery: publicGallery,
+                category_id: categoryId,
+                region_id: regionId,
+                difficulty,
+              },
+            },
+          );
+          if (applyErr) return Response.json({ error: applyErr.message }, { status: 500 });
+
+          ctx.audit({
+            action: "experience.decide",
+            entityType: "experiences",
+            entityId: id,
+            before: { status: exp.status, revision_of: exp.revision_of },
+            after: { status: "archived", applied_to: liveId, decision },
+            reason: note ?? undefined,
+          });
+
+          const notified = await notifyExperienceDecision({
+            db: ctx.db,
+            userId: exp.host_id as string,
+            experienceId: liveId as string,
+            outcome: "approved",
+          });
+          return Response.json({ status: "archived", appliedTo: liveId, notified });
+        }
 
         update.category_id = categoryId;
         update.region_id = regionId;

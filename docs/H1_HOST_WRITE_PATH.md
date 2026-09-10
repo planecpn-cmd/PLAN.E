@@ -21,6 +21,16 @@ Client doc says "3 EXPERIENCE AWAITING APPROVAL"; `experience_status` already ca
 
 **Cleanup story (do not build now):** copy-on-approve leaves the private originals in `experience-photos` behind for the lifetime of the experience, including for **rejected / archived** listings that will never be approved. There is no reference-counting or TTL. For now this is an accepted, documented leak: a **manual periodic sweep** — delete `experience-photos/<host_id>/<experience_id>/` for any experience whose status has been `rejected` or `archived` for more than N days — run by an operator, not code. Wire an automated sweep (a cron edge function keyed off `experiences.status` + `updated_at`) only if storage cost or a data-retention requirement makes it worth it.
 
+**Bucket split — decision change from D2 as written, do not merge these three buckets:**
+
+| Bucket | Visibility | MIME | Holds | Who writes |
+|---|---|---|---|---|
+| `catalog-images` | public | `image/webp` only | licensed **stock** photography, seed-managed | migrations / an operator; **no client write policy** |
+| `experience-photos` | private | jpeg / png / webp | host-uploaded **originals**, path `<host_id>/<experience_id>/<file>` | the owning approved active host (storage RLS); admin reviewer reads via signed URL |
+| `experience-photos-public` | public | jpeg / png / webp | **approved** host photos, promoted copies (same object path) | **only** the service-role admin backend, on approve; no client write policy |
+
+D2 originally said promote into `catalog-images`. That is wrong: `catalog-images` is `image/webp`-only and its stated purpose is licensed stock, so a copy of a host's jpeg would be rejected and the provenance would blur. `experience-photos-public` (added in `20260910120000`) is the promotion target instead — a dedicated public home for host imagery, same "one well-known public surface, one delete on takedown" property. **Keep the three separate:** different MIME policies, different provenance, different write paths. Merging `experience-photos-public` into `catalog-images` reintroduces the webp constraint and mixes stock with user content; merging it into `experience-photos` makes unreviewed uploads publicly reachable.
+
 ### D3 — taxonomy: NOT NULL status of the six columns (reported, per request)
 
 `public.experiences`, from `0005_experiences.sql`; **no later migration alters any of these**:
@@ -80,11 +90,24 @@ Four `SECURITY DEFINER` RPCs, each `revoke execute from public, anon` + `grant t
 - **Tests**: `experience_review_rls.test.sql` (content:manage reads history; content:decide-only / hosts:review / traveler don't; no client insert; `content:decide` a known scope, garbage rejected); `experience-review.test.ts` + `promotedGallery`; `host-notifications.test.ts` (`notifyExperienceDecision` gated); `with-admin.test.ts` (`content:decide` 403s a `content:manage`-only staff); **`experience_review_end_to_end.test.sql` — the exit condition**: signup → approved host → draft with a photo → submit → approve (route effects) → the experience is discoverable by a traveler as `published` with a public-bucket cover URL. `admin/` vitest + tsc + lint + `next build` clean.
 - **HALT unchanged** — `HOST_DECISION_COPY` still `null`; `notifyExperienceDecision` sends nothing, decision still succeeds. Founder still owes EN + Nepali copy + a from-address.
 
+### D1 — approved-listing edit → `pending_review` revision — done (`20260910140000`)
+
+**Behaviour before D1:** the "Edit experience" control on a published listing was reachable, the wizard opened and seeded from the live row, but `Save draft` / `Submit for review` failed — `host_save_experience_draft` raised *"Only a draft can be edited here"*, the client swallowed it into a generic *"Could not save the draft. Try again."*. Not a live-row mutation and not unreachable — a reachable dead end with a misleading error.
+
+**Model chosen: revision rows in `experiences` with a `revision_of` parent link.** A revision is a full `experiences` row, `status` `draft` → `pending_review` → `archived`, `revision_of = <live id>`. Rejected a separate `experience_pending_changes` blob table: a revision *is* an `experiences` row, so `host_save_experience_draft` (already writes one from the wizard payload) and the N1 review queue / detail / decision endpoint (already operate on an `experiences` row) need almost no new code — just the approve-swap branch. A blob table would need parallel apply-logic and a parallel admin view, and its shape could drift from the columns.
+
+**What the traveler sees while a revision is in review: the live row, unchanged.** Two layers: every discovery query filters `.eq('status','published')` and a revision is never `published`; and RLS only lets a traveler read `status='published'` rows (the owning host + `content:manage` staff are the only readers of a non-published row). The live row keeps `status='published'` for the whole revision lifecycle; it is touched only at approval, in one atomic function call. Confirmed no discovery path (`webapp` `experiences.ts` / `map` / booking-confirmation, Flutter `experience_repository`) reads status-agnostically.
+
+- `host_save_experience_draft`: editing a `published`/`paused` row (with `revision_of is null`) creates — or reuses — a **draft** revision and redirects the content write to it; a second edit while a `pending_review` revision exists is refused (*"already has changes awaiting review"*). A revision carries content + itinerary only, no departure (availability stays on the live row via `host_update_experience_availability`).
+- `host_submit_experience_for_review`: skips the "needs a departure" check for a revision.
+- **`public.admin_apply_experience_revision(uuid, uuid, jsonb)`** — SECURITY DEFINER, `service_role`-only (manifest + `security_definer_grants` list). The decision endpoint, on `approve` of a `revision_of` row, does the photo copy (same as N1), then calls this once: it copies the revision's content + itinerary into the live row, sets the promoted cover/gallery + the reviewer's normalised taxonomy, archives the revision, and writes an `experience_reviews` row against the **live** id — all in one transaction. Live `id` / `slug` / departures / bookings untouched. `finalize_verified_payment` and the `bookings.experience_id` FK are not touched — **no HALT**.
+- Flutter: `getExperiences` filters `revision_of is null` (a revision is not its own card); `getExperience` of a published listing returns its in-progress revision's content when one exists, so the wizard seeds from and saves to the revision.
+- Test: **`experience_revision_end_to_end.test.sql`** — publish → host edits → revision created, live untouched → traveler still sees the live version, cannot see the revision → submit → second edit refused → approve → revision swapped into the live row atomically + archived, live still `published`, itinerary replaced, `experience_reviews` row on the live id → traveler now sees the revised content on the same slug.
+
 ### Not done — the next increments
 
 1. **`updateBookingStatus` — still deferred** (own node after N3). `booking_status` has no host-decision state; decline-with-refund needs the refund path; accept touches frozen `finalize_verified_payment`.
-2. **D2 private-original cleanup** — manual sweep only, per the D2 note.
-3. **Approved-listing edit → `pending_review` revision** (D1) — editing a published listing still isn't wired; `host_save_experience_draft` refuses a non-draft row. Rides with a future revision model.
+2. **D2 private-original cleanup** — manual sweep only, per the D2 note. (Now also covers **archived revision rows** and their orphan departures/itinerary — same sweep.)
 
 ---
 
@@ -96,9 +119,7 @@ Every host write path — `getExperiences` (reads `departures.first`), the avail
 
 The client doc's availability model asks for **closed dates, blocked dates, and "available anytime"** — i.e. a real availability calendar with multiple date ranges / recurring availability, not one start–end pair. That is a **stated requirement**, currently unmet. Closing it means: a host-facing departures/calendar UI, `host_*` RPCs that address a departure by id (the `HostExperience` model must stop flattening), and the traveller booking flow already supports many departures so no change there. Not scoped here; flagged so it stays visible.
 
-### Edit of a draft does not preserve existing photos
-
-`HostExperience` carries no `gallery`, so opening a saved draft in the wizard shows none of its stored photos; re-saving overwrites `gallery` with whatever was added in that session. Acceptable for the create flow (the exit condition); a gap for iterative editing. Fix rides with the N1 revision model.
+*(The "edit of a draft loses stored photos" gap listed here previously is closed — `HostExperience.gallery` + `getExperience` rehydration, and the D1 revision path carries the gallery through.)*
 
 ---
 

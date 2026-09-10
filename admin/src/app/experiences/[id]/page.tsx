@@ -19,6 +19,18 @@ export default async function ExperienceReviewDetailPage({
   const { data: exp } = await supabase.from("experiences").select("*").eq("id", id).maybeSingle();
   if (!exp) notFound();
 
+  // A revision inherits its live listing's taxonomy as the panel defaults —
+  // the revision row itself carries none.
+  let taxonomyFrom = exp;
+  if (exp.revision_of) {
+    const { data: live } = await supabase
+      .from("experiences")
+      .select("category_id,region_id,difficulty")
+      .eq("id", exp.revision_of)
+      .maybeSingle();
+    if (live) taxonomyFrom = { ...exp, ...live };
+  }
+
   const [{ data: departures }, { data: itinerary }, { data: reviews }, { data: categories }, { data: regions }] =
     await Promise.all([
       supabase
@@ -66,6 +78,12 @@ export default async function ExperienceReviewDetailPage({
         Status: <span className="font-medium">{String(exp.status).replace("_", " ")}</span>
         {exp.updated_at && <> · updated {new Date(exp.updated_at).toLocaleDateString()}</>}
       </p>
+      {exp.revision_of && (
+        <p className="mt-2 rounded-md bg-[var(--color-sage)] px-3 py-2 text-sm">
+          These are <strong>proposed changes</strong> to a live listing. The live version stays
+          published and unchanged until you approve — approving swaps this content in atomically.
+        </p>
+      )}
 
       <section className="mt-6">
         <h2 className="text-sm font-semibold uppercase text-[var(--color-ink)]/50">Submitted listing</h2>
@@ -110,9 +128,9 @@ export default async function ExperienceReviewDetailPage({
         status={exp.status as string}
         canDecide={session.scopes.includes("content:decide")}
         photoPaths={gallery}
-        currentCategoryId={(exp.category_id as string | null) ?? ""}
-        currentRegionId={(exp.region_id as string | null) ?? ""}
-        currentDifficulty={(exp.difficulty as string | null) ?? "moderate"}
+        currentCategoryId={(taxonomyFrom.category_id as string | null) ?? ""}
+        currentRegionId={(taxonomyFrom.region_id as string | null) ?? ""}
+        currentDifficulty={(taxonomyFrom.difficulty as string | null) ?? "moderate"}
         categories={(categories ?? []).map((c) => ({ id: c.id, name: c.name_en }))}
         regions={(regions ?? []).map((r) => ({ id: r.id, name: r.name_en }))}
         reviews={(reviews ?? []).map((r) => ({

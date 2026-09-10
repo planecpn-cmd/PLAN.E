@@ -25,7 +25,8 @@ declare
     'public.check_ai_rate_limit(text, integer, integer)',
     'public.consume_payment_redirect_token(text)',
     'public.finalize_verified_payment(uuid, uuid, payment_provider, text, jsonb)',
-    'public.claim_trip_push_deliveries(uuid)'
+    'public.claim_trip_push_deliveries(uuid)',
+    'public.admin_apply_experience_revision(uuid, uuid, jsonb)'
   ];
   v_sig text;
   v_allow_oids oid[] := '{}';

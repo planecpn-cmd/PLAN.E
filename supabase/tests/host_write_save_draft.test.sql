@@ -145,20 +145,30 @@ begin
   end if;
 
   ----------------------------------------------------------------------------
-  -- 4. editing a non-draft row is refused
+  -- 4. editing a PUBLISHED row makes a content revision (D1), not a refusal;
+  --    the live row is untouched. Full revision flow is in
+  --    experience_revision_end_to_end.test.sql.
   update public.experiences
     set status = 'published', cover_image_url = 'https://e.test/c.webp'
   where id = v_idn;
-  v_raised := false;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_owner, 'role', 'authenticated')::text, true);
+  declare
+    v_rev_id uuid;
   begin
-    perform set_config('request.jwt.claims',
-      json_build_object('sub', v_owner, 'role', 'authenticated')::text, true);
-    perform public.host_save_experience_draft(
-      v_base || jsonb_build_object('id', v_idn::text));
-  exception when others then v_raised := true;
+    v_rev_id := public.host_save_experience_draft(
+      v_base || jsonb_build_object('id', v_idn::text, 'title', 'ABC via revision'));
+    if v_rev_id = v_idn then
+      raise exception 'FAIL: editing a published row mutated it instead of making a revision';
+    end if;
+    if (select revision_of from public.experiences where id = v_rev_id) is distinct from v_idn then
+      raise exception 'FAIL: revision row not linked to its live parent';
+    end if;
+    if (select title from public.experiences where id = v_idn) = 'ABC via revision' then
+      raise exception 'FAIL: the live published row was changed by the edit';
+    end if;
   end;
   perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
-  if not v_raised then raise exception 'FAIL: a published row was edited as a draft'; end if;
 
   ----------------------------------------------------------------------------
   -- 5. non-owner refused
