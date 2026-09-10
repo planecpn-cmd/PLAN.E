@@ -112,6 +112,27 @@ begin
   if v_cnt <> 1 then raise exception 'FAIL: itinerary not replaced (count %)', v_cnt; end if;
 
   ----------------------------------------------------------------------------
+  -- 2b. gallery is REPLACED, not appended: save with two photos, then one
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_owner, 'role', 'authenticated')::text, true);
+  perform public.host_save_experience_draft(v_base || jsonb_build_object(
+    'id', v_id1::text,
+    'gallery', jsonb_build_array(
+      v_owner::text || '/k/1.jpg', v_owner::text || '/k/2.jpg'),
+    'cover_image_url', v_owner::text || '/k/1.jpg'));
+  perform public.host_save_experience_draft(v_base || jsonb_build_object(
+    'id', v_id1::text,
+    'gallery', jsonb_build_array(v_owner::text || '/k/2.jpg'),
+    'cover_image_url', v_owner::text || '/k/2.jpg'));
+  perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
+  if (select gallery from public.experiences where id = v_id1)
+     is distinct from array[v_owner::text || '/k/2.jpg']
+     or (select cover_image_url from public.experiences where id = v_id1)
+        is distinct from v_owner::text || '/k/2.jpg' then
+    raise exception 'FAIL: gallery/cover not replaced on re-save';
+  end if;
+
+  ----------------------------------------------------------------------------
   -- 3. slug collision -> distinct slug
   perform set_config('request.jwt.claims',
     json_build_object('sub', v_owner, 'role', 'authenticated')::text, true);

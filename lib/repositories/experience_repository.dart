@@ -108,6 +108,10 @@ class ExperienceRepository {
         .toList();
   }
 
+  /// Traveler-facing single-experience read. Published only — a draft /
+  /// pending_review row must never surface here even if RLS would allow the
+  /// caller to see it (e.g. the owning host). Host Mode reads its own
+  /// experiences through SupabaseHostModeRepository, not this method.
   Future<Experience?> getExperienceById(String id) async {
     final cacheKey = 'experience_detail:$id';
     try {
@@ -115,6 +119,7 @@ class ExperienceRepository {
           .from('experiences')
           .select('*, experience_departures(*), itinerary_items(*)')
           .eq('id', id)
+          .eq('status', 'published')
           .maybeSingle();
 
       if (response == null) return null;

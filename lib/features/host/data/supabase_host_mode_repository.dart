@@ -70,7 +70,7 @@ class SupabaseHostModeRepository extends UnavailableHostModeRepository {
     final experienceRows = await _client
         .from('experiences')
         .select(
-          'id,title,summary,location_name,cover_image_url,price_paisa,status,group_size_max,created_at',
+          'id,title,summary,location_name,cover_image_url,gallery,price_paisa,status,group_size_max,created_at',
         )
         .eq('host_id', user.id)
         .order('created_at', ascending: true);
@@ -109,6 +109,15 @@ class SupabaseHostModeRepository extends UnavailableHostModeRepository {
         departure?['total_spots'] ?? row['group_size_max'],
       );
       final spotsLeft = _integer(departure?['spots_left'] ?? capacity);
+      final rawGallery = row['gallery'];
+      final gallery = <String>[
+        if (rawGallery is List)
+          ...rawGallery.map((e) => e.toString()).where((e) => e.isNotEmpty),
+      ];
+      final cover = row['cover_image_url']?.toString();
+      if (gallery.isEmpty && cover != null && cover.isNotEmpty) {
+        gallery.add(cover);
+      }
       return HostExperience(
         id: id,
         title: row['title']?.toString() ?? 'Untitled experience',
@@ -123,6 +132,7 @@ class SupabaseHostModeRepository extends UnavailableHostModeRepository {
         summary:
             row['summary']?.toString() ??
             'A locally hosted PLAN E experience in Nepal.',
+        gallery: gallery,
       );
     }).toList();
   }

@@ -10,6 +10,7 @@ import 'package:image_picker_platform_interface/image_picker_platform_interface.
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:plan_e/features/host/data/host_mode_repository.dart';
 import 'package:plan_e/features/host/data/mock_host_mode_repository.dart';
+import 'package:plan_e/features/host/domain/host_mode_models.dart';
 import 'package:plan_e/features/host/presentation/create_host_experience_screen.dart';
 import 'package:plan_e/features/host/presentation/host_mode_providers.dart';
 
@@ -29,6 +30,12 @@ class _UploadFailsRepo extends MockHostModeRepository {
     required String fileName,
     required String experienceKey,
   }) async => throw StateError('upload failed (test)');
+}
+
+class _DeleteTrackingRepo extends MockHostModeRepository {
+  final List<String> deleted = [];
+  @override
+  Future<void> deleteExperiencePhoto(String path) async => deleted.add(path);
 }
 
 Widget _host(Widget child, HostModeRepository repo) => ProviderScope(
@@ -91,5 +98,50 @@ void main() {
     await tester.tap(find.text('Back'));
     await tester.pumpAndSettle();
     expect(find.text('Mardi Ridge Sunrise'), findsOneWidget);
+  });
+
+  testWidgets('editing a draft rehydrates stored photos; remove deletes the object', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 3200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final repo = _DeleteTrackingRepo();
+    const draft = HostExperienceDraft(
+      id: 'exp-1',
+      title: 'Edited Ridge Trek',
+      location: 'Pokhara, Nepal',
+      description: 'A description that is comfortably over the thirty character minimum.',
+      photoAssets: ['host-1/exp-1/a.jpg', 'host-1/exp-1/b.jpg'],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          hostModeRepositoryProvider.overrideWithValue(repo),
+          hostCreateExperienceProvider.overrideWith(
+            (ref) => HostCreateExperienceNotifier()..update(draft),
+          ),
+        ],
+        child: const MaterialApp(
+          home: CreateHostExperienceScreen(experienceId: 'exp-1'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Step 0 -> Photos.
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+
+    // Both stored photos are shown.
+    expect(find.byTooltip('Remove photo'), findsNWidgets(2));
+
+    // Remove the first -> the stored object is deleted, one thumbnail left.
+    await tester.tap(find.byTooltip('Remove photo').first);
+    await tester.pumpAndSettle();
+    expect(repo.deleted, ['host-1/exp-1/a.jpg']);
+    expect(find.byTooltip('Remove photo'), findsOneWidget);
   });
 }

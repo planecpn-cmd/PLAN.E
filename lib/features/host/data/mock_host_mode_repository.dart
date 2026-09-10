@@ -483,6 +483,9 @@ class MockHostModeRepository implements HostModeRepository {
       priceNpr: draft.priceNpr ?? 0,
       status: status,
       summary: draft.description.trim(),
+      gallery: draft.photoAssets
+          .where((p) => !p.startsWith('assets/'))
+          .toList(),
     );
     final index = _experiences.indexWhere((e) => e.id == id);
     if (index < 0) {
