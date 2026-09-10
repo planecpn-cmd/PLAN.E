@@ -135,11 +135,6 @@ export default async function ExperienceDetailPage({
                 {experience.location_name}
               </p>
             )}
-            {experience.rating_count > 0 && (
-              <div className="mt-2">
-                <RatingStars rating={experience.rating_avg} reviewCount={experience.rating_count} />
-              </div>
-            )}
           </div>
 
           <dl className="mt-6 grid grid-cols-2 gap-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] p-4 text-sm sm:grid-cols-4">
@@ -203,7 +198,8 @@ export default async function ExperienceDetailPage({
             </Section>
           )}
 
-          <Section title={`Reviews (${experience.rating_count})`}>
+          {/* Title carries no count: rating_count is not backed by readable review rows (AUDIT.md (b)). */}
+          <Section title="Reviews">
             {reviews.length === 0 ? (
               <p className="text-[var(--color-ink)]/70">No reviews yet. Be the first to join!</p>
             ) : (
