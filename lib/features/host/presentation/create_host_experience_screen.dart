@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../theme/theme.dart';
@@ -176,10 +177,18 @@ class _CreateHostExperienceScreenState
       if (!mounted) return;
       setState(() => dirty = false);
       messenger.showSnackBar(const SnackBar(content: Text('Draft saved.')));
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
+      // Surface the backend's actionable message (e.g. "This listing already
+      // has changes awaiting review.") rather than a generic retry prompt.
       messenger.showSnackBar(
-        const SnackBar(content: Text('Could not save the draft. Try again.')),
+        SnackBar(
+          content: Text(
+            error is PostgrestException
+                ? error.message
+                : 'Could not save the draft. Try again.',
+          ),
+        ),
       );
     }
   }
