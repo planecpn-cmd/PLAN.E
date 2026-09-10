@@ -94,15 +94,8 @@ export default async function ExperienceDetailPage({
       availability: nextDeparture ? "https://schema.org/InStock" : "https://schema.org/SoldOut",
       url: `https://planenepal.com/experience/${experience.slug}`,
     },
-    ...(experience.rating_count > 0
-      ? {
-          aggregateRating: {
-            "@type": "AggregateRating",
-            ratingValue: experience.rating_avg,
-            reviewCount: experience.rating_count,
-          },
-        }
-      : {}),
+    // No aggregateRating: rating_count is not backed by review rows anon can
+    // read (AUDIT.md (b)). Re-add only once it is.
   };
 
   return (
