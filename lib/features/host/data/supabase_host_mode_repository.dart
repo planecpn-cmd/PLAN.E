@@ -136,6 +136,18 @@ class SupabaseHostModeRepository extends UnavailableHostModeRepository {
   }
 
   @override
+  Future<void> setExperiencePaused(String id, bool paused) async {
+    await _requireApprovedHost();
+    // Client cannot write experiences.status directly (grant revoked); the
+    // SECURITY DEFINER RPC re-checks ownership + approved-active host + that the
+    // listing is in a state that can be toggled.
+    await _client.rpc(
+      'host_set_experience_paused',
+      params: {'p_experience_id': id, 'p_paused': paused},
+    );
+  }
+
+  @override
   Future<List<HostBookingRequest>> getBookings() async {
     await _requireApprovedHost();
     final experiences = await getExperiences();

@@ -7,7 +7,6 @@ import '../../../widgets/widgets.dart';
 import '../domain/host_mode_models.dart';
 import 'host_conversation_navigation.dart';
 import 'host_mode_providers.dart';
-import 'widgets/host_mode_scaffold.dart';
 
 class HostExperienceDetailScreen extends ConsumerWidget {
   const HostExperienceDetailScreen({super.key, required this.id});
@@ -140,22 +139,17 @@ class HostExperienceDetailScreen extends ConsumerWidget {
                     ),
                   ),
                   const Divider(),
-                  _Control(
-                    icon: item.status == HostExperienceStatus.paused
-                        ? Icons.play_circle_outline
-                        : Icons.pause_circle_outline,
-                    label: item.status == HostExperienceStatus.paused
-                        ? 'Resume listing'
-                        : 'Pause listing',
-                    // H0 stopgap: pause/resume is not wired to a backend yet
-                    // (see docs/H1_HOST_WRITE_PATH.md).
-                    onTap: () => showUnavailableNotice(
-                      context,
-                      item.status == HostExperienceStatus.paused
-                          ? 'Resuming a listing'
-                          : 'Pausing a listing',
+                  if (item.status == HostExperienceStatus.active ||
+                      item.status == HostExperienceStatus.paused)
+                    _Control(
+                      icon: item.status == HostExperienceStatus.paused
+                          ? Icons.play_circle_outline
+                          : Icons.pause_circle_outline,
+                      label: item.status == HostExperienceStatus.paused
+                          ? 'Resume listing'
+                          : 'Pause listing',
+                      onTap: () => _toggle(context, ref, item),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -165,6 +159,59 @@ class HostExperienceDetailScreen extends ConsumerWidget {
     ),
   );
 
+  Future<void> _toggle(
+    BuildContext context,
+    WidgetRef ref,
+    HostExperience item,
+  ) async {
+    final pause = item.status != HostExperienceStatus.paused;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('${pause ? 'Pause' : 'Resume'} listing?'),
+        content: Text(
+          pause
+              ? 'This hides the listing from travelers until you resume it.'
+              : 'This makes the listing visible to travelers again.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(pause ? 'Pause' : 'Resume'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await ref
+          .read(hostModeRepositoryProvider)
+          .setExperiencePaused(item.id, pause);
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Could not ${pause ? 'pause' : 'resume'} the listing. Try again.',
+            ),
+          ),
+        );
+      }
+      return;
+    }
+    ref.invalidate(hostExperienceProvider(item.id));
+    ref.invalidate(hostExperiencesProvider);
+    ref.invalidate(hostDashboardProvider);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(pause ? 'Listing paused.' : 'Listing resumed.')),
+      );
+    }
+  }
 }
 
 class _Control extends StatelessWidget {

@@ -154,19 +154,21 @@ void main() {
     expect(find.textContaining(_notice), findsOneWidget);
   });
 
-  testWidgets('Pause listing (experience detail) does not hit the write path', (
+  testWidgets('Pause listing (experience detail) handles a write failure', (
     tester,
   ) async {
+    // RPC-backed since H1(1/4): confirm dialog -> repo call. When the call
+    // fails the handler must catch it and show an error, not let it escape.
     await _pump(
       tester,
       _host(const HostExperienceDetailScreen(id: 'mock-exp-mardi')),
     );
 
-    await expectNoWritePathError(
-      tester,
-      () => _tapAndSettle(tester, find.text('Pause listing')),
-    );
-    expect(find.textContaining(_notice), findsOneWidget);
+    await expectNoWritePathError(tester, () async {
+      await _tapAndSettle(tester, find.text('Pause listing'));
+      await _tapAndSettle(tester, find.widgetWithText(FilledButton, 'Pause'));
+    });
+    expect(find.textContaining('Could not pause'), findsOneWidget);
   });
 
   testWidgets('Update availability does not hit the write path', (tester) async {
