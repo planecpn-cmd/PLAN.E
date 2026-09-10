@@ -1,0 +1,143 @@
+# Runs the next runnable node of docs/plan-e-marketing-agent-graph.md, one
+# node per run, then opens a DRAFT PR whose body is the node contract JSON.
+#
+# - The next node comes from agent/graph-state.json via
+#   scripts/agent-next-node.mjs (deterministic, tested). A closed human gate
+#   (H1/H2/G-FINAL) means nothing runs and the job exits green.
+# - The model edits the working tree only. This workflow validates the
+#   contract, rejects forbidden paths, commits, and pushes to agent/<node>-<run>.
+#   It never pushes to main.
+# - Pushes and PRs use a GitHub App token, so gates.yml runs on the PR and the
+#   PR author is the app. The owner can therefore give the CODEOWNERS review.
+name: agent
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 20 * * *"   # 02:00 Asia/Kathmandu
+
+concurrency:
+  group: agent
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  run-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: App token (push + PR as the agent app)
+        id: app
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.AGENT_APP_ID }}
+          private-key: ${{ secrets.AGENT_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ steps.app.outputs.token }}
+
+      - name: Select next node
+        id: pick
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          # Nodes that already have an open agent PR are skipped, so the nightly
+          # run never duplicates work awaiting review.
+          open=$(gh pr list --state open --limit 100 --json headRefName \
+                  --jq '[.[].headRefName | select(startswith("agent/")) | sub("^agent/"; "") | sub("-[0-9]+$"; "")] | join(",")')
+          node=$(node scripts/agent-next-node.mjs --skip "$open")
+          echo "node=$node" >> "$GITHUB_OUTPUT"
+          if [ -z "$node" ]; then
+            echo "No runnable node (human gate closed, deps unfinished, or open PRs: ${open:-none})." | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Running node **$node**" | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - if: steps.pick.outputs.node != ''
+        uses: actions/setup-node@v4
+        with: { node-version: "22", cache: npm, cache-dependency-path: webapp/package-lock.json }
+
+      - if: steps.pick.outputs.node != ''
+        name: Install webapp + Playwright (the agent runs its node's gates)
+        working-directory: webapp
+        run: npm ci && npx playwright install --with-deps chromium
+
+      - if: steps.pick.outputs.node != ''
+        name: Run node with Claude Code
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Anon key only: the agent sees exactly what the public site sees.
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NODE_ID: ${{ steps.pick.outputs.node }}
+        run: |
+          mkdir -p agent/out
+          prompt="You are executing exactly one node, ${NODE_ID}, of docs/plan-e-marketing-agent-graph.md.
+          Read that spec first, including the Amendments section. Then read RECON.md, AUDIT.md, BLOCKED.md, SECTIONS.json (if present) and agent/graph-state.json.
+          Obey every operating rule. Execute only node ${NODE_ID}, run its gates (bounded repair: max 3 attempts, stop on a repeated identical failure), and never weaken a gate.
+          You must not modify: webapp/gates/**, supabase/tests/**, .github/**, CODEOWNERS, agent/graph-state.json, supabase/migrations/**, supabase/functions/**, or any Flutter path (lib/, android/, ios/, windows/, web/, test/, integration_test/, pubspec.*). Record anything needing those in BLOCKED.md.
+          Do not commit, push or create branches; the workflow does that.
+          Finish by writing the node contract JSON (keys: node, status [pass|blocked|halted], attempts, changed_files, gate_results, blocked_reason, next) to agent/out/contract.json."
+          npx -y @anthropic-ai/claude-code@latest -p "$prompt" \
+            --model claude-opus-5 \
+            --max-turns 300 \
+            --permission-mode acceptEdits \
+            --allowedTools "Read" "Edit" "Write" "Glob" "Grep" \
+              "Bash(npm:*)" "Bash(npx:*)" "Bash(node:*)" \
+              "Bash(git diff:*)" "Bash(git status:*)" "Bash(git log:*)" "Bash(ls:*)"
+
+      - if: steps.pick.outputs.node != ''
+        name: Validate contract
+        id: contract
+        env: { NODE_ID: "${{ steps.pick.outputs.node }}" }
+        run: |
+          node -e '
+            const c = JSON.parse(require("fs").readFileSync("agent/out/contract.json", "utf8"));
+            const need = ["node","status","attempts","changed_files","gate_results","blocked_reason","next"];
+            const missing = need.filter((k) => !(k in c));
+            if (missing.length) throw new Error("contract missing: " + missing.join(","));
+            if (c.node !== process.env.NODE_ID) throw new Error(`contract is for ${c.node}, expected ${process.env.NODE_ID}`);
+            if (!["pass","blocked","halted"].includes(c.status)) throw new Error("bad status " + c.status);
+            console.log("status=" + c.status);
+          ' | tee -a "$GITHUB_OUTPUT"
+
+      - if: steps.pick.outputs.node != ''
+        name: Reject forbidden paths
+        run: |
+          changed=$(git status --porcelain --untracked-files=all | sed 's/^...//' | sed 's/.* -> //')
+          bad=$(printf '%s\n' "$changed" | grep -E '^(webapp/gates/|supabase/tests/|supabase/migrations/|supabase/functions/|\.github/|CODEOWNERS|agent/graph-state\.json|lib/|android/|ios/|windows/|web/|test/|integration_test/|pubspec\.)' || true)
+          if [ -n "$bad" ]; then
+            echo "Agent touched forbidden paths:"; echo "$bad"; exit 1
+          fi
+
+      - if: steps.pick.outputs.node != ''
+        name: Commit, push node branch, open draft PR
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          NODE_ID: ${{ steps.pick.outputs.node }}
+          STATUS: ${{ steps.contract.outputs.status }}
+        run: |
+          branch="agent/${NODE_ID}-${GITHUB_RUN_ID}"
+          case "$branch" in agent/*) ;; *) echo "refusing branch $branch"; exit 1 ;; esac
+          [ "$branch" != "main" ] || exit 1
+
+          node scripts/agent-next-node.mjs --set "$NODE_ID" "$STATUS"
+          mkdir -p agent/contracts
+          cp agent/out/contract.json "agent/contracts/${NODE_ID}.json"
+          rm -rf agent/out
+
+          git config user.name  "plan-e-agent[bot]"
+          git config user.email "plan-e-agent[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add -A
+          git commit -m "agent: ${NODE_ID} (${STATUS})"
+          git push origin "HEAD:refs/heads/${branch}"
+
+          { echo '```json'; cat "agent/contracts/${NODE_ID}.json"; echo '```'; } > /tmp/body.md
+          gh pr create --draft --base main --head "$branch" \
+            --title "agent: ${NODE_ID} (${STATUS})" --body-file /tmp/body.md
