@@ -9,6 +9,7 @@ import '../../../theme/theme.dart';
 import '../../../widgets/widgets.dart';
 import '../domain/host_experience_validator.dart';
 import 'host_mode_providers.dart';
+import 'widgets/host_mode_scaffold.dart';
 
 class HostExperiencePreviewScreen extends ConsumerStatefulWidget {
   const HostExperiencePreviewScreen({super.key});
@@ -19,7 +20,6 @@ class HostExperiencePreviewScreen extends ConsumerStatefulWidget {
 
 class _HostExperiencePreviewScreenState
     extends ConsumerState<HostExperiencePreviewScreen> {
-  bool submitting = false;
   @override
   Widget build(BuildContext context) {
     final draft = ref.watch(hostCreateExperienceProvider);
@@ -178,7 +178,6 @@ class _HostExperiencePreviewScreenState
               Expanded(
                 child: AppButton(
                   label: 'Submit for review',
-                  isLoading: submitting,
                   onPressed: _submit,
                   isFullWidth: true,
                 ),
@@ -190,7 +189,11 @@ class _HostExperiencePreviewScreenState
     );
   }
 
-  Future<void> _submit() async {
+  // H0 stopgap: submitting an experience for review is not wired to a backend
+  // yet (see docs/H1_HOST_WRITE_PATH.md). Validate for feedback, then show a
+  // clear notice instead of calling the repository, whose submitForReview
+  // throws an unhandled StateError in production.
+  void _submit() {
     final draft = ref.read(hostCreateExperienceProvider);
     final errors = HostExperienceValidator.validateForSubmission(draft);
     if (errors.isNotEmpty) {
@@ -199,32 +202,7 @@ class _HostExperiencePreviewScreenState
       ).showSnackBar(SnackBar(content: Text(errors.values.first)));
       return;
     }
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Submit for review?'),
-        content: const Text(
-          'This will send the experience for review. You can track its status from Experiences.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Keep editing'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Submit'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-    setState(() => submitting = true);
-    await ref.read(hostModeRepositoryProvider).submitForReview(draft);
-    ref.invalidate(hostExperiencesProvider);
-    ref.invalidate(hostDashboardProvider);
-    ref.read(hostCreateExperienceProvider.notifier).reset();
-    if (mounted) context.go('/host/experiences/submitted');
+    showUnavailableNotice(context, 'Submitting experiences for review');
   }
 }
 

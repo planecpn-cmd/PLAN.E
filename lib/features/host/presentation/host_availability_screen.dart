@@ -5,6 +5,7 @@ import '../../../theme/theme.dart';
 import '../../../widgets/widgets.dart';
 import '../domain/host_mode_models.dart';
 import 'host_mode_providers.dart';
+import 'widgets/host_mode_scaffold.dart';
 
 class HostAvailabilityScreen extends ConsumerStatefulWidget {
   const HostAvailabilityScreen({super.key, required this.id});
@@ -66,13 +67,16 @@ class _HostAvailabilityScreenState
             ),
             const SizedBox(height: 16),
             AppButton(
-              label: 'Update availability locally',
+              label: 'Update availability',
               isFullWidth: true,
-              onPressed: _save,
+              // H0 stopgap: editing availability is not wired to a backend yet
+              // (see docs/H1_HOST_WRITE_PATH.md).
+              onPressed: () =>
+                  showUnavailableNotice(context, 'Updating availability'),
             ),
             const SizedBox(height: 8),
             Text(
-              'This update is in-memory only and resets when the app restarts.',
+              'Editing availability is not available yet.',
               style: AppTypography.caption.copyWith(
                 color: AppColors.disabledText,
               ),
@@ -101,28 +105,6 @@ class _HostAvailabilityScreenState
     }
   }
 
-  Future<void> _save() async {
-    final count = int.tryParse(capacity.text.trim());
-    if (start == null ||
-        end == null ||
-        end!.isBefore(start!) ||
-        count == null ||
-        count < 1 ||
-        count > 100) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Enter valid dates and a capacity from 1 to 100.'),
-        ),
-      );
-      return;
-    }
-    await ref
-        .read(hostModeRepositoryProvider)
-        .updateAvailability(widget.id, start!, end!, count);
-    ref.invalidate(hostExperienceProvider(widget.id));
-    ref.invalidate(hostExperiencesProvider);
-    if (mounted) Navigator.pop(context);
-  }
 }
 
 class _DateRow extends StatelessWidget {

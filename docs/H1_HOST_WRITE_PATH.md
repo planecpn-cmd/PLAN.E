@@ -2,6 +2,50 @@
 
 What it takes to make `SupabaseHostModeRepository` actually write. No implementation in this doc. Read it to decide whether H1 runs before or after P3.
 
+---
+
+## Decisions log (founder, post-audit)
+
+### D1 — N1 = approval queue (confirmed)
+
+Client doc says "3 EXPERIENCE AWAITING APPROVAL"; `experience_status` already carries `pending_review`. **H1 client writes may only ever produce `draft` or `pending_review`, never `published`.** Publishing is an admin `content:manage` action. Edits to an already-published experience create a **`pending_review` revision**; they do not mutate the live row. The approval queue is therefore additive — build it as its own P-node modelled on P2's host-application review.
+
+### D2 — experience photo storage: private bucket + copy on approval
+
+**Supabase Storage has no per-object ACL** — a bucket is wholly public or wholly private, so "flip an ACL on the same object" is not an available primitive. Decision:
+
+- New **private** bucket `experience-photos`. Host upload path `<host_id>/<experience_id>/<file>`; RLS upload policy scoped to `auth.uid() = <host_id>` and `private.is_approved_active_host(auth.uid())`. Read = signed URL for the owning host and the admin reviewer.
+- On approval, the admin decision RPC **copies** the approved objects into the existing **public `catalog-images`** bucket and sets `experiences.cover_image_url` / `gallery` to those public paths. Private originals are kept for audit.
+
+**Why copy, not signed-URL-always:** copy keeps the public surface a single well-known bucket (`catalog-images`, already how seeded catalog imagery works — stable CDN-friendly URLs). A takedown is then one delete from that one bucket + set the experience `archived`; the private original is not publicly reachable so it needs no urgent action. Signed-URL-always also unpublishes cleanly but couples every catalog image read to short-lived URL minting forever to get that property, and diverges from the existing catalog delivery model. Rejected the "public bucket, rely on nothing linking to unpublished photos" option outright — that is obscurity and it publicly hosts unreviewed uploads on our domain.
+
+### D3 — taxonomy: NOT NULL status of the six columns (reported, per request)
+
+`public.experiences`, from `0005_experiences.sql`; **no later migration alters any of these**:
+
+| Column | NOT NULL? | Default | Fillable at draft-insert time? |
+|---|---|---|---|
+| `category_id` | **No** (nullable FK `categories`) | — | map from doc Q1; or leave null, admin sets at review |
+| `region_id` | **No** (nullable FK `regions`) | — | derive from the host's location text; or leave null, admin sets at review |
+| `slug` | **Yes** | none | yes — server-generated from `title` + short hash, retry-on-conflict |
+| `currency` | **Yes** | `'NPR'` (+ `check (currency = 'NPR')`) | yes — default applies on insert |
+| `duration_hours` | **Yes** | `24` | yes — default applies; admin normalises at review |
+| `difficulty` | **Yes** | `'moderate'` (enum `difficulty_level`) | yes — default applies; admin sets at review |
+
+**None of the six blocks a draft-time insert.** The three NOT-NULL ones all have defaults; `slug` is NOT NULL without a default but is server-generated; `category_id` / `region_id` are nullable.
+
+**One column outside the six IS a draft-insert blocker — flagging it:** `cover_image_url text not null` has **no default**. A `draft` / `pending_review` row cannot be inserted without a URL, and the wizard holds only local file paths until upload. Two ways out:
+- **(a) recommended, no migration:** the create RPC uploads the photos first (step 1 already requires ≥1) and derives `cover_image_url` from the first stored object before the `experiences` insert.
+- (b) additive migration: drop the NOT NULL, add `check (status <> 'published' or cover_image_url is not null)` so imageless drafts are legal and the constraint only bites at publish.
+
+Recommend (a): keeps the live catalog's not-null invariant intact and needs no schema change. This is the one place the taxonomy decision meets a real constraint — raising it rather than inventing a placeholder cover URL.
+
+### D4 — `slug` uniqueness: retry-on-conflict
+
+`slug text unique not null`. Generate `slugify(title) + '-' + base36(short hash)`; on unique-violation, regenerate the hash and retry (bounded, e.g. 5 attempts). Do **not** repeat the `booking_ref` pattern of a unique column with no retry path.
+
+---
+
 ## Background
 
 `hostModeRepositoryProvider` → `SupabaseHostModeRepository` (`lib/features/host/presentation/host_mode_providers.dart:8`). That class extends `UnavailableHostModeRepository` and overrides **reads and messaging only**. Five write methods fall through to the fail-closed base, which returns `Future.error(StateError('Host Mode requires an authenticated, approved and active host account.'))`.
