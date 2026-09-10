@@ -11,6 +11,7 @@ export const ALL_SCOPES = [
   "finance:read",
   "content:manage",
   "content:decide",
+  "users:manage",
   "staff:manage",
 ] as const;
 

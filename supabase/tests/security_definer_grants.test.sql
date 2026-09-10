@@ -26,7 +26,13 @@ declare
     'public.consume_payment_redirect_token(text)',
     'public.finalize_verified_payment(uuid, uuid, payment_provider, text, jsonb)',
     'public.claim_trip_push_deliveries(uuid)',
-    'public.admin_apply_experience_revision(uuid, uuid, jsonb)'
+    'public.admin_apply_experience_revision(uuid, uuid, jsonb)',
+    'public.admin_cancel_booking(uuid, uuid, text, uuid)',
+    'public.admin_create_refund(uuid, uuid, bigint, text)',
+    'public.admin_settle_refund(uuid, uuid, refund_status, text, jsonb, text)',
+    'public.admin_suspend_user(uuid, uuid, text)',
+    'public.admin_reactivate_user(uuid, uuid)',
+    'public.expire_stale_pending_bookings()'
   ];
   v_sig text;
   v_allow_oids oid[] := '{}';

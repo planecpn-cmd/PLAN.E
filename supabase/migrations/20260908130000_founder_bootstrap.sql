@@ -26,7 +26,7 @@ declare
   v_all_scopes constant text[] := array[
     'hosts:review', 'hosts:decide',
     'bookings:read', 'payments:read', 'payments:act',
-    'finance:read', 'content:manage', 'content:decide', 'staff:manage'
+    'finance:read', 'content:manage', 'content:decide', 'users:manage', 'staff:manage'
   ];
   v_email text;
   v_uid uuid;

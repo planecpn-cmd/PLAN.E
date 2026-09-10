@@ -7,14 +7,20 @@
     "When you add or change a SECURITY DEFINER function: update this file AND the .test.sql list."
   ],
   "audited_at": "2026-09-09",
-  "audited_against_migration": "20260908140000_scope_aware_admin_policies + 20260909120000_host_review_workflow + 20260909150000-190000 host write path + photo slice + 20260910120000_experience_review_workflow (N1 -- no new SECURITY DEFINER functions; the decision logic is a service-role admin route)",
+  "audited_against_migration": "20260908140000..20260910160000 -- host write path, photo slice, N1 experience review, D1 revisions (admin_apply_experience_revision), P3 ops console (admin_cancel_booking / admin_create_refund / admin_settle_refund / admin_suspend_user / admin_reactivate_user / expire_stale_pending_bookings -- all service_role only, called from withAdmin routes)",
 
   "service_role_only": [
     "public.check_ai_rate_limit(text, integer, integer)",
     "public.consume_payment_redirect_token(text)",
     "public.finalize_verified_payment(uuid, uuid, payment_provider, text, jsonb)",
     "public.claim_trip_push_deliveries(uuid)",
-    "public.admin_apply_experience_revision(uuid, uuid, jsonb)"
+    "public.admin_apply_experience_revision(uuid, uuid, jsonb)",
+    "public.admin_cancel_booking(uuid, uuid, text, uuid)",
+    "public.admin_create_refund(uuid, uuid, bigint, text)",
+    "public.admin_settle_refund(uuid, uuid, refund_status, text, jsonb, text)",
+    "public.admin_suspend_user(uuid, uuid, text)",
+    "public.admin_reactivate_user(uuid, uuid)",
+    "public.expire_stale_pending_bookings()"
   ],
 
   "authenticated_callable": [

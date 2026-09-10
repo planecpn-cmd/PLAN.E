@@ -67,7 +67,7 @@ select set_config('request.jwt.claims', '{"role":"service_role"}', true);
 insert into public.staff_members (user_id, status, scopes)
 values ('<your-local-auth-uid>', 'active', array[
   'hosts:review','hosts:decide','bookings:read','payments:read',
-  'payments:act','finance:read','content:manage','content:decide','staff:manage'])
+  'payments:act','finance:read','content:manage','content:decide', 'users:manage', 'staff:manage'])
 on conflict (user_id) do update set status = 'active', scopes = excluded.scopes;
 
 -- role = 'admin' is NOT required to sign in (staff_members self-read handles
