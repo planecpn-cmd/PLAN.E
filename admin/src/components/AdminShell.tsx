@@ -9,7 +9,7 @@ const NAV: { href: string; label: string; scope: Scope }[] = [
   { href: "/experiences", label: "Experiences", scope: "content:manage" },
   { href: "/bookings", label: "Bookings", scope: "bookings:read" },
   { href: "/payments", label: "Payments", scope: "payments:read" },
-  { href: "/users", label: "Users", scope: "bookings:read" },
+  { href: "/users", label: "Users", scope: "users:manage" },
   { href: "/config", label: "Config & feature flags", scope: "content:manage" },
 ];
 

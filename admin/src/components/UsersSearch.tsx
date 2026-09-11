@@ -14,7 +14,7 @@ type Row = {
   totalSpentNpr: number;
 };
 
-export function UsersSearch({ canManage }: { canManage: boolean }) {
+export function UsersSearch() {
   const [q, setQ] = useState("");
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,19 +79,17 @@ export function UsersSearch({ canManage }: { canManage: boolean }) {
                 {u.bookingCount} bookings · NPR {u.totalSpentNpr.toLocaleString()} spent · country: not collected
               </div>
             </div>
-            {canManage && (
-              <div className="mt-2">
-                {u.suspendedAt ? (
-                  <OpsActionForm
-                    endpoint={`/api/users/${u.id}/reactivate`}
-                    label="Reactivate"
-                    reasonLabel="Note (optional)"
-                  />
-                ) : (
-                  <OpsActionForm endpoint={`/api/users/${u.id}/suspend`} label="Suspend" danger />
-                )}
-              </div>
-            )}
+            <div className="mt-2">
+              {u.suspendedAt ? (
+                <OpsActionForm
+                  endpoint={`/api/users/${u.id}/reactivate`}
+                  label="Reactivate"
+                  reasonLabel="Note (optional)"
+                />
+              ) : (
+                <OpsActionForm endpoint={`/api/users/${u.id}/suspend`} label="Suspend" danger />
+              )}
+            </div>
           </div>
         ))}
       </div>

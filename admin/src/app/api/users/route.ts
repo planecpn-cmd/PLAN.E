@@ -1,12 +1,15 @@
 import { withAdmin } from "@/lib/with-admin.server";
 
-// User search. bookings:read (viewing a user's booking history is booking data).
-// Per-user total spending + booking count are DERIVED. Country is NOT collected
-// anywhere in the product today -> rendered absent, not invented.
+// User search. Gated on users:manage, not bookings:read: this is a full
+// traveler+host directory with lifetime spend, a different sensitivity class
+// than one booking's detail. A moderator who only triages bookings should not
+// get a roster of every user's total spend. Per-user total spending + booking
+// count are DERIVED. Country is NOT collected anywhere in the product today ->
+// rendered absent, not invented.
 export function GET(req: Request) {
   const term = new URL(req.url).searchParams.get("q")?.trim() ?? "";
 
-  return withAdmin("bookings:read", async (ctx) => {
+  return withAdmin("users:manage", async (ctx) => {
     let q = ctx.db
       .from("profiles")
       .select("id,full_name,phone,role,suspended_at,suspended_reason,created_at")

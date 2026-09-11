@@ -52,7 +52,7 @@ Same two-person split as host onboarding: `content:manage` recommends,
 
 | Scope | Can see | Can change |
 |---|---|---|
-| **`users:manage`** | (Also needs `bookings:read` to open the user list.) | **Suspend or reactivate a user account** — traveller or host — with a mandatory reason. One action: whether "block" should differ from "suspend", and whether either cancels confirmed bookings, is an open founder question. **Country is not collected anywhere in the product**, so it is shown as absent, never guessed. |
+| **`users:manage`** | The full user directory — every traveller and host, name, phone, booking count, and lifetime spend — plus each one's suspended state. | **Suspend or reactivate a user account** — traveller or host — with a mandatory reason. One action: whether "block" should differ from "suspend", and whether either cancels confirmed bookings, is an open founder question. **Country is not collected anywhere in the product**, so it is shown as absent, never guessed. |
 
 ### Staff
 
@@ -79,7 +79,7 @@ enough to sign in, nothing more.
 | See all bookings & contact details | ✅ | ❌ (needs `bookings:read`) | ❌ |
 | See all payments & the reconciliation view | ✅ | ❌ (needs `payments:read`) | ❌ |
 | **Re-verify a stuck payment / create a refund / cancel a booking** | ✅ | ❌ (needs `payments:act`) | ❌ |
-| Search users, see spend & booking count | ✅ | ❌ (needs `bookings:read`) | ❌ |
+| Search users, see spend & booking count | ✅ | ❌ (needs `users:manage`) | ❌ |
 | **Suspend / reactivate a user account** | ✅ | ❌ (needs `users:manage`) | ❌ |
 | See / manage other staff | ✅ | ❌ (needs `staff:manage`) | ❌ |
 | See finance / settlement data | ✅ *(when it ships)* | ❌ | ❌ |
