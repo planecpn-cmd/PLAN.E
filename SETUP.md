@@ -13,6 +13,15 @@ Do the steps in this order. **Read §6 (merge order) before merging anything** �
 
 ## ⚠ Local git safety: never verify merge order in a live session's checkout
 
+**Who this addresses:** whoever is about to run `git checkout` / `git
+merge` in `PLAN E/` to test whether branches merge together cleanly — that
+process is the one that must move to the worktree below. It is not a
+request aimed at whichever session happens to be doing feature work in
+`PLAN E/` at the time; that session did nothing wrong and has no reason to
+relocate. If you are about to check out a different ref in `PLAN E/` for
+any reason other than the feature work you are actively looking at, stop —
+you are the one this section is about.
+
 If you (or an agent) need to check whether several branches merge together
 cleanly before actually merging into `main` — which is exactly what §6 below
 requires — do it in a **dedicated git worktree**, never in this checkout
