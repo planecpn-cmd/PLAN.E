@@ -9,20 +9,20 @@ import { Icon } from "@/components/ui/Icon";
 export function BookmarkButton({ experienceId }: { experienceId: string }) {
   const { user } = useAuth();
   const router = useRouter();
-  const [saved, setSaved] = useState(false);
+  // Raw fetched value; rendering derives `saved` below so signed-out is never
+  // a setState call, just a computed false.
+  const [fetchedSaved, setFetchedSaved] = useState(false);
+  const saved = user ? fetchedSaved : false;
 
   useEffect(() => {
-    if (!user) {
-      setSaved(false);
-      return;
-    }
+    if (!user) return;
     supabase
       .from("saved_experiences")
       .select("experience_id")
       .eq("user_id", user.id)
       .eq("experience_id", experienceId)
       .maybeSingle()
-      .then(({ data }) => setSaved(!!data));
+      .then(({ data }) => setFetchedSaved(!!data));
   }, [user, experienceId]);
 
   async function toggle() {
@@ -36,10 +36,10 @@ export function BookmarkButton({ experienceId }: { experienceId: string }) {
         .delete()
         .eq("user_id", user.id)
         .eq("experience_id", experienceId);
-      setSaved(false);
+      setFetchedSaved(false);
     } else {
       await supabase.from("saved_experiences").insert({ user_id: user.id, experience_id: experienceId });
-      setSaved(true);
+      setFetchedSaved(true);
     }
   }
 

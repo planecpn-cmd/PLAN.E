@@ -107,7 +107,6 @@ export default async function ExperienceDetailPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 lg:px-6 lg:py-10">
-      {/* eslint-disable-next-line react/no-danger */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px] lg:items-start">

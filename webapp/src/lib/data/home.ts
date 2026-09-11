@@ -138,8 +138,6 @@ export async function getHomeData() {
     };
   };
 
-  const happeningThisWeek = rank(list).slice(0, 8).map(toCard);
-
   const sections: HomeSectionData[] = homeSections.map((section) => {
     const filterResults = section.filters.map((filter) => ({
       label: filter.label,
@@ -159,5 +157,5 @@ export async function getHomeData() {
     return { ...section, filterResults, overview };
   });
 
-  return { happeningThisWeek, sections };
+  return { sections };
 }
