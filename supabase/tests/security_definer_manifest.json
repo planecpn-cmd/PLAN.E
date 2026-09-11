@@ -7,7 +7,7 @@
     "When you add or change a SECURITY DEFINER function: update this file AND the .test.sql list."
   ],
   "audited_at": "2026-09-09",
-  "audited_against_migration": "20260908140000..20260910160000 -- host write path, photo slice, N1 experience review, D1 revisions (admin_apply_experience_revision), P3 ops console (admin_cancel_booking / admin_create_refund / admin_settle_refund / admin_suspend_user / admin_reactivate_user / expire_stale_pending_bookings -- all service_role only, called from withAdmin routes)",
+  "audited_against_migration": "20260908140000..20260910160000 -- host write path, photo slice, N1 experience review, D1 revisions (admin_apply_experience_revision), P3 ops console (admin_cancel_booking / admin_create_refund / admin_settle_refund / admin_suspend_user / admin_reactivate_user -- service_role only, called from withAdmin routes; expire_stale_pending_bookings -- service_role only, called from the expire-stale-bookings-cron edge function)",
 
   "service_role_only": [
     "public.check_ai_rate_limit(text, integer, integer)",

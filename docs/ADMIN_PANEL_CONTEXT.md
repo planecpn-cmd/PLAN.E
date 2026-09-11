@@ -147,9 +147,11 @@ stale — it predates roughly the 2026‑08‑16 migrations onward).
   `supabase db push --linked`, `supabase functions deploy`,
   `supabase secrets set --env-file …`.
 - **CI:** **NOT PRESENT.** No `.github/`, no CI config of any kind in the repo.
-- **Scheduled jobs:** `complete-trips-cron` expects to be POSTed by an external
-  scheduler with an `X-Cron-Secret` header. No scheduler definition
-  (`pg_cron`, GitHub cron, Cloudflare cron) is committed.
+- **Scheduled jobs:** `complete-trips-cron` and `expire-stale-bookings-cron`
+  (P3 — flips `pending` bookings past `quote_expires_at` to `expired` via
+  `expire_stale_pending_bookings()`) each expect to be POSTed by an external
+  scheduler with their own `X-Cron-Secret` header. No scheduler definition
+  (`pg_cron`, GitHub cron, Cloudflare cron) is committed for either.
 - **Payment redirect base URL:** `PUBLIC_SUPABASE_URL` env var; web returns land
   on `https://planenepal.com/booking/confirmation/<id>` (hard-coded `WEB_ORIGIN`
   in `verify-payment-return/index.ts`).
