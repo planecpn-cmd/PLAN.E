@@ -11,6 +11,55 @@ Do the steps in this order. **Read §6 (merge order) before merging anything** �
 
 ---
 
+## ⚠ Local git safety: never verify merge order in a live session's checkout
+
+If you (or an agent) need to check whether several branches merge together
+cleanly before actually merging into `main` — which is exactly what §6 below
+requires — do it in a **dedicated git worktree**, never in this checkout
+(`PLAN E/`). A plain `git checkout` / `git merge` here moves the one shared
+`HEAD` and working tree for *everything* pointed at this directory. If an
+interactive Claude Code session (or you, in another terminal) has
+uncommitted edits at that moment, they are silently discarded the instant
+something else checks out a different ref — there is no prompt, no
+conflict, nothing to undo.
+
+This already happened once: a local merge-order check walked through
+`tmp/gate-verify` / `tmp/final-merge-check`, octopus-merging the `p0crit/*`
+branches with `infra/pipeline` in this exact directory, while an
+interactive session had uncommitted `admin-panel/p0-test-harness` work in
+progress. The edits vanished. No commits were lost — only what hadn't been
+committed yet — and it was caught only because that session happened to
+diff file contents against what it expected.
+
+**The fix — a second, fully independent working copy:**
+
+```bash
+git worktree add ../PLAN-E-automation infra/pipeline
+```
+
+`../PLAN-E-automation` shares this repo's `.git` object store (so it sees
+every branch and commit) but has its own `HEAD`, index, and working files.
+Do every temporary checkout, octopus-merge dry run, or "does this actually
+merge cleanly" check **there** — `cd ../PLAN-E-automation` first, not
+`PLAN E/`. Nothing done in that worktree can ever touch this checkout's
+`HEAD` or its uncommitted files, no matter what branch it lands on or what
+it merges into what.
+
+```bash
+git worktree list                          # every worktree + which branch each is on
+git worktree remove ../PLAN-E-automation   # tear it down once the check is done
+```
+
+This worktree already exists on disk as of 2026-09-11 — reuse it (`git
+fetch` + `git checkout <ref>` inside it) rather than creating another one.
+
+**Rule of thumb:** `PLAN E/` is for the work a human or a single active
+session is actively looking at. Anything scripted, unattended, or
+exploratory that needs to move `HEAD` around — including this file's own
+§6 merge-order dry-runs — belongs in a worktree, never here.
+
+---
+
 ## 0. One-time: push the branches (this environment has no push access)
 
 ```bash
@@ -92,6 +141,9 @@ This needs an account with Owner/Admin on the project. The account used in this 
 ## 6. Merge order
 
 Merge in exactly this order. Steps (c) and (d) are commands you run by hand, not PRs.
+If you want to dry-run whether these branches actually merge together before
+doing it for real, do that in the dedicated worktree from the callout above
+(`../PLAN-E-automation`) — not in `PLAN E/`.
 
 **(a) Merge `p0crit/5-lint-and-omit-happening` into `main`.**
 Lint fixes, no functional change, and removes the "Happening This Week" homepage section (it ranked by rating with no date filter and can't be made truthful — see the commit message). Safe first because nothing later depends on it and it touches no backend.
