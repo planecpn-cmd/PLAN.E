@@ -1,5 +1,8 @@
 # Runs the next runnable node of docs/plan-e-marketing-agent-graph.md, one
 # node per run, then opens a DRAFT PR whose body is the node contract JSON.
+# Manual dispatch only (Actions tab, or `gh workflow run agent.yml`) — no
+# schedule. Trigger it deliberately after opening a human gate, or when you
+# want the next node picked up.
 #
 # - The next node comes from agent/graph-state.json via
 #   scripts/agent-next-node.mjs (deterministic, tested). A closed human gate
@@ -13,8 +16,6 @@ name: agent
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "15 20 * * *"   # 02:00 Asia/Kathmandu
 
 concurrency:
   group: agent
@@ -46,8 +47,8 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
         run: |
-          # Nodes that already have an open agent PR are skipped, so the nightly
-          # run never duplicates work awaiting review.
+          # Nodes that already have an open agent PR are skipped, so a
+          # re-dispatch never duplicates work awaiting review.
           open=$(gh pr list --state open --limit 100 --json headRefName \
                   --jq '[.[].headRefName | select(startswith("agent/")) | sub("^agent/"; "") | sub("-[0-9]+$"; "")] | join(",")')
           node=$(node scripts/agent-next-node.mjs --skip "$open")
@@ -70,7 +71,10 @@ jobs:
       - if: steps.pick.outputs.node != ''
         name: Run node with Claude Code
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Dedicated to this workflow — never the key used for anything else
+          # in this repo — so it can be capped and rotated on its own without
+          # touching other integrations.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_AGENT_KEY }}
           # Anon key only: the agent sees exactly what the public site sees.
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
