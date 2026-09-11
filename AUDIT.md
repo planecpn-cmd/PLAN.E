@@ -331,3 +331,124 @@ A human must approve these. **None were done by N1.**
 7. **Populate or hide empty families** (trips-tours, meet-people, give-back). This also fixes the "Curated Trips" CTA.
 8. **Decide host commission rate and direction.** Blocks `/for-hosts` terms.
 9. **Remove the dead profile-menu links** (7 × 404) and `/host/dashboard`. This was not in the P0 request scope.
+
+---
+
+## 9. STALE-BOOKINGS (read-only diagnosis, 2026-09-11)
+
+Node run after P0-VERIFY confirmed the past-departure guard live in production. Trigger: PLE-114405 and PLE-988971 (both created deliberately by P0-VERIFY's Test A/B, `create-booking-intent`) sat at `status: pending` well past their `quote_expires_at` with no automatic change. **No writes were made in this node. Nothing was cancelled, modified, or scheduled.**
+
+### (a)-(d) Scale of the problem — cannot be measured from this environment
+
+`bookings` has RLS restricting every row to `user_id = auth.uid()`; the anon key gets `401 permission denied for table bookings` (confirmed again this run), and `supabase migration list --linked` / any Management-API-backed DB access still 403s for this account (`unexpected login role status 403`, needs `SUPABASE_DB_PASSWORD` — still unset). That RLS is correct and desirable; it also means I have no way to see any booking except the two rows above, which belong to the test user I control. **I cannot report a-d for the whole platform without either `SUPABASE_DB_PASSWORD` or a service-role key, neither of which exists in this environment** (checked: no `supabase/functions/.env`, only the checked-in `.env.example` template with placeholder values).
+
+What I can confirm, for the two rows I do have access to (via that user's own token):
+
+| booking_ref | status | created_at | quote_expires_at | now (at last check) | past expiry by |
+|---|---|---|---|---|---|
+| PLE-114405 | pending | 2026-09-11T06:40:00.335Z | 2026-09-11T06:55:00.283Z | 2026-09-11T07:33:58Z | 38m 58s |
+| PLE-988971 | pending | 2026-09-11T06:40:02.330Z | 2026-09-11T06:55:01.506Z | 2026-09-11T07:33:58Z | 38m 57s |
+
+Both `updated_at` still equal `created_at` exactly — no process has touched either row since creation.
+
+**To get the real platform-wide a-d, once DB access works, run:**
+
+```sql
+-- (a) total pending
+select count(*) from public.bookings where status = 'pending';
+
+-- (b) pending AND past quote_expires_at (exactly what expire_stale_pending_bookings() targets)
+select count(*) from public.bookings
+where status = 'pending' and quote_expires_at is not null and quote_expires_at < now();
+
+-- (c) oldest such booking
+select id, booking_ref, created_at, quote_expires_at
+from public.bookings
+where status = 'pending' and quote_expires_at is not null and quote_expires_at < now()
+order by created_at asc limit 1;
+
+-- (d) grouped by experience + departure, with the departure's own capacity for context
+select b.experience_id, b.departure_id, d.start_date, d.total_spots, d.spots_left,
+       count(*) filter (where b.status = 'pending' and b.quote_expires_at < now()) as expired_pending_count,
+       sum(b.adults + b.children) filter (where b.status = 'pending' and b.quote_expires_at < now()) as guests_held
+from public.bookings b
+join public.experience_departures d on d.id = b.departure_id
+group by b.experience_id, b.departure_id, d.start_date, d.total_spots, d.spots_left
+having count(*) filter (where b.status = 'pending' and b.quote_expires_at < now()) > 0
+order by expired_pending_count desc;
+```
+
+Given the two known rows already span two different experiences/departures created 30+ minutes ago from a single manual test run, and this repo's audit already found 90 past-dated departures that were `open` for weeks before P0-CRIT, it would not be surprising if real historical pending bookings exist too — but that is a guess, not a finding. The query above is the only way to know.
+
+### (e) Does displayed availability count pending bookings as consumed seats? No.
+
+Traced the full write path for `experience_departures.spots_left`:
+
+| Where `spots_left` is written | What triggers it |
+|---|---|
+| `supabase/migrations/20260823080000_atomic_payment_finalization.sql:74` — `update ... set spots_left = spots_left - (adults + children) ... where spots_left >= (adults + children)`, inside `finalize_verified_payment()` | Called only from `payment-webhook/index.ts:271`, `verify-payment-return/index.ts:165`, and `admin-reverify-payment/index.ts:117` — i.e. only when a **payment is actually confirmed as paid**, moving the booking to `confirmed`. |
+| Host-side capacity edits | `supabase/migrations/20260909160000_host_update_experience_availability.sql:99` and `20260909170000_host_save_experience_draft.sql:173` — host explicitly setting departure capacity, unrelated to bookings. |
+
+`create-booking-intent/index.ts:111,129` only **reads** `spots_left` to validate there's room; it never decrements it. The same finalize function (line 65-66) also independently refuses to confirm a booking whose `quote_expires_at <= now()`, so an expired pending booking cannot silently become a paid one later even without the cron.
+
+The webapp displays this same raw column, unchanged: `webapp/src/components/BookingForm.tsx:58,154` and `webapp/src/app/(main)/experience/[slug]/page.tsx:47,59,67` all read `departure.spots_left` directly.
+
+**Conclusion: a pending or expired-but-unflagged booking does not hold a seat.** `spots_left` only ever drops when a payment is confirmed. The stale rows are a data-hygiene and (if a host or admin console ever sums pending totals) a possible-reporting-accuracy problem, not an overselling/availability problem.
+
+## 10. Whether the cron ever ran
+
+**Defined nowhere.** Checked every mechanism named in the task:
+
+| Mechanism | Result |
+|---|---|
+| `pg_cron` extension / `cron.schedule(...)` | No match anywhere in `supabase/migrations/` |
+| Supabase scheduled-function config | Not exposed by this config.toml version; `[functions.expire-stale-bookings-cron]` only sets `verify_jwt = false` — no schedule |
+| GitHub Actions workflow | This branch has `db.yml`, `flutter.yml`, `web.yml` (pre-existing) and, on `infra/pipeline` (unmerged), `gates.yml`/`deploy.yml`/`agent.yml` — none reference `expire-stale-bookings` or cron |
+| Cloudflare Cron Trigger | No `crons`/`triggers` block in `webapp/wrangler.jsonc` |
+
+The function's own source says so directly, `supabase/functions/expire-stale-bookings-cron/index.ts:19-22`: "Wiring the actual scheduler (pg_cron / GitHub Actions cron / Cloudflare cron) that POSTs here on an interval is ops, same as `complete-trips-cron` today."
+
+`complete-trips-cron` (the sibling job that flips completed trips) is in the exact same unwired state — this isn't unique to booking expiry.
+
+**Function's own logic** (`supabase/functions/expire-stale-bookings-cron/index.ts`):
+- Requires `POST` + a matching `X-Cron-Secret` header (constant-time compare against `EXPIRE_STALE_BOOKINGS_CRON_SECRET`), else `401`.
+- On success, calls RPC `expire_stale_pending_bookings()` with the service-role key and returns its count.
+
+**The RPC itself** (`supabase/migrations/20260910160000_ops_console_schema.sql:317-335`):
+
+```sql
+create or replace function public.expire_stale_pending_bookings()
+returns integer
+language plpgsql security definer set search_path = ''
+as $$
+declare v_count integer;
+begin
+  with expired as (
+    update public.bookings
+      set status = 'expired'::public.booking_status, updated_at = now()
+    where status = 'pending'::public.booking_status
+      and quote_expires_at is not null
+      and quote_expires_at < now()
+    returning 1
+  )
+  select count(*) into v_count from expired;
+  return v_count;
+end;
+$$;
+revoke execute on function public.expire_stale_pending_bookings()
+  from public, anon, authenticated;
+```
+
+Selects exactly `status='pending' AND quote_expires_at < now()`, sets `status='expired', updated_at=now()`. It does not touch `spots_left` (consistent with §9(e) — expiry was never meant to free seats, because pending bookings never held any). `EXECUTE` is revoked from every client-facing role; only the service-role-authenticated Edge Function can call it, which is correct, and also means it genuinely cannot run unless something invokes that function with the right secret.
+
+PLE-114405 and PLE-988971 match this `WHERE` clause exactly right now — they are precisely the rows this function would flip to `expired` the moment it is ever called. Per instruction, I have not called it.
+
+## 11. Migration state — unavailable
+
+`supabase migration list --linked`:
+```
+Initialising login role...
+unexpected login role status 403: {"message":"Your account does not have the necessary privileges..."}
+Connect to your database by setting the env var correctly: SUPABASE_DB_PASSWORD
+```
+Same permission gap as `functions list` earlier in this session. `SUPABASE_DB_PASSWORD` is not set in this environment. No diff against `main`'s migrations could be produced. Nothing was applied.
