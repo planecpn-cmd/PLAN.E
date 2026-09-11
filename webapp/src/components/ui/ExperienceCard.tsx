@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { RatingStars } from "./RatingStars";
 import { formatNpr } from "@/lib/format";
 
 export interface ExperienceCardData {
@@ -79,11 +78,8 @@ export function ExperienceCard({
           )}
           {meta && <p className="truncate text-xs font-semibold text-[var(--color-forest)]">{meta}</p>}
           <div className="mt-1 flex items-center justify-between gap-2">
-            {experience.ratingCount > 0 ? (
-              <RatingStars rating={experience.ratingAvg} reviewCount={experience.ratingCount} />
-            ) : (
-              <span />
-            )}
+            {/* No rating badge until rating_count is backed by readable review rows (AUDIT.md (b)). */}
+            <span />
             <span className="font-bold text-[var(--color-forest)]">{formatNpr(experience.pricePaisa)}</span>
           </div>
         </div>
