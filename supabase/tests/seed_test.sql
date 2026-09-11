@@ -64,17 +64,29 @@ begin
   end if;
 
   -- ---- auth users (handle_new_user trigger seeds a matching profiles row) ----
+  -- confirmation_token / recovery_token / email_change_token_new /
+  -- email_change have no column default (unlike the other GoTrue token
+  -- columns) and are left NULL by a bare insert; GoTrue's admin API
+  -- (PUT /admin/users/:id, e.g. to set a real password on a seeded fixture
+  -- for local browser testing) scans them into a non-nullable Go string and
+  -- 500s with "converting NULL to string is unsupported" if they are. Set
+  -- them to '' explicitly.
   insert into auth.users (
     id, instance_id, email, encrypted_password, email_confirmed_at,
+    confirmation_token, recovery_token, email_change_token_new, email_change,
     raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role, aud
   ) values
     (v_traveler,  '00000000-0000-0000-0000-000000000000', 'traveler@planetest.local',  'x', now(),
+      '', '', '', '',
       '{"provider":"email","providers":["email"]}', '{"full_name":"Test Traveler"}',  now() - interval '40 days', now(), 'authenticated', 'authenticated'),
     (v_applicant, '00000000-0000-0000-0000-000000000000', 'applicant@planetest.local', 'x', now(),
+      '', '', '', '',
       '{"provider":"email","providers":["email"]}', '{"full_name":"Test Applicant"}', now() - interval '30 days', now(), 'authenticated', 'authenticated'),
     (v_host,      '00000000-0000-0000-0000-000000000000', 'host@planetest.local',      'x', now(),
+      '', '', '', '',
       '{"provider":"email","providers":["email"]}', '{"full_name":"Test Host"}',      now() - interval '60 days', now(), 'authenticated', 'authenticated'),
     (v_admin,     '00000000-0000-0000-0000-000000000000', 'admin@planetest.local',     'x', now(),
+      '', '', '', '',
       '{"provider":"email","providers":["email"]}', '{"full_name":"Test Admin"}',     now() - interval '90 days', now(), 'authenticated', 'authenticated')
   on conflict (id) do nothing;
 
