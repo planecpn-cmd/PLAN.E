@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../domain/host_mode_models.dart';
 import 'host_mode_repository.dart';
 
@@ -33,6 +35,19 @@ class UnavailableHostModeRepository implements HostModeRepository {
 
   @override
   Future<HostExperience> saveDraft(HostExperienceDraft draft) => _unavailable();
+
+  @override
+  Future<String> uploadExperiencePhoto({
+    required Uint8List bytes,
+    required String fileName,
+    required String experienceKey,
+  }) => _unavailable();
+
+  @override
+  Future<String> experiencePhotoSignedUrl(String path) => _unavailable();
+
+  @override
+  Future<void> deleteExperiencePhoto(String path) => _unavailable();
 
   @override
   Future<HostExperience> submitForReview(HostExperienceDraft draft) =>

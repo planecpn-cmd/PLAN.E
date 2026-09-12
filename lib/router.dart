@@ -45,6 +45,7 @@ import 'features/profile/help_support_screen.dart';
 import 'features/profile/more_settings_screen.dart';
 import 'features/profile/my_reviews_screen.dart';
 import 'features/profile/moderation_queue_screen.dart';
+import 'features/profile/admin_access_gate.dart';
 
 import 'features/host/become_host_screen.dart';
 import 'features/host/application_submitted_screen.dart';
@@ -107,7 +108,8 @@ final GoRouter router = GoRouter(
     GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
     GoRoute(
       path: '/admin/message-moderation',
-      builder: (context, state) => const ModerationQueueScreen(),
+      builder: (context, state) =>
+          const AdminAccessGate(child: ModerationQueueScreen()),
     ),
     GoRoute(
       path: '/welcome',

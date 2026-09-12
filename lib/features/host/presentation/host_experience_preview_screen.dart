@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../theme/theme.dart';
 import '../../../widgets/widgets.dart';
@@ -19,7 +20,6 @@ class HostExperiencePreviewScreen extends ConsumerStatefulWidget {
 
 class _HostExperiencePreviewScreenState
     extends ConsumerState<HostExperiencePreviewScreen> {
-  bool submitting = false;
   @override
   Widget build(BuildContext context) {
     final draft = ref.watch(hostCreateExperienceProvider);
@@ -177,9 +177,8 @@ class _HostExperiencePreviewScreenState
               const SizedBox(width: 10),
               Expanded(
                 child: AppButton(
-                  label: 'Submit for review',
-                  isLoading: submitting,
-                  onPressed: _submit,
+                  label: _submitting ? 'Submitting…' : 'Submit for review',
+                  onPressed: _submitting ? null : _submit,
                   isFullWidth: true,
                 ),
               ),
@@ -190,37 +189,34 @@ class _HostExperiencePreviewScreenState
     );
   }
 
+  bool _submitting = false;
+
   Future<void> _submit() async {
     final draft = ref.read(hostCreateExperienceProvider);
     final errors = HostExperienceValidator.validateForSubmission(draft);
+    final messenger = ScaffoldMessenger.of(context);
     if (errors.isNotEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(errors.values.first)));
+      messenger.showSnackBar(SnackBar(content: Text(errors.values.first)));
       return;
     }
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Submit for review?'),
-        content: const Text(
-          'This will send the experience for review. You can track its status from Experiences.',
+    setState(() => _submitting = true);
+    try {
+      await ref.read(hostModeRepositoryProvider).submitForReview(draft);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      // The RPC returns actionable messages (e.g. "Add at least one photo…").
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            error is PostgrestException
+                ? error.message
+                : 'Could not submit for review. Try again.',
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Keep editing'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Submit'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-    setState(() => submitting = true);
-    await ref.read(hostModeRepositoryProvider).submitForReview(draft);
+      );
+      return;
+    }
     ref.invalidate(hostExperiencesProvider);
     ref.invalidate(hostDashboardProvider);
     ref.read(hostCreateExperienceProvider.notifier).reset();

@@ -66,13 +66,14 @@ class _HostAvailabilityScreenState
             ),
             const SizedBox(height: 16),
             AppButton(
-              label: 'Update availability locally',
+              label: _saving ? 'Saving…' : 'Update availability',
               isFullWidth: true,
-              onPressed: _save,
+              onPressed: _saving ? null : _save,
             ),
             const SizedBox(height: 8),
             Text(
-              'This update is in-memory only and resets when the app restarts.',
+              'Capacity cannot drop below the number already booked, and dates '
+              'cannot move once a departure has bookings.',
               style: AppTypography.caption.copyWith(
                 color: AppColors.disabledText,
               ),
@@ -83,6 +84,44 @@ class _HostAvailabilityScreenState
       },
     ),
   );
+
+  bool _saving = false;
+
+  Future<void> _save() async {
+    final count = int.tryParse(capacity.text.trim());
+    if (start == null ||
+        end == null ||
+        end!.isBefore(start!) ||
+        count == null ||
+        count < 1 ||
+        count > 100) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter valid dates and a capacity from 1 to 100.'),
+        ),
+      );
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      await ref
+          .read(hostModeRepositoryProvider)
+          .updateAvailability(widget.id, start!, end!, count);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not update availability. Try again.'),
+          ),
+        );
+      }
+      return;
+    }
+    ref.invalidate(hostExperienceProvider(widget.id));
+    ref.invalidate(hostExperiencesProvider);
+    if (mounted) Navigator.pop(context);
+  }
   Future<void> _pick(bool first) async {
     final value = await showDatePicker(
       context: context,
@@ -101,28 +140,6 @@ class _HostAvailabilityScreenState
     }
   }
 
-  Future<void> _save() async {
-    final count = int.tryParse(capacity.text.trim());
-    if (start == null ||
-        end == null ||
-        end!.isBefore(start!) ||
-        count == null ||
-        count < 1 ||
-        count > 100) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Enter valid dates and a capacity from 1 to 100.'),
-        ),
-      );
-      return;
-    }
-    await ref
-        .read(hostModeRepositoryProvider)
-        .updateAvailability(widget.id, start!, end!, count);
-    ref.invalidate(hostExperienceProvider(widget.id));
-    ref.invalidate(hostExperiencesProvider);
-    if (mounted) Navigator.pop(context);
-  }
 }
 
 class _DateRow extends StatelessWidget {

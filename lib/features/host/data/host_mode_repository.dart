@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../domain/host_mode_models.dart';
 
 abstract interface class HostModeRepository {
@@ -7,6 +9,20 @@ abstract interface class HostModeRepository {
   Future<List<HostExperience>> getExperiences();
   Future<HostExperience?> getExperience(String id);
   Future<HostExperience> saveDraft(HostExperienceDraft draft);
+
+  /// Uploads one experience photo to the private `experience-photos` bucket
+  /// under `<host_id>/<experienceKey>/...` and returns the storage path.
+  Future<String> uploadExperiencePhoto({
+    required Uint8List bytes,
+    required String fileName,
+    required String experienceKey,
+  });
+
+  /// A short-lived signed URL for a stored experience photo path.
+  Future<String> experiencePhotoSignedUrl(String path);
+
+  /// Best-effort removal of a stored experience photo.
+  Future<void> deleteExperiencePhoto(String path);
   Future<HostExperience> submitForReview(HostExperienceDraft draft);
   Future<void> setExperiencePaused(String id, bool paused);
   Future<void> updateAvailability(

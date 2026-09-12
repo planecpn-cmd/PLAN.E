@@ -105,6 +105,9 @@ class HostExperience {
   final int priceNpr;
   final HostExperienceStatus status;
   final String summary;
+  /// Stored experience-photo paths (private bucket) or promoted public URLs.
+  /// First entry is the cover. Used to rehydrate the wizard when editing.
+  final List<String> gallery;
   const HostExperience({
     required this.id,
     required this.title,
@@ -117,6 +120,7 @@ class HostExperience {
     required this.priceNpr,
     required this.status,
     this.summary = 'A locally hosted PLAN E experience in Nepal.',
+    this.gallery = const [],
   });
   double get occupancy => capacity == 0 ? 0 : bookedSpots / capacity;
   HostExperience copyWith({
@@ -129,6 +133,7 @@ class HostExperience {
     int? priceNpr,
     HostExperienceStatus? status,
     String? summary,
+    List<String>? gallery,
   }) => HostExperience(
     id: id,
     title: title ?? this.title,
@@ -141,6 +146,7 @@ class HostExperience {
     priceNpr: priceNpr ?? this.priceNpr,
     status: status ?? this.status,
     summary: summary ?? this.summary,
+    gallery: gallery ?? this.gallery,
   );
 }
 

@@ -76,7 +76,9 @@ class HostCreateExperienceNotifier extends StateNotifier<HostExperienceDraft> {
       title: experience.title,
       location: experience.location,
       description: experience.summary,
-      photoAssets: [experience.imageAsset],
+      // Rehydrate from the stored photo paths so an edit shows the real photos
+      // and does not orphan them on re-save.
+      photoAssets: experience.gallery,
       startDate: experience.startDate,
       endDate: experience.endDate,
       capacity: experience.capacity,

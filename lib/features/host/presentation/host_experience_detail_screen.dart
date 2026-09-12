@@ -139,15 +139,17 @@ class HostExperienceDetailScreen extends ConsumerWidget {
                     ),
                   ),
                   const Divider(),
-                  _Control(
-                    icon: item.status == HostExperienceStatus.paused
-                        ? Icons.play_circle_outline
-                        : Icons.pause_circle_outline,
-                    label: item.status == HostExperienceStatus.paused
-                        ? 'Resume listing'
-                        : 'Pause listing',
-                    onTap: () => _toggle(context, ref, item),
-                  ),
+                  if (item.status == HostExperienceStatus.active ||
+                      item.status == HostExperienceStatus.paused)
+                    _Control(
+                      icon: item.status == HostExperienceStatus.paused
+                          ? Icons.play_circle_outline
+                          : Icons.pause_circle_outline,
+                      label: item.status == HostExperienceStatus.paused
+                          ? 'Resume listing'
+                          : 'Pause listing',
+                      onTap: () => _toggle(context, ref, item),
+                    ),
                 ],
               ),
             ),
@@ -169,8 +171,8 @@ class HostExperienceDetailScreen extends ConsumerWidget {
         title: Text('${pause ? 'Pause' : 'Resume'} listing?'),
         content: Text(
           pause
-              ? 'This will pause the listing for travelers.'
-              : 'This will make the listing active again.',
+              ? 'This hides the listing from travelers until you resume it.'
+              : 'This makes the listing visible to travelers again.',
         ),
         actions: [
           TextButton(
@@ -185,19 +187,28 @@ class HostExperienceDetailScreen extends ConsumerWidget {
       ),
     );
     if (confirmed != true) return;
-    await ref
-        .read(hostModeRepositoryProvider)
-        .setExperiencePaused(item.id, pause);
+    try {
+      await ref
+          .read(hostModeRepositoryProvider)
+          .setExperiencePaused(item.id, pause);
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Could not ${pause ? 'pause' : 'resume'} the listing. Try again.',
+            ),
+          ),
+        );
+      }
+      return;
+    }
     ref.invalidate(hostExperienceProvider(item.id));
     ref.invalidate(hostExperiencesProvider);
     ref.invalidate(hostDashboardProvider);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${pause ? 'Paused' : 'Reactivated'} in temporary frontend state.',
-          ),
-        ),
+        SnackBar(content: Text(pause ? 'Listing paused.' : 'Listing resumed.')),
       );
     }
   }

@@ -14,7 +14,7 @@ const COLLECTION_META: Record<string, { title: string; description: string }> = 
   homestays: { title: "Homestays", description: "Stay with a local family across Nepal." },
   "live-like-a-local": { title: "Live Like a Local", description: "Food, homes, villages, culture, and crafts." },
   "adventure-together": { title: "Adventure Together", description: "Outdoor adventures made for sharing." },
-  "mind-soul": { title: "Soul & Mind", description: "Wellness, reflection, healing and creativity." },
+  "mind-soul": { title: "Mind & Soul", description: "Wellness, reflection, healing and creativity." },
   "give-back": { title: "Give Back", description: "Community, conservation, and meaningful impact." },
   "trips-tours": { title: "Trips & Tours", description: "Day trips, guided tours, packages, and sightseeing." },
   "meet-people": { title: "Meet People", description: "Connect, socialize, make new friends." },
