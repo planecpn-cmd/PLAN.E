@@ -156,9 +156,10 @@ a timeline of what's happened to that booking.
 **Action:** if you have the right permission, you can cancel a booking,
 with a required reason. See §7 below.
 
-*This screen has been checked to work correctly for who can see it and
-who can't. It has not yet been walked through, screen by screen, by a real
-person clicking every button — see §10.*
+*This screen has been checked end to end, including who can see it and
+who can't. The list and detail views were confirmed working with real
+data. Cancelling a booking itself still needs one real person to click it
+once — see §7 and §13.*
 
 ### Payments
 
@@ -170,8 +171,9 @@ than half an hour. See §8 for what "stuck" means and what to do about it.
 **Action:** re-verify a stuck payment, or create a refund on a paid
 payment.
 
-*Like Bookings, this screen's permissions have been checked but the
-screen itself has not yet been walked through by a real person. See §10.*
+*Confirmed working end to end, including actually creating a refund and
+watching it record correctly with no money moving. See §9 for a real
+caveat found while testing it.*
 
 ### Users
 
@@ -293,6 +295,16 @@ panel (bank transfer, or directly through the Khalti/eSewa merchant
 dashboard) — the "Create refund" button is a record-keeping step, not
 a way to actually pay someone back yet.
 
+**One thing to watch for:** the screen does not currently show you that a
+refund has already been recorded for a payment — after clicking "Create
+refund," the button is still sitting there as if nothing happened. Before
+clicking it, check whether the payment already has a refund on record
+another way (ask a founder, or whoever tracks this outside the panel) —
+don't rely on the screen to remind you. This has been flagged for a fix;
+in the meantime, the system won't let a refund total more than what was
+actually paid, so the worst case is a confusing duplicate record, not lost
+money.
+
 ## 10. Suspending a user
 
 Open a user's row (traveler or host) on the **Users** screen and click
@@ -365,19 +377,27 @@ on the screen. As of this guide, plainly:
   does not message the traveler either (see §7). This will change once
   the message wording is finalized and turned on — nothing needs to
   change on your end when it does.
-- **The Bookings and Payments screens have been checked for *who can
-  access them* (that part is solid and has been directly tested), but not
-  yet walked through button-by-button by a real person.** They should
-  work as described in §7 and §8, but treat the first real use of them
-  as a careful first try, not a known-good routine, until someone
-  confirms otherwise.
-- **Refunds record intent only — no money moves yet** (§9). Don't tell a
-  customer a refund has been sent because the button was clicked.
+- **The Bookings and Payments screens have now been walked through with
+  real test data — the list, the detail page, creating a refund, and
+  attempting a re-verify all behaved exactly as described in §7, §8, and
+  §9.** The one piece still needing a real person: actually clicking
+  "Cancel booking" through to completion. The confirmation step in front
+  of that one button couldn't be triggered by the automated check that did
+  this pass, so cancelling has been confirmed to open correctly and ask
+  for a reason, but not confirmed all the way through to a cancelled
+  booking. Everything else on these two screens is confirmed, not assumed.
+- **Refunds record intent only — no money moves yet** (§9) — this has now
+  been directly confirmed by creating a real refund and checking the
+  database: the payment stayed "paid," the refund sat as "pending," and
+  no gateway was ever contacted. Don't tell a customer a refund has been
+  sent because the button was clicked. See §9 for the duplicate-refund
+  visibility gap found while testing this.
 - Re-verifying a stuck payment (§8) has been confirmed to correctly
-  require the right permission, but hasn't yet been exercised against a
-  real payment provider outside of Plan E's own testing — if it behaves
-  unexpectedly the first few times it's used for real, that's expected
-  growing pain, not cause for alarm; report what happened.
+  require the right permission, and to fail visibly (not silently) when
+  the gateway connection isn't configured — but hasn't yet been exercised
+  against a real payment provider outside of Plan E's own testing — if it
+  behaves unexpectedly the first few times it's used for real, that's
+  expected growing pain, not cause for alarm; report what happened.
 
 If you find something else that doesn't match what this guide says,
 that's more useful to know than not — please report it rather than

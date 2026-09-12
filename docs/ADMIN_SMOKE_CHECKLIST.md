@@ -161,40 +161,78 @@ end-to-end test for that path already covered by automation).
 
 ## 4. Bookings — `/bookings`
 
+**VERIFIED IN A REAL BROWSER on 2026-09-12** (list + detail render; the
+cancel action itself could not be fired by the automation that did this
+pass — see the note below).
+
 **Scope to open:** `bookings:read`. **Scope to cancel:** `payments:act`.
 
 **Should render (no filter):** three rows for the one seeded traveler —
 `TEST-PENDING-0001` (2 people, NPR 26,250, pending), `TEST-CONFIRMED-01`
 (1 person, NPR 13,125, confirmed), `TEST-COMPLETED-01` (3 people,
-NPR 39,375, completed).
+NPR 39,375, completed). **Confirmed exactly this**, verbatim, in a real
+browser session against a freshly reset + seeded stack.
 
 **Should be empty:** the `cancellation_requested`, `cancelled`, and
-`expired` filter chips — nothing in the seed is in any of those states.
+`expired` filter chips — confirmed: `cancelled` showed "No bookings in
+'cancelled'."; nothing in the seed is in any of those states.
 
-**Detail screen** (`TEST-PENDING-0001`): Departure line shows the seeded
-open departure's dates; Payment line shows `khalti · NPR 26,250 · initiated`;
-Timeline shows "Booking created" and "Payment initiated" only (no paid /
-completed / cancelled entries — none happened). A "Cancel booking" button
-appears (status is cancellable, and the seed founder has `payments:act`).
+**Detail screen** (`TEST-PENDING-0001`): confirmed rendering exactly —
+Departure `2026-10-12 → 2026-10-16 (open)`; Payment
+`khalti · NPR 26,250 · initiated`; Timeline shows "Booking created" and
+"Payment initiated (khalti)" only; a "Cancel booking" button appears.
 
-**Action to fire:** on `TEST-PENDING-0001`, click Cancel, type a reason
-("smoke test"), confirm.
+**Action to fire:** click "Cancel booking", type a reason, confirm.
 
-**Expect after:**
+**Could not be completed by this pass — a real human needs to do this
+one.** Clicking "Cancel booking" opens a reason field correctly, and typing
+a reason and submitting works right up to a `window.confirm(...)`
+JavaScript dialog the code fires before it actually calls the API (see
+`OpsActionForm.tsx` — the cancel button is the only action in the admin
+panel that uses a native `confirm()`, everywhere else uses an in-page
+form). The automated browser tool used for this pass suppresses native
+JS dialogs and reports them as `false`, so the confirm is silently
+declined and the cancel request is never sent — confirmed via network
+inspection: no POST to `/api/bookings/[id]/cancel` occurred, and the
+booking's status was still `pending` afterward. **This is a tooling
+limitation, not a bug** — a real browser will show the confirm dialog
+normally. A human still needs to click through this once to confirm the
+full flow (status → `cancelled`, the "Cancellation" section appearing,
+the `booking.cancel` audit row, and the `booking_cancellations` row).
+
+**Expect after a human completes it:**
 - Status flips to `cancelled`; a "Cancellation" section appears on the
-  detail page (`staff: "smoke test" (from pending)`).
+  detail page (`staff: "<your reason>" (from pending)`).
 - `admin_audit_log`: one row, `action = 'booking.cancel'`,
   `entity_type = 'bookings'`, `entity_id` = the booking's id,
-  `reason = 'smoke test'`, `before.status = 'pending'`,
-  `after.status = 'cancelled'`.
+  `before.status = 'pending'`, `after.status = 'cancelled'`.
 - A new row in `booking_cancellations` for the same booking.
 
 **Clean up:** this mutates seed data; reset before your next full pass if you
 want the original three-status baseline back.
 
+**Operational note, learned the hard way during this pass:** reset
+immediately before walking this checklist, and don't run
+`bash scripts/test-all.sh --edge` (or the SQL suite) in between resetting
+and starting the walk. The edge suite creates real bookings and payments
+through the actual booking/payment APIs to test pricing and IDOR
+scenarios, and can leave behind payment rows whose booking was deleted as
+part of that testing — briefly, this pass saw 12 payment rows (vs. the 3
+above) with 9 of them linking to booking IDs that no longer existed,
+producing a bare Next.js 404 with no admin chrome when clicking "booking"
+from the Payments screen. That was traced conclusively to test-suite
+sequencing (a second clean reset with only `seed_test.sql` loaded — no
+edge suite run afterward — reproduced exactly 3 bookings / 3 payments,
+all correctly linked) and is **not** a defect in the admin panel, the
+seed, or the fixes in this pass. Still: reset right before you walk
+through this checklist, not after running other test suites.
+
 ---
 
 ## 5. Payments — `/payments`
+
+**VERIFIED IN A REAL BROWSER on 2026-09-12**, including firing both actions
+for real.
 
 **Scope to open:** `payments:read`. **Scope to act:** `payments:act`.
 
@@ -202,37 +240,57 @@ want the original three-status baseline back.
 `KHALTI · NPR 26,250` (we say `initiated`, gateway says `—`, since
 `raw_response` has no `status` key), `KHALTI · NPR 13,125` (we say `paid`,
 gateway says `Completed`), `ESEWA · NPR 39,375` (we say `failed`, gateway
-says `CANCELED`).
+says `CANCELED`). **Confirmed exactly this**, verbatim, on a freshly reset
++ seeded stack.
 
-**Should be empty:** click the "stuck (>30 min)" tab. The seed's one
-`initiated` payment is ~9 minutes old, below the 30-minute cutoff — this
-tab shows "No payments stuck right now."
+**Should be empty:** clicked the "stuck (>30 min)" tab — confirmed:
+"No payments stuck right now." (the seed's one `initiated` payment is well
+under the 30-minute cutoff).
 
-**Action to fire (re-verify):** on the `initiated` row, click "Re-verify
-with gateway".
+**Action fired (re-verify):** clicked "Re-verify with gateway" on the
+`initiated` row. **Observed:** the row expanded to show an inline error —
+`ADMIN_REVERIFY_SECRET is not configured` — no crash, no silent failure,
+exactly the visible-and-audited error path the code is meant to produce
+when the local dev environment has no gateway sandbox credentials
+configured. Confirmed the audit row was written even though the call
+failed before reaching the gateway: `admin_audit_log` got a row,
+`action = 'payment.reverify'`, with `entity_type`/`entity_id` both `null`
+(the handler returns before it ever loads the payment, so it has nothing
+to attribute the row to yet — this is the same "audit even on an early
+error" backstop `with-admin.test.ts` exercises, not a bug). This remains
+the one control that can't be fully exercised locally without real gateway
+sandbox credentials.
 
-**Expect:** this call reaches a real Khalti sandbox lookup
-(`admin-reverify-payment` edge function) — it will not succeed against the
-seed's fake `provider_ref`/`idempotency_key`, and that's fine to observe: you
-should see a clear error surfaced in the UI (not a silent failure, not a
-crash), and `admin_audit_log` should still get a row —
-`action = 'payment.reverify'` — with an error-shaped `after` (per
-`with-admin.server.ts`, an audit row is written even when the handler
-throws or returns an error status). This is the one control that can't be
-fully exercised locally without real gateway sandbox credentials; confirming
-the error path is visible and audited is the useful local check.
-
-**Action to fire (refund):** on the `paid` row (NPR 13,125), click "Create
-refund", enter an amount ≤ 13,125, submit.
-
-**Expect after:**
-- A new row in `refunds` with `status = 'pending'` — no live gateway call
-  happens (`refund_gateway_live` is off).
-- `admin_audit_log`: one row, `action = 'payment.refund_create'`.
+**Action fired (refund):** clicked "Create refund" on the `paid` row
+(NPR 13,125), entered the full amount, submitted. **Observed, verified
+directly in the database, not assumed:**
+- A new `refunds` row: `amount_paisa = 1312500`, `status = 'pending'`,
+  the typed reason recorded verbatim, `provider_refund_ref` **empty** —
+  confirming no gateway call happened.
+- `admin_audit_log`: one row, `action = 'payment.refund_create'`,
+  correct `entity_id` (the payment) and reason.
+- The underlying payment's own `status` was **still `paid`** afterward —
+  creating a refund request does not itself change the payment record;
+  only a later `settle` to `succeeded` would.
+- `feature_flags.refund_gateway_live` was confirmed `false` throughout.
 - The footnote under the list ("Refunds record a pending row only...") is
-  accurate — there is nothing further to click to make the refund "real"
-  from this screen; advancing it is `/api/refunds/[id]/settle`, not yet
-  wired into this UI (mark that gap if you expect a settle button here).
+  accurate.
+
+**A real gap worth knowing about, found by actually creating one:** after
+creating a refund, the "Create refund" button is still sitting there,
+unchanged — nothing on this screen shows that a refund already exists for
+that payment. A moderator could click it again and record a second refund
+request for the same payment with no warning. The `admin_create_refund`
+backstop still caps the total by the refundable balance (so it can't be
+tricked into over-refunding), but the screen gives no visual indication a
+refund is already pending — worth a founder decision on whether that's
+worth a UI fix (e.g. showing existing refund rows inline) before this ships
+for real use; recorded here rather than fixed silently.
+
+**Advancing a refund** past `pending` (to `succeeded`/`failed`/`cancelled`)
+is `/api/refunds/[id]/settle` — not wired into this screen at all, so there
+is currently no button anywhere in the UI to do it; that has to happen by
+a direct API call today.
 
 ---
 

@@ -14,6 +14,10 @@ cell was then executed for real.
 files (23 method+path combinations) or 10 gated pages. HALT condition never
 triggered.** Two non-security documentation/behavior mismatches were found
 and are reported below (§ Findings) — neither is an access-control failure.
+**Both have since been fixed in code and re-verified live on 2026-09-12**
+(migration `20260912090000_decide_scopes_can_read_their_queue.sql`,
+`admin/src/lib/session.ts`'s `requireAnyScope`, and `admin/src/proxy.ts`) —
+see the "Fixed" note under each finding.
 
 ---
 
@@ -136,45 +140,74 @@ for API callers).
 **None are access-control failures — nothing here let an unauthorized
 identity see or do more than intended.**
 
-1. **Signed-out API calls redirect to an HTML login page rather than
-   returning a JSON 401.** `admin/src/proxy.ts` intercepts every request
-   (its matcher excludes only static assets) when there is no session at
-   all, and issues an HTTP redirect to `/login` — including for `/api/*`.
-   `withAdmin`'s own clean `401` JSON response (confirmed real in
-   `with-admin.test.ts`) never gets a chance to run for a fully signed-out
-   caller, because middleware answers first. The result is still fully
-   blocked (no data leaks — the body is generic login HTML, byte-identical
-   across every route tried), but a programmatic API caller with no
-   session gets a redirect + HTML instead of a clean 401 JSON error. Worth
-   a small fix for API hygiene (skip the middleware redirect for `/api/*`
-   and let `withAdmin` answer with its own 401 there), but not urgent and
-   not a security gap.
+1. ~~Signed-out API calls redirect to an HTML login page rather than
+   returning a JSON 401.~~ **FIXED (2026-09-12).** `admin/src/proxy.ts`
+   intercepted every request (its matcher excludes only static assets) when
+   there was no session at all, and issued an HTTP redirect to `/login` —
+   including for `/api/*`, ahead of `withAdmin`'s own clean 401. Was never a
+   security gap (no data leaked — the body was generic login HTML,
+   byte-identical across every route), just poor API hygiene for a
+   programmatic caller. Fix: `proxy.ts` now checks `path.startsWith("/api/")`
+   and returns `Response.json({error:"not authorized"}, {status:401})`
+   directly for that case, before the redirect branch; a page request still
+   redirects to `/login` as before. Re-verified live, signed out:
+   `fetch('/api/bookings')` → `401`, body `{"error":"not authorized"}`,
+   `res.type === "basic"` (a real response, not an opaque redirect). Page
+   behavior unchanged: `fetch('/bookings')` still lands on `/login`, 200.
 
-2. **`content:decide`, `hosts:decide`, and `payments:act`, held alone,
-   cannot open their own screens — despite `docs/ADMIN_SCOPES.md` implying
-   they can.** All three route pages (`/experiences`, `/host-applications`,
-   `/payments`) are gated on the paired read/manage/review scope only
-   (`content:manage`, `hosts:review`, `payments:read` respectively) — not
-   on the decide/act scope. A moderator holding *only* `content:decide`
-   (or `hosts:decide`, or `payments:act`) can genuinely approve a listing /
-   decide a host application / cancel a booking or create a refund via a
-   direct API call (verified: each passed its scope gate and hit real
-   business validation) — but cannot load the page to do it through the
-   UI at all; the page redirects them to `/not-authorized` first.
-   `ADMIN_SCOPES.md` currently says `content:decide` "(Same as above.)"
-   for what it can see, and `payments:act` "(Also sees payments.)" — both
-   read as if the decide/act scope alone grants the view, which it does
-   not in the running code. **This needs a decision, not a silent fix**:
-   either (a) also grant page access when the staff member holds the
-   paired decide/act scope without the read/review/manage one — which
-   changes who can see what, a security-relevant choice — or (b) correct
-   `ADMIN_SCOPES.md` to say plainly that a decide/act-only moderator needs
-   the paired scope too to use the panel at all, which is how every
-   founder has in fact been granting these in practice (`ADMIN_SCOPES.md`'s
-   own "rule of thumb" already says to grant the read scope alongside).
-   Recommend (b) — it matches actual granting practice and is a one-line
-   doc fix — but flagging rather than changing it unilaterally, since it's
-   a decision about intended behavior, not a bug in behavior.
+2. ~~`content:decide`, `hosts:decide`, and `payments:act`, held alone,
+   cannot open their own screens.~~ **FIXED (2026-09-12), option (a) from
+   the original write-up — page access widened, not the doc corrected**,
+   per explicit instruction: the whole point of a decide-only scope is that
+   someone can be trusted to decide without also being trusted to
+   review/triage, and the old behavior defeated that split by making the
+   scope practically unusable alone.
+
+   **The fix has two layers, both required** — widening the page gate alone
+   is not enough, because these Server Components read their business data
+   through the anon session client, which is itself bound by RLS:
+   - `admin/src/lib/session.ts` gained `requireAnyScope(scopes[])`; the 5
+     affected pages (`/experiences`, `/experiences/[id]`,
+     `/host-applications`, `/host-applications/[id]`, `/payments`) now use
+     it in place of `requireScope`, accepting either scope in the pair.
+   - Migration `20260912090000_decide_scopes_can_read_their_queue.sql`
+     widens the matching RLS SELECT policies (`experiences`,
+     `experience_reviews`, `experience_departures`, `host_applications`,
+     `host_documents`, `host_application_reviews`, `payments`) to accept
+     the paired scope too.
+   - No component change was needed: `ExperienceReviewPanel` and
+     `ReviewPanel` already rendered the Decision-only controls (taxonomy +
+     decide buttons, no recommend controls) whenever `canDecide` was true —
+     that split was already correct, it just never got the chance to run
+     for a decide-only session before now.
+
+   **Re-verified live**, narrowing the founder to exactly one scope at a
+   time (same methodology as the original pass):
+   - `content:decide` alone: `/experiences?status=published` renders all
+     30 real published listings (200, real data, not empty); opening
+     `/experiences/33333333-3333-4333-8333-000000000001` renders the full
+     submitted-listing detail, departure, and a **"DECISION"** section
+     with the taxonomy pickers and Approve/Reject/Request changes/Mark
+     under review buttons — no "Recommendation" section, confirming the
+     panel shows decide controls only, never the recommend ones, for a
+     decide-only session.
+   - `hosts:decide` alone: `/host-applications` renders both seed
+     applications; the submitted one's detail page renders the full
+     application and documents section plus the same **"DECISION"**
+     button set.
+   - `payments:act` alone: `/payments` renders all real payment rows
+     (initiated/paid/failed) with the Re-verify / Create refund action
+     forms visible and usable.
+   - The now-unrelated GET `/api/experiences` route (queried by nothing in
+     the admin frontend — grepped, no consumer) still 403s for
+     `content:decide`-only; harmless, since the page never calls it, and
+     out of scope for this fix (it wasn't part of what the page needed).
+
+   SQL test files `experience_review_rls.test.sql` and
+   `host_review_rls.test.sql` had asserted the *old* (bug) behavior as
+   correct — a decide-only session reading 0 rows — updated to assert the
+   new intended behavior (≥1 row) instead. Full suite re-run green
+   (26 pass + 1 documented skip; edge 4/4) after the migration.
 
 ## What could not be fully exercised
 
