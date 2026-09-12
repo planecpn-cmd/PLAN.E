@@ -38,6 +38,13 @@ export async function proxy(request: NextRequest) {
   const isPublic = PUBLIC_PREFIXES.some((p) => path === p || path.startsWith(p));
 
   if (!user && !isPublic) {
+    // An API caller with no session at all gets a clean 401 here, same
+    // shape withAdmin already returns for every other unauthorized case —
+    // not a redirect to an HTML login page. A page still redirects to
+    // /login, since a browser navigation needs somewhere to land.
+    if (path.startsWith("/api/")) {
+      return NextResponse.json({ error: "not authorized" }, { status: 401 });
+    }
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", path);
