@@ -1,0 +1,26 @@
+{
+  "_comment": "Source of truth for agent.yml. Nodes run in listed order once deps are 'pass' and their human gate is approved. Only a human flips a gate to approved (CODEOWNERS). The workflow, not the model, writes node status from the contract JSON.",
+  "gates": {
+    "H1": { "approved": false, "note": "Human approves the P0 list in AUDIT.md §8. Blocks N2, F1 and everything after." },
+    "H2": { "approved": false, "note": "Human approves PARITY.md before F2 touches Flutter." },
+    "G-FINAL": { "approved": false, "note": "Full gate suite green on main; human confirms before N11." }
+  },
+  "nodes": [
+    { "id": "N0", "status": "pass", "deps": [] },
+    { "id": "N1", "status": "pass", "deps": ["N0"] },
+    { "id": "P0-CRIT", "status": "blocked", "deps": ["N1"], "human_only": true, "note": "Code merged via p0crit/* PRs; DB fixes ship as migrations 20260910200000/200100." },
+    { "id": "INFRA", "status": "pass", "deps": ["N1"], "human_only": true },
+    { "id": "N2", "status": "pending", "deps": ["N1"], "gate": "H1" },
+    { "id": "F1", "status": "pending", "deps": ["N1"], "gate": "H1" },
+    { "id": "N3", "status": "pending", "deps": ["N2"], "gate": "H1" },
+    { "id": "N4", "status": "pending", "deps": ["N2"], "gate": "H1" },
+    { "id": "N5", "status": "pending", "deps": ["N2"], "gate": "H1" },
+    { "id": "N6", "status": "pending", "deps": ["N2"], "gate": "H1" },
+    { "id": "N7", "status": "pending", "deps": ["N2"], "gate": "H1" },
+    { "id": "N8", "status": "pending", "deps": ["N2"], "gate": "H1" },
+    { "id": "N9", "status": "pending", "deps": ["N2"], "gate": "H1" },
+    { "id": "N10", "status": "pending", "deps": ["N3", "N4", "N5", "N6", "N7", "N8", "N9"], "gate": "H1" },
+    { "id": "F2", "status": "pending", "deps": ["F1"], "gate": "H2", "human_only": true, "note": "Flutter edits: own branch, not run by agent.yml." },
+    { "id": "N11", "status": "pending", "deps": ["N10"], "gate": "G-FINAL" }
+  ]
+}

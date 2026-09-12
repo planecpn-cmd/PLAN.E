@@ -1,0 +1,104 @@
+# Deterministic gates for every PR into main. Each job is one required status
+# check. Job names are the check names; SETUP.md lists them for branch protection.
+# A gate is never weakened to go green: fix the code or the data.
+name: gates
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: gates-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "22"
+  # Public-by-design anon credentials (RLS is the guard), still kept out of
+  # the repo. The gates read Supabase as anon only: the marketing site's view.
+  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+jobs:
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: webapp } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm, cache-dependency-path: webapp/package-lock.json }
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: webapp } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm, cache-dependency-path: webapp/package-lock.json }
+      - run: npm ci
+      - run: npx eslint . --max-warnings=0
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: webapp } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm, cache-dependency-path: webapp/package-lock.json }
+      - run: npm ci
+      - run: npm run build
+
+  edge-booking-test:
+    name: edge-booking-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}" }
+      - uses: supabase/setup-cli@v1
+        with: { version: 2.105.0 }
+      - name: Start local Supabase (migrations + seed)
+        run: supabase start
+      - name: Export local stack keys
+        run: |
+          supabase status -o json > /tmp/status.json
+          echo "SUPABASE_URL=$(jq -r .API_URL /tmp/status.json)" >> "$GITHUB_ENV"
+          echo "SUPABASE_ANON_KEY=$(jq -r .ANON_KEY /tmp/status.json)" >> "$GITHUB_ENV"
+          echo "SUPABASE_SERVICE_ROLE_KEY=$(jq -r .SERVICE_ROLE_KEY /tmp/status.json)" >> "$GITHUB_ENV"
+      - name: Serve edge functions
+        run: |
+          supabase functions serve --no-verify-jwt --env-file supabase/functions/.env.example > /tmp/functions.log 2>&1 &
+          for _ in $(seq 1 60); do
+            curl -sf -o /dev/null -X OPTIONS "$SUPABASE_URL/functions/v1/create-booking-intent" && exit 0
+            sleep 2
+          done
+          echo "functions did not come up"; cat /tmp/functions.log; exit 1
+      - name: create-booking-intent rejects past departures
+        run: node --test supabase/tests/edge_booking_past_departure.test.mjs
+      - if: failure()
+        run: cat /tmp/functions.log || true
+
+  gate:
+    name: gate-${{ matrix.gate }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        gate: [routes, data-truth, viewports]
+    defaults: { run: { working-directory: webapp } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm, cache-dependency-path: webapp/package-lock.json }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npx playwright test gates/gate-${{ matrix.gate }}.spec.ts
+        env: { CI: "true" }
