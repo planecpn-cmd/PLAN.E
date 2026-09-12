@@ -116,6 +116,10 @@ is permanently logged with your name, the time, and your reason. Nothing
 else happens automatically — flipping a switch does not send any message
 to anyone.
 
+*This screen renders correctly and every flag shows the right state, but
+flipping a switch has not yet been confirmed all the way through by a real
+person — see §13.*
+
 ### Host applications
 
 Shows everyone who has applied to become a host, and where each
@@ -380,18 +384,30 @@ on the screen. As of this guide, plainly:
 - **The Bookings and Payments screens have now been walked through with
   real test data — the list, the detail page, creating a refund, and
   attempting a re-verify all behaved exactly as described in §7, §8, and
-  §9.** The one piece still needing a real person: actually clicking
-  "Cancel booking" through to completion. The confirmation step in front
-  of that one button couldn't be triggered by the automated check that did
-  this pass, so cancelling has been confirmed to open correctly and ask
-  for a reason, but not confirmed all the way through to a cancelled
-  booking. Everything else on these two screens is confirmed, not assumed.
+  §9.** Everything on these two screens is confirmed, not assumed, with
+  two specific exceptions — see the next bullet.
+- **Two actions have never actually been clicked by a person, for the same
+  technical reason: cancelling a booking, and turning a config switch on
+  or off.** Both ask for confirmation with a pop-up dialog box before they
+  do anything, and the automated tool used to check the rest of this panel
+  is not able to click through that kind of pop-up — so these two are the
+  only actions in the whole panel that remain unconfirmed end to end.
+  Nothing suggests either is broken (both open correctly and ask for a
+  reason exactly as designed up to that point), but neither has been
+  proven to work all the way through. **These should be the first two
+  things a real tester tries** — cancel a test booking, and flip a config
+  switch — before trusting the rest of the panel for real use.
 - **Refunds record intent only — no money moves yet** (§9) — this has now
   been directly confirmed by creating a real refund and checking the
   database: the payment stayed "paid," the refund sat as "pending," and
   no gateway was ever contacted. Don't tell a customer a refund has been
-  sent because the button was clicked. See §9 for the duplicate-refund
-  visibility gap found while testing this.
+  sent because the button was clicked. **Separately: the refunds screen
+  does not show you a refund that already exists for a payment**, so it is
+  possible to create two refunds for the same payment without the screen
+  warning you. The total is still capped at what was actually paid — the
+  system won't let refunds add up to more than that — but check whether a
+  payment already has a refund on record (ask a founder, or check outside
+  the panel) before creating a second one.
 - Re-verifying a stuck payment (§8) has been confirmed to correctly
   require the right permission, and to fail visibly (not silently) when
   the gateway connection isn't configured — but hasn't yet been exercised
