@@ -54,14 +54,6 @@ export default async function HomePage() {
                   Curated Trips
                 </Button>
               </Link>
-              <Link href="/ai-planner" className="flex-1">
-                <Button variant="secondary" fullWidth className="bg-white">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M12 2l1.6 5.4L19 9l-5.4 1.6L12 16l-1.6-5.4L5 9l5.4-1.6L12 2Z" />
-                  </svg>
-                  Plan with AI
-                </Button>
-              </Link>
             </div>
           </div>
         </div>
