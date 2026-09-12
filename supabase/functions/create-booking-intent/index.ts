@@ -126,6 +126,15 @@ serve(async (req) => {
       );
     }
 
+    // Departures are Nepal-local calendar dates; compare in Asia/Kathmandu.
+    const todayNepal = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kathmandu" }).format(new Date());
+    if (departure.start_date < todayNepal) {
+      return new Response(
+        JSON.stringify({ error: "This departure date has already passed and can no longer be booked" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     if (departure.spots_left < totalGuests) {
       return new Response(
         JSON.stringify({

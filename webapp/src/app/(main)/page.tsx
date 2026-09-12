@@ -2,16 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { getHomeData } from "@/lib/data/home";
 import { SearchBar } from "@/components/SearchBar";
-import { SectionHeader } from "@/components/ui/SectionHeader";
-import { ContentRail } from "@/components/ui/ContentRail";
-import { ExperienceCard } from "@/components/ui/ExperienceCard";
 import { HomeCategorySection } from "@/components/HomeCategorySection";
 import { Button } from "@/components/ui/Button";
 
 export const revalidate = 300;
 
 export default async function HomePage() {
-  const { happeningThisWeek, sections } = await getHomeData();
+  const { sections } = await getHomeData();
 
   return (
     <div>
@@ -63,24 +60,6 @@ export default async function HomePage() {
       </section>
 
       <div className="mx-auto max-w-6xl px-4 pb-20 lg:px-6">
-        {happeningThisWeek.length > 0 && (
-          <section>
-            <SectionHeader
-              title="Happening This Week"
-              subtitle="Experiences happening around Nepal this week"
-              actionLabel="See All"
-              actionHref="/collection/recommended"
-            />
-            <ContentRail>
-              {happeningThisWeek.map((card, i) => (
-                <div key={card.slug} className="w-64 shrink-0 lg:w-auto">
-                  <ExperienceCard experience={card} priority={i === 0} />
-                </div>
-              ))}
-            </ContentRail>
-          </section>
-        )}
-
         {sections.map((section) => (
           <HomeCategorySection key={section.slug} section={section} />
         ))}
