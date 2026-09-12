@@ -14,13 +14,9 @@
   "EMERGENCY HOTLINE": "[TO BE CONFIRMED — EMERGENCY HOTLINE]",
   "NTB NUMBER": "[TO BE CONFIRMED — NTB NUMBER]",
   "SUPABASE REGION — CONFIRM": "[TO BE CONFIRMED — SUPABASE REGION]",
-  "SUPABASE REGION": "[TO BE CONFIRMED — SUPABASE REGION (unused key: no document contains a bare [SUPABASE REGION] bracket, only [SUPABASE REGION — CONFIRM] above)]",
   "PAYOUT TIMING — CONFIRM: e.g. within X working days after the experience has been delivered": "7 working days after the experience has been delivered",
-  "PAYOUT TIMING": "7 working days after the experience has been delivered",
   "X": "[TO BE CONFIRMED — X: years of account inactivity before deletion (08-account-deletion-policy.md:110). This is NOT the payout-timing figure - do not fill with 7 without confirming the actual inactivity threshold separately]",
   "ANALYTICS PROVIDER": "[TO BE CONFIRMED — ANALYTICS PROVIDER]",
   "MAP TILE PROVIDER": "[TO BE CONFIRMED — MAP TILE PROVIDER]",
-  "INSURANCE POSITION": "[TO BE CONFIRMED — INSURANCE POSITION (unused key: no document contains an [INSURANCE POSITION] bracket; see 00-README-AND-DECISIONS.md:74,78-79 - the question appears to already be answered in-body by 04-cancellation-policy.md:81-82, 04-cancellation-policy.md:88, worth a human sanity check)]",
-  "GRIEVANCE EMAIL ": "[TO BE CONFIRMED — GRIEVANCE EMAIL (unused key: has a trailing space in its JSON name, apparently a duplicate/typo of \"GRIEVANCE EMAIL\" above, which is the key documents actually use)]",
   "DOMAIN": "planenepal.com"
 }

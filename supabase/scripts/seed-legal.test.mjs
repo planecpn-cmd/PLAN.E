@@ -61,4 +61,25 @@ assert.ok(!'the **Grievance Policy** applies'.match(UNRESOLVED));
   assert.equal(withSlots.length, stems.length, `some docs have no placeholders: ${stems.filter(s => !withSlots.includes(s))}`);
 }
 
+// 7. Hard-wrapped placeholder: a real paragraph wrap puts the line break
+//    wherever the author's editor wrapped the line, not neatly outside the
+//    bracket. This is the exact 06-payment-policy.md bug (PAYOUT TIMING wraps
+//    mid-slot). Must (a) still read as UNRESOLVED before it's filled, and
+//    (b) substitute correctly once it is.
+{
+  const wrapped = 'Payouts are released within [PAYOUT TIMING — please\nconfirm the timing] of delivery.';
+  assert.ok(UNRESOLVED.test(wrapped), 'a placeholder wrapped across a line break must still be detected as unresolved');
+
+  const filled = applyPlaceholders(wrapped, { 'PAYOUT TIMING — please confirm the timing': '7 working days' });
+  assert.equal(filled, 'Payouts are released within 7 working days of delivery.');
+  assert.ok(!UNRESOLVED.test(filled), 'once substituted it must no longer read as unresolved');
+}
+
+// 8. Whitespace-only differences (not just a hard wrap) must also match: two
+//    spaces, or a tab, in the source vs one space in the placeholders.json key.
+{
+  const doubled = applyPlaceholders('mail  [SUPPORT  EMAIL]  now', { 'SUPPORT EMAIL': 'x@y.z' });
+  assert.equal(doubled, 'mail  x@y.z  now');
+}
+
 console.log('seed-legal.test: all assertions passed');
