@@ -16,6 +16,59 @@ const NAV_ITEMS = [
   { href: "/profile", label: "Profile", icon: "user" as const },
 ];
 
+// Marketing nav (homepage only - N2 Foundation). Everywhere else keeps the
+// product TopNav below untouched: the marketplace is not being redesigned.
+//
+// Spec called for Logo, Explore, Why PLAN E, How It Works, For Hosts, About,
+// Sign In, CTA. Omitted three - no route exists for any of them yet, and
+// rule "no new 404s" applies to nav same as any other link:
+//   - "Why PLAN E": no route; its homepage section (why_plan_e) is disabled
+//     in SECTIONS.json, so there is not even an in-page anchor to point to.
+//   - "How It Works": /how-it-works does not exist (N10, not built).
+//   - "About": /about does not exist (N10, not built).
+// "For Hosts" links to /host, the real host-landing page (RECON.md), which
+// is the closest live equivalent. The CTA does not say "Get the App" - no
+// app store link exists anywhere in the repo (app_showcase is disabled) -
+// it goes to /explore instead, same substitution AUDIT.md (g) makes for
+// final_cta.
+const MARKETING_NAV_ITEMS = [
+  { href: "/explore", label: "Explore" },
+  { href: "/host", label: "For Hosts" },
+];
+
+function MarketingNav() {
+  return (
+    <div className="mx-auto flex max-w-[1280px] items-center gap-8 px-6 py-3">
+      <Link href="/" aria-label="PLAN E home">
+        <Logo />
+      </Link>
+
+      <nav aria-label="Primary" className="flex items-center gap-1">
+        {MARKETING_NAV_ITEMS.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="rounded-full px-3.5 py-2 text-sm font-medium text-[var(--color-ink)]/70 transition-colors hover:bg-[var(--color-sage)]"
+          >
+            {item.label}
+          </Link>
+        ))}
+      </nav>
+
+      <div className="ml-auto flex items-center gap-3">
+        <Link href="/auth/login" className="text-sm font-medium text-[var(--color-ink)]/70 hover:text-[var(--color-forest)]">
+          Sign In
+        </Link>
+        <Link href="/explore">
+          <Button variant="primary" className="!min-h-0 !py-2 !px-5">
+            Get Started
+          </Button>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
   return pathname.startsWith(href);
@@ -24,6 +77,14 @@ function isActive(pathname: string, href: string) {
 export function TopNav() {
   const pathname = usePathname();
   const { user, loading } = useAuth();
+
+  if (pathname === "/") {
+    return (
+      <header className="sticky top-0 z-40 hidden border-b border-[var(--color-border-subtle)] bg-[var(--color-ivory)]/95 backdrop-blur lg:block">
+        <MarketingNav />
+      </header>
+    );
+  }
 
   return (
     <header className="sticky top-0 z-40 hidden border-b border-[var(--color-border-subtle)] bg-[var(--color-ivory)]/95 backdrop-blur lg:block">
@@ -63,15 +124,6 @@ export function TopNav() {
           >
             <Icon name="search" size={18} />
           </Link>
-          {!loading && user && (
-            <Link
-              href="/notifications"
-              aria-label="Notifications"
-              className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-ink)]/70 hover:bg-[var(--color-sage)]"
-            >
-              <Icon name="bell" size={18} />
-            </Link>
-          )}
           {!loading &&
             (user ? (
               <button
@@ -82,13 +134,6 @@ export function TopNav() {
               </button>
             ) : (
               <>
-                <Link
-                  href="/notifications"
-                  aria-label="Notifications"
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-ink)]/70 hover:bg-[var(--color-sage)]"
-                >
-                  <Icon name="bell" size={18} />
-                </Link>
                 <Link href="/auth/sign-up" className="text-sm font-medium text-[var(--color-ink)]/70 hover:text-[var(--color-forest)]">
                   Sign up
                 </Link>

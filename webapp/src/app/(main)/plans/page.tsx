@@ -46,10 +46,13 @@ function PlansContent() {
   const searchParams = useSearchParams();
   const tab = (searchParams.get("tab") as Tab) ?? "upcoming";
   const [bookings, setBookings] = useState<BookingRow[] | null>(null);
+  // Which tab `bookings` actually answers. "Loading" is bookings not yet
+  // matching the current tab — derived, not a synchronous reset in the effect.
+  const [loadedTab, setLoadedTab] = useState<Tab | null>(null);
+  const isLoading = loadedTab !== tab;
 
   useEffect(() => {
     if (authLoading || !user) return;
-    setBookings(null);
     let query = supabase
       .from("bookings")
       .select("id, booking_ref, status, is_draft, adults, children, total_paisa, experience_id, created_at, experiences(title, slug, cover_image_url)")
@@ -61,7 +64,10 @@ function PlansContent() {
     else if (tab === "past") query = query.eq("status", "completed");
     else query = query.eq("status", "cancelled");
 
-    query.then(({ data }) => setBookings((data ?? []) as unknown as BookingRow[]));
+    query.then(({ data }) => {
+      setBookings((data ?? []) as unknown as BookingRow[]);
+      setLoadedTab(tab);
+    });
   }, [user, authLoading, tab]);
 
   function setTab(next: Tab) {
@@ -104,7 +110,7 @@ function PlansContent() {
         ))}
       </div>
 
-      {bookings === null ? (
+      {isLoading || bookings === null ? (
         <p className="mt-8 text-sm text-[var(--color-ink)]/60">Loading…</p>
       ) : bookings.length === 0 ? (
         <div className="mt-8">

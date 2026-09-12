@@ -47,8 +47,8 @@ export async function generateMetadata({
 function spotsLeftBanner(nextDeparture: { start_date: string; spots_left: number } | undefined) {
   if (!nextDeparture) {
     return (
-      <div className="bg-[var(--color-sage)] px-4 py-2.5 text-sm font-medium text-[var(--color-forest)] lg:rounded-t-[var(--radius-md)]">
-        ⚡ Instant confirmation
+      <div className="bg-[var(--color-sage)] px-4 py-2.5 text-sm font-medium text-[var(--color-ink)]/80 lg:rounded-t-[var(--radius-md)]">
+        Closed: no upcoming departures
       </div>
     );
   }
@@ -79,7 +79,10 @@ export default async function ExperienceDetailPage({
   if (!experience) notFound();
 
   const { departures, itinerary, reviews } = await getExperienceExtras(experience.id);
-  const nextDeparture = departures[0];
+  // Past departures can still be status='open'; only a Nepal-today-or-later
+  // date counts as bookable. None upcoming = closed.
+  const todayNepal = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kathmandu" }).format(new Date());
+  const nextDeparture = departures.find((d) => d.start_date >= todayNepal);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -94,20 +97,12 @@ export default async function ExperienceDetailPage({
       availability: nextDeparture ? "https://schema.org/InStock" : "https://schema.org/SoldOut",
       url: `https://planenepal.com/experience/${experience.slug}`,
     },
-    ...(experience.rating_count > 0
-      ? {
-          aggregateRating: {
-            "@type": "AggregateRating",
-            ratingValue: experience.rating_avg,
-            reviewCount: experience.rating_count,
-          },
-        }
-      : {}),
+    // No aggregateRating: rating_count is not backed by review rows anon can
+    // read (AUDIT.md (b)). Re-add only once it is.
   };
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 lg:px-6 lg:py-10">
-      {/* eslint-disable-next-line react/no-danger */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px] lg:items-start">
@@ -134,11 +129,6 @@ export default async function ExperienceDetailPage({
               <p className="mt-1.5 flex items-center gap-1.5 text-[var(--color-ink)]/70">
                 {experience.location_name}
               </p>
-            )}
-            {experience.rating_count > 0 && (
-              <div className="mt-2">
-                <RatingStars rating={experience.rating_avg} reviewCount={experience.rating_count} />
-              </div>
             )}
           </div>
 
@@ -203,7 +193,8 @@ export default async function ExperienceDetailPage({
             </Section>
           )}
 
-          <Section title={`Reviews (${experience.rating_count})`}>
+          {/* Title carries no count: rating_count is not backed by readable review rows (AUDIT.md (b)). */}
+          <Section title="Reviews">
             {reviews.length === 0 ? (
               <p className="text-[var(--color-ink)]/70">No reviews yet. Be the first to join!</p>
             ) : (
@@ -243,11 +234,17 @@ export default async function ExperienceDetailPage({
                 </p>
               )}
 
-              <Link href={`/booking/${experience.slug}`} className="mt-4 block">
-                <Button variant="primary" fullWidth>
-                  JOIN NOW
+              {nextDeparture ? (
+                <Link href={`/booking/${experience.slug}`} className="mt-4 block">
+                  <Button variant="primary" fullWidth>
+                    JOIN NOW
+                  </Button>
+                </Link>
+              ) : (
+                <Button variant="primary" fullWidth disabled className="mt-4">
+                  CLOSED
                 </Button>
-              </Link>
+              )}
 
               <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs">
                 <Link
@@ -278,9 +275,15 @@ export default async function ExperienceDetailPage({
             <p className="text-lg font-bold text-[var(--color-forest)]">{formatNpr(experience.price_paisa)}</p>
             <p className="text-xs text-[var(--color-ink)]/70">per person</p>
           </div>
-          <Link href={`/booking/${experience.slug}`}>
-            <Button variant="primary">JOIN NOW</Button>
-          </Link>
+          {nextDeparture ? (
+            <Link href={`/booking/${experience.slug}`}>
+              <Button variant="primary">JOIN NOW</Button>
+            </Link>
+          ) : (
+            <Button variant="primary" disabled>
+              CLOSED
+            </Button>
+          )}
         </div>
       </div>
     </div>

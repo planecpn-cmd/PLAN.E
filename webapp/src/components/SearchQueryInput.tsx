@@ -18,7 +18,6 @@ export function SearchQueryInput() {
       if (value) params.set("q", value);
       else params.delete("q");
       router.push(`${pathname}?${params.toString()}`);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, 350);
     return () => {
       if (timer.current) clearTimeout(timer.current);
