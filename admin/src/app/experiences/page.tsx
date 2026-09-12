@@ -1,12 +1,14 @@
 import Link from "next/link";
-import { requireScope } from "@/lib/session";
+import { requireAnyScope } from "@/lib/session";
 import { createAnonServerClient } from "@/lib/supabase/server";
 import { AdminShell } from "@/components/AdminShell";
 
-// Experience review queue. content:manage. experiences RLS has a
-// has_scope('content:manage') read policy (20260908140000), so a scoped staff
-// member reads the list with their own session client; writes go through the
-// API routes.
+// Experience review queue. content:manage OR content:decide (either opens
+// the page — a content:decide-only moderator needs to see the queue to use
+// their decide-only controls; see 20260912090000). experiences RLS accepts
+// both scopes too, so the anon session client actually returns rows for
+// either. Which action buttons render is decided inside the detail page /
+// ExperienceReviewPanel, not here.
 const STATUSES = ["pending_review", "published", "draft", "paused", "archived"] as const;
 
 function ageDays(iso: string | null): number | null {
@@ -19,7 +21,7 @@ export default async function ExperienceQueuePage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
-  const session = await requireScope("content:manage");
+  const session = await requireAnyScope(["content:manage", "content:decide"]);
   const { status } = await searchParams;
   const active = status ?? "pending_review";
   const supabase = await createAnonServerClient();

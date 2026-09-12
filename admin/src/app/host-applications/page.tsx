@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { requireScope } from "@/lib/session";
+import { requireAnyScope } from "@/lib/session";
 import { createAnonServerClient } from "@/lib/supabase/server";
 import { AdminShell } from "@/components/AdminShell";
 
-// Queue. hosts:review. host_applications RLS is has_scope('hosts:review'), so a
-// scoped staff member reads the list with their own session client; writes go
-// through the API routes.
+// Queue. hosts:review OR hosts:decide (either opens the page — a
+// hosts:decide-only moderator needs to see the queue to use their
+// decide-only controls; see 20260912090000). host_applications RLS accepts
+// both scopes too.
 const STATUSES = ["submitted", "under_review", "action_required", "approved", "rejected"] as const;
 
 function ageDays(iso: string | null): number | null {
@@ -18,7 +19,7 @@ export default async function HostApplicationsPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
-  const session = await requireScope("hosts:review");
+  const session = await requireAnyScope(["hosts:review", "hosts:decide"]);
   const { status } = await searchParams;
   const supabase = await createAnonServerClient();
 

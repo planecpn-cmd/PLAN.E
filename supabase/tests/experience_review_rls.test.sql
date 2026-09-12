@@ -1,9 +1,11 @@
--- N1: experience_reviews RLS + the content:decide scope.
+-- N1/20260912090000: experience_reviews RLS + the content:decide scope.
 --
 -- Mirrors host_review_rls.test.sql. content:manage reads the review history;
--- content:decide alone does not; hosts:review does not; traveler / anon do not.
--- No client may INSERT a review row (no write policy). The scope CHECK accepts
--- content:decide and still rejects unknown scopes.
+-- content:decide alone ALSO does (20260912090000 — a content:decide-only
+-- moderator needs to see what they're deciding on, or the page hosting the
+-- decide control has nothing to show); hosts:review does not; traveler /
+-- anon do not. No client may INSERT a review row (no write policy). The
+-- scope CHECK accepts content:decide and still rejects unknown scopes.
 
 begin;
 
@@ -100,8 +102,8 @@ begin
   if pg_temp.count_as(v_dec, 'select count(*) from public.experience_reviews') < 1 then
     raise exception 'FAIL: a content:manage+decide reviewer cannot read review history';
   end if;
-  if pg_temp.count_as(v_deconly, 'select count(*) from public.experience_reviews') <> 0 then
-    raise exception 'FAIL: content:decide alone can read review history';
+  if pg_temp.count_as(v_deconly, 'select count(*) from public.experience_reviews') < 1 then
+    raise exception 'FAIL: content:decide alone cannot read review history (20260912090000)';
   end if;
   if pg_temp.count_as(v_hrev, 'select count(*) from public.experience_reviews') <> 0 then
     raise exception 'FAIL: hosts:review can read experience review history';
@@ -118,7 +120,7 @@ begin
     raise exception 'FAIL: content:decide inserted a review row via direct JWT';
   end if;
 
-  raise notice 'OK: experience_reviews readable by content:manage only, no client write';
+  raise notice 'OK: experience_reviews readable by content:manage and content:decide, no client write';
 end $$;
 
 -- The scope CHECK: content:decide already stored above for v_deconly, so it is

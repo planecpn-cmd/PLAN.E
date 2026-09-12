@@ -1,18 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireScope } from "@/lib/session";
+import { requireAnyScope } from "@/lib/session";
 import { createAnonServerClient } from "@/lib/supabase/server";
 import { AdminShell } from "@/components/AdminShell";
 import { ReviewPanel } from "@/components/ReviewPanel";
 
-// hosts:review to open. The decision controls inside ReviewPanel switch on
-// whether the session also holds hosts:decide.
+// hosts:review OR hosts:decide opens the page. The decision controls inside
+// ReviewPanel still switch on whether the session holds hosts:decide
+// specifically — recommend vs. decide, not page access.
 export default async function HostApplicationDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await requireScope("hosts:review");
+  const session = await requireAnyScope(["hosts:review", "hosts:decide"]);
   const { id } = await params;
   const supabase = await createAnonServerClient();
 

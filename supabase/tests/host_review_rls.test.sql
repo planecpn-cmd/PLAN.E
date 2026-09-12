@@ -19,7 +19,7 @@ declare
   v_susp     uuid := 'ba000000-0000-4000-8000-000000000005';  -- suspended, {hosts:review,hosts:decide}
   v_other    uuid := 'ba000000-0000-4000-8000-000000000006';  -- plain traveler
   v_applicant uuid := 'ba000000-0000-4000-8000-000000000007';
-  v_decideonly uuid := 'ba000000-0000-4000-8000-000000000008';  -- {hosts:decide} only — cannot see anything to decide on
+  v_decideonly uuid := 'ba000000-0000-4000-8000-000000000008';  -- {hosts:decide} only — 20260912090000: reads too, so the page hosting the decide control has something to show
   v_app  uuid := 'ba000000-0000-4000-8000-0000000000a1';
 begin
   perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
@@ -126,13 +126,18 @@ begin
        'select count(*) from public.host_documents') <> 0
      then raise exception 'FAIL: payments:read read host_documents'; end if;
 
-  -- hosts:decide WITHOUT hosts:review sees nothing to decide on (detail route is hosts:review-gated too)
+  -- hosts:decide WITHOUT hosts:review can now read too (20260912090000) — the
+  -- page hosting the decide control needs real data to show a decide-only
+  -- moderator, and the page-level gate accepts either scope for the same reason
   if pg_temp.count_as('ba000000-0000-4000-8000-000000000008',
-       'select count(*) from public.host_application_reviews') <> 0
-     then raise exception 'FAIL: decide-only staff read review history'; end if;
+       'select count(*) from public.host_application_reviews') < 1
+     then raise exception 'FAIL: hosts:decide alone cannot read review history (20260912090000)'; end if;
   if pg_temp.count_as('ba000000-0000-4000-8000-000000000008',
-       'select count(*) from public.host_documents') <> 0
-     then raise exception 'FAIL: decide-only staff read host_documents'; end if;
+       'select count(*) from public.host_documents') < 1
+     then raise exception 'FAIL: hosts:decide alone cannot read host_documents (20260912090000)'; end if;
+  if pg_temp.count_as('ba000000-0000-4000-8000-000000000008',
+       'select count(*) from public.host_applications where id = ''' || v_app || '''') <> 1
+     then raise exception 'FAIL: hosts:decide alone cannot read the application itself (20260912090000)'; end if;
 
   -- suspended staff: nothing
   if pg_temp.count_as('ba000000-0000-4000-8000-000000000005',

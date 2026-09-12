@@ -1,18 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireScope } from "@/lib/session";
+import { requireAnyScope } from "@/lib/session";
 import { createAnonServerClient } from "@/lib/supabase/server";
 import { AdminShell } from "@/components/AdminShell";
 import { ExperienceReviewPanel } from "@/components/ExperienceReviewPanel";
 
-// content:manage to open. The decision controls (taxonomy + approve/reject)
-// inside the panel switch on whether the session also holds content:decide.
+// content:manage OR content:decide opens the page (a content:decide-only
+// account needs to see the listing to decide on it). The panel itself
+// still switches which controls render on whether the session holds
+// content:decide specifically — recommend vs. decide, not page access.
 export default async function ExperienceReviewDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await requireScope("content:manage");
+  const session = await requireAnyScope(["content:manage", "content:decide"]);
   const { id } = await params;
   const supabase = await createAnonServerClient();
 

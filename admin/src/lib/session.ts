@@ -47,3 +47,19 @@ export async function requireScope(scope: Scope): Promise<AdminSession> {
   if (!session.scopes.includes(scope)) redirect("/not-authorized");
   return session;
 }
+
+// For a page shared by a read/manage/review scope and its paired
+// decide/act scope (content:manage + content:decide, hosts:review +
+// hosts:decide, payments:read + payments:act): either one alone is enough
+// to open the page. The page's own business-table reads still go through
+// the anon session client, so the matching RLS SELECT policy must also
+// accept both scopes (see 20260912090000_decide_scopes_can_read_their_queue.sql)
+// or a decide/act-only session will pass this gate but see empty data.
+// Which controls render (recommend vs. decide) is a separate check the
+// page makes against session.scopes itself — this only decides whether the
+// page opens at all.
+export async function requireAnyScope(scopes: Scope[]): Promise<AdminSession> {
+  const session = await requireAdmin();
+  if (!scopes.some((s) => session.scopes.includes(s))) redirect("/not-authorized");
+  return session;
+}

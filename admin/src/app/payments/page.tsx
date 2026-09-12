@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireScope } from "@/lib/session";
+import { requireAnyScope } from "@/lib/session";
 import { createAnonServerClient } from "@/lib/supabase/server";
 import { AdminShell } from "@/components/AdminShell";
 import { OpsActionForm } from "@/components/OpsActionForm";
@@ -8,14 +8,17 @@ function stuckCutoffIso(): string {
   return new Date(Date.now() - 30 * 60_000).toISOString();
 }
 
-// Payments reconciliation. payments:read. ?stuck=1 -> the daily stuck-payment
-// ritual (initiated > 30 min). payments:act sees the re-verify + refund forms.
+// Payments reconciliation. payments:read OR payments:act opens the page (a
+// payments:act-only moderator needs to see payments to act on one; see
+// 20260912090000 — payments RLS accepts both scopes too). ?stuck=1 -> the
+// daily stuck-payment ritual (initiated > 30 min). The re-verify + refund
+// forms below still check payments:act specifically before rendering.
 export default async function PaymentsPage({
   searchParams,
 }: {
   searchParams: Promise<{ stuck?: string }>;
 }) {
-  const session = await requireScope("payments:read");
+  const session = await requireAnyScope(["payments:read", "payments:act"]);
   const { stuck } = await searchParams;
   const supabase = await createAnonServerClient();
   const canAct = session.scopes.includes("payments:act");
