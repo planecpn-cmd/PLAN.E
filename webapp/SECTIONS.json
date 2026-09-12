@@ -1,0 +1,28 @@
+{
+  "generated": "2026-09-10",
+  "source": "AUDIT.md (N1)",
+  "sections": [
+    { "id": "hero", "node": "N3", "enabled": true, "data_source": "static", "omit_if_empty": false,
+      "note": "Static copy + search are fine. Do NOT carry over the 'Curated Trips' CTA (/collection/trips-tours = 0 results) or the hardcoded '0 pts' badge." },
+    { "id": "brand_proposition", "node": "N4", "enabled": true, "data_source": "static", "omit_if_empty": false },
+    { "id": "families", "node": "N5", "enabled": true, "data_source": "experience_families JOIN categories JOIN experiences(status=published)", "omit_if_empty": true,
+      "note": "DB has 6 families, not 5. Render only families with >=1 published experience: today 3 (adventure-together 23, live-like-a-local 6, mind-soul 2). trips-tours, meet-people, give-back = 0. Human decides whether '5' becomes 'data-driven N'." },
+    { "id": "happening_this_week", "node": "N6", "enabled": false, "data_source": "experience_departures(status=open, start_date between today and today+6)", "omit_if_empty": true,
+      "omit_reason": "0 open departures in 2026-09-10..2026-09-16. Only 1 future departure exists at all (2026-09-18, demo-ram-mardi-himal-trek, pending unpublish). Section must query dates, not rating rank as home.ts:141 does today." },
+    { "id": "why_plan_e", "node": "N7", "enabled": false, "data_source": "static (each pillar must pass a data check)", "omit_if_empty": false,
+      "omit_reason": "No approved pillar list yet. Of the likely pillars, 'verified local hosts' is FALSE (30/31 listings have no host), 'transparent policies' is FALSE (legal_documents empty, 13 legal 404s), 'real reviews' is not readable by anon key. Only 'local payments (Khalti/eSewa)' is TRUE. Re-enable once 4 pillars each map to a TRUE row in AUDIT (a)." },
+    { "id": "app_showcase", "node": "N8", "enabled": false, "data_source": "store URLs", "omit_if_empty": true,
+      "omit_reason": "No App Store / Play listing URL anywhere in repo; app_versions has 0 rows." },
+    { "id": "host_cta", "node": "N9", "enabled": true, "data_source": "static", "omit_if_empty": false,
+      "note": "Links to /host (200). Must not state a commission % — see AUDIT (f)." },
+    { "id": "final_cta", "node": "N9", "enabled": true, "data_source": "static", "omit_if_empty": false,
+      "note": "CTA target must not be 'Get the App' while app_showcase is omitted; use /explore." },
+
+    { "id": "explore_by_feeling", "enabled": false, "omit_reason": "Deferred by spec. Moods have no DB table; 3 of 6 moods point at empty families." },
+    { "id": "editorial_story", "enabled": false, "omit_reason": "Deferred by spec. No editorial content source." },
+    { "id": "destinations_grid", "enabled": false, "omit_reason": "Deferred by spec. regions has 10 rows but no per-region availability check yet." },
+    { "id": "meet_the_hosts", "enabled": false, "omit_reason": "Deferred by spec. host_accounts not readable by anon; 30/31 listings have null host_id." },
+    { "id": "ai_planner", "enabled": false, "omit_reason": "Deferred by spec. No web route; ai_itinerary flag is on but web has nothing behind it." },
+    { "id": "community_proof", "enabled": false, "omit_reason": "Deferred by spec. Reviews/bookings not readable by anon; rating_count values are not backed by visible review rows." }
+  ]
+}
