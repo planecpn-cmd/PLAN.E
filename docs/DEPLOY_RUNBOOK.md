@@ -153,6 +153,26 @@ should know which before you run this:
 - The rest — new tables, new RLS policies, new functions — are safe to
   apply and don't change any existing row.
 
+**Why `20260910200000_close_past_departures_unpublish_demo.sql` is safe today,
+and why that could change.** Its Part 1 predicate — `status = 'open' and
+start_date < date '2026-09-10'` — has **no owner filter and no demo-only
+condition**. It closes every open, past-dated departure regardless of who
+listed it. It is safe to run now only because of a fact about the *current
+data*, not anything in the migration itself: the only listings in the
+database are the 30 seeded catalog experiences (`seed.sql`, 3 departures
+each = 90 rows) and the one demo host (Ram Shrestha). There are no real host
+listings yet, so "every open past-dated departure" and "every demo departure"
+are the same set today, coincidentally.
+
+**This makes the migration run-once, not re-runnable.** If it is ever run
+again after a real host has published a listing with a past-dated departure
+(a bug, a mis-set date, anything), it will close that host's departure too,
+silently, with no way to distinguish it from the demo rows it was written
+for. Once applied here, do not re-run it "just in case" on a later reset or
+a new environment that already has real hosts — verify via `supabase
+migration list --linked` that it already shows a `Remote` timestamp before
+ever considering a re-apply.
+
 **If it fails partway:** `supabase db push` applies migrations one at a
 time and stops at the first failure; migrations already applied before
 the failure stay applied (this is normal Postgres transaction behavior
