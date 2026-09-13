@@ -1,11 +1,13 @@
 import Image from "next/image";
 import { getHomepageData, isSectionEnabled } from "@/lib/data/homepage";
 import { SearchBar } from "@/components/SearchBar";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+import { FamilyTile } from "@/components/ui/FamilyTile";
 
 export const revalidate = 300;
 
 export default async function HomePage() {
-  await getHomepageData();
+  const { families } = await getHomepageData();
 
   return (
     <div>
@@ -51,6 +53,17 @@ export default async function HomePage() {
           <p className="mt-2 font-[family-name:var(--font-display)] text-2xl font-bold leading-tight text-[var(--color-forest)] lg:text-3xl">
             Neither are you.
           </p>
+        </section>
+      )}
+
+      {isSectionEnabled("families") && families && (
+        <section className="mx-auto max-w-6xl px-4 pb-14 lg:px-6 lg:pb-20">
+          <SectionHeader title="Browse by experience" subtitle="Choose the kind of day you want to have" />
+          <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-3">
+            {families.map((family) => (
+              <FamilyTile key={family.slug} family={family} />
+            ))}
+          </div>
         </section>
       )}
     </div>
