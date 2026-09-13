@@ -59,6 +59,13 @@ env/*.json
 # Incoming raw external extracts
 _incoming/
 
+# Generated schema bundles - break-glass fallback for pasting into the hosted
+# dashboard when the CLI is unavailable. Regenerate with
+# tool/build_schema_bundle.sh; committing them makes every migration-adding
+# PR a merge conflict on a file nothing automated reads.
+supabase/full_schema_bundle.sql
+supabase/hosted_schema_bundle.sql
+
 # Node deps in helper script dirs
 supabase/scripts/node_modules/
 .pnpm-store/
