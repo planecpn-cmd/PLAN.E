@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -63,76 +64,265 @@ class SupabaseHostModeRepository extends UnavailableHostModeRepository {
     return user;
   }
 
+  static const _experienceCols =
+      'id,title,summary,location_name,cover_image_url,gallery,price_paisa,status,group_size_max,created_at,revision_of';
+
   @override
   Future<List<HostExperience>> getExperiences() async {
     final user = await _requireApprovedHost();
+    // Live listings + standalone drafts only. A content revision of a published
+    // listing (revision_of set) is edited through its parent, not shown as its
+    // own card.
     final experienceRows = await _client
         .from('experiences')
-        .select(
-          'id,title,summary,location_name,cover_image_url,price_paisa,status,group_size_max,created_at',
-        )
+        .select(_experienceCols)
         .eq('host_id', user.id)
+        .isFilter('revision_of', null)
         .order('created_at', ascending: true);
 
     final ids = experienceRows
         .map((row) => row['id']?.toString())
         .whereType<String>()
         .toList();
-    final departuresByExperience = <String, List<Map<String, dynamic>>>{};
-    if (ids.isNotEmpty) {
-      final departureRows = await _client
-          .from('experience_departures')
-          .select(
-            'id,experience_id,start_date,end_date,total_spots,spots_left,status',
-          )
-          .inFilter('experience_id', ids)
-          .order('start_date');
-      for (final raw in departureRows) {
-        final row = Map<String, dynamic>.from(raw);
-        final experienceId = row['experience_id']?.toString();
-        if (experienceId != null) {
-          departuresByExperience.putIfAbsent(experienceId, () => []).add(row);
-        }
+    final departuresById = await _departuresByExperience(ids);
+
+    return experienceRows
+        .map(
+          (raw) => _hostExperienceFromRow(
+            Map<String, dynamic>.from(raw),
+            departuresById[raw['id']?.toString()] ?? const [],
+          ),
+        )
+        .toList();
+  }
+
+  Future<Map<String, List<Map<String, dynamic>>>> _departuresByExperience(
+    List<String> ids,
+  ) async {
+    final byId = <String, List<Map<String, dynamic>>>{};
+    if (ids.isEmpty) return byId;
+    final rows = await _client
+        .from('experience_departures')
+        .select(
+          'id,experience_id,start_date,end_date,total_spots,spots_left,status',
+        )
+        .inFilter('experience_id', ids)
+        .order('start_date');
+    for (final raw in rows) {
+      final row = Map<String, dynamic>.from(raw);
+      final experienceId = row['experience_id']?.toString();
+      if (experienceId != null) {
+        byId.putIfAbsent(experienceId, () => []).add(row);
       }
     }
+    return byId;
+  }
 
-    return experienceRows.map((raw) {
-      final row = Map<String, dynamic>.from(raw);
-      final id = row['id'].toString();
-      final departures = departuresByExperience[id] ?? const [];
-      final departure = departures.isEmpty ? null : departures.first;
-      final now = DateTime.now();
-      final start = _date(departure?['start_date']) ?? now;
-      final end = _date(departure?['end_date']) ?? start;
-      final capacity = _integer(
-        departure?['total_spots'] ?? row['group_size_max'],
-      );
-      final spotsLeft = _integer(departure?['spots_left'] ?? capacity);
-      return HostExperience(
-        id: id,
-        title: row['title']?.toString() ?? 'Untitled experience',
-        location: row['location_name']?.toString() ?? 'Nepal',
-        imageAsset: _fallbackImage,
-        startDate: start,
-        endDate: end,
-        capacity: capacity,
-        bookedSpots: (capacity - spotsLeft).clamp(0, capacity),
-        priceNpr: _integer(row['price_paisa']) ~/ 100,
-        status: _experienceStatus(row['status']?.toString()),
-        summary:
-            row['summary']?.toString() ??
-            'A locally hosted PLAN E experience in Nepal.',
-      );
-    }).toList();
+  HostExperience _hostExperienceFromRow(
+    Map<String, dynamic> row,
+    List<Map<String, dynamic>> departures,
+  ) {
+    final departure = departures.isEmpty ? null : departures.first;
+    final now = DateTime.now();
+    final start = _date(departure?['start_date']) ?? now;
+    final end = _date(departure?['end_date']) ?? start;
+    final capacity = _integer(departure?['total_spots'] ?? row['group_size_max']);
+    final spotsLeft = _integer(departure?['spots_left'] ?? capacity);
+    final rawGallery = row['gallery'];
+    final gallery = <String>[
+      if (rawGallery is List)
+        ...rawGallery.map((e) => e.toString()).where((e) => e.isNotEmpty),
+    ];
+    final cover = row['cover_image_url']?.toString();
+    if (gallery.isEmpty && cover != null && cover.isNotEmpty) {
+      gallery.add(cover);
+    }
+    return HostExperience(
+      id: row['id'].toString(),
+      title: row['title']?.toString() ?? 'Untitled experience',
+      location: row['location_name']?.toString() ?? 'Nepal',
+      imageAsset: _fallbackImage,
+      startDate: start,
+      endDate: end,
+      capacity: capacity,
+      bookedSpots: (capacity - spotsLeft).clamp(0, capacity),
+      priceNpr: _integer(row['price_paisa']) ~/ 100,
+      status: _experienceStatus(row['status']?.toString()),
+      summary:
+          row['summary']?.toString() ??
+          'A locally hosted PLAN E experience in Nepal.',
+      gallery: gallery,
+    );
   }
 
   @override
   Future<HostExperience?> getExperience(String id) async {
-    final experiences = await getExperiences();
-    for (final experience in experiences) {
-      if (experience.id == id) return experience;
+    final user = await _requireApprovedHost();
+    final rows = await _client
+        .from('experiences')
+        .select(_experienceCols)
+        .eq('id', id)
+        .eq('host_id', user.id)
+        .limit(1);
+    if (rows.isEmpty) return null;
+    var row = Map<String, dynamic>.from(rows.first);
+
+    // Editing a LIVE listing works on its in-progress content revision, so the
+    // wizard seeds from — and saves to — the revision, not the live row.
+    final status = row['status']?.toString();
+    if ((status == 'published' || status == 'paused') &&
+        row['revision_of'] == null) {
+      final revRows = await _client
+          .from('experiences')
+          .select(_experienceCols)
+          .eq('revision_of', id)
+          .inFilter('status', const ['draft', 'pending_review'])
+          .limit(1);
+      if (revRows.isNotEmpty) row = Map<String, dynamic>.from(revRows.first);
     }
-    return null;
+
+    final departuresById = await _departuresByExperience([row['id'].toString()]);
+    return _hostExperienceFromRow(
+      row,
+      departuresById[row['id'].toString()] ?? const [],
+    );
+  }
+
+  @override
+  Future<void> setExperiencePaused(String id, bool paused) async {
+    await _requireApprovedHost();
+    // Client cannot write experiences.status directly (grant revoked); the
+    // SECURITY DEFINER RPC re-checks ownership + approved-active host + that the
+    // listing is in a state that can be toggled.
+    await _client.rpc(
+      'host_set_experience_paused',
+      params: {'p_experience_id': id, 'p_paused': paused},
+    );
+  }
+
+  @override
+  Future<void> updateAvailability(
+    String id,
+    DateTime start,
+    DateTime end,
+    int capacity,
+  ) async {
+    await _requireApprovedHost();
+    // SECURITY DEFINER RPC: targets the earliest open departure (creates one if
+    // none), re-checks ownership + approved-active host, and rejects a capacity
+    // below the booked count or a date move while active bookings exist.
+    await _client.rpc(
+      'host_update_experience_availability',
+      params: {
+        'p_experience_id': id,
+        'p_start': start.toIso8601String().split('T').first,
+        'p_end': end.toIso8601String().split('T').first,
+        'p_total_spots': capacity,
+      },
+    );
+  }
+
+  @override
+  Future<HostExperience> saveDraft(HostExperienceDraft draft) async {
+    await _requireApprovedHost();
+    // SECURITY DEFINER RPC: only ever writes status = 'draft'.
+    // photoAssets holds experience-photos storage paths (or promoted http URLs);
+    // bundled placeholder assets from an edit-seed are not persisted. The first
+    // photo is the cover; on approval the admin promotes these to catalog-images.
+    final photos = draft.photoAssets
+        .where((p) => !p.startsWith('assets/'))
+        .toList();
+    final payload = <String, dynamic>{
+      if (draft.id != null) 'id': draft.id,
+      'title': draft.title,
+      'location': draft.location,
+      'description': draft.description,
+      'trip_details': draft.tripDetails,
+      'meeting_point': draft.meetingPoint,
+      'price_npr': draft.priceNpr,
+      'capacity': draft.capacity,
+      'start_date': draft.startDate?.toIso8601String().split('T').first,
+      'end_date': draft.endDate?.toIso8601String().split('T').first,
+      'itinerary': draft.itinerary,
+      'included': draft.included,
+      'bring': draft.bring,
+      'gallery': photos,
+      'cover_image_url': photos.isEmpty ? null : photos.first,
+    };
+    final id =
+        await _client.rpc(
+              'host_save_experience_draft',
+              params: {'p': payload},
+            )
+            as String;
+    final saved = await getExperience(id);
+    if (saved == null) {
+      throw StateError('The draft was saved but could not be reloaded.');
+    }
+    return saved;
+  }
+
+  static const _experiencePhotoBucket = 'experience-photos';
+
+  @override
+  Future<String> uploadExperiencePhoto({
+    required Uint8List bytes,
+    required String fileName,
+    required String experienceKey,
+  }) async {
+    final user = await _requireApprovedHost();
+    final rawExt = fileName.contains('.')
+        ? fileName.split('.').last.toLowerCase()
+        : 'jpg';
+    final ext = const {'jpg', 'jpeg', 'png', 'webp'}.contains(rawExt)
+        ? rawExt
+        : 'jpg';
+    final contentType = switch (ext) {
+      'png' => 'image/png',
+      'webp' => 'image/webp',
+      _ => 'image/jpeg',
+    };
+    // Server enforces the 5 MiB / image-only limits on the bucket; this is a
+    // fast client-side reject so a too-large file fails before the round trip.
+    if (bytes.lengthInBytes > 5 * 1024 * 1024) {
+      throw ArgumentError('Each photo must be 5 MB or smaller.');
+    }
+    final path =
+        '${user.id}/$experienceKey/${DateTime.now().millisecondsSinceEpoch}.$ext';
+    await _client.storage
+        .from(_experiencePhotoBucket)
+        .uploadBinary(
+          path,
+          bytes,
+          fileOptions: FileOptions(upsert: false, contentType: contentType),
+        );
+    return path;
+  }
+
+  @override
+  Future<String> experiencePhotoSignedUrl(String path) => _client.storage
+      .from(_experiencePhotoBucket)
+      .createSignedUrl(path, 3600);
+
+  @override
+  Future<void> deleteExperiencePhoto(String path) async {
+    await _requireApprovedHost();
+    await _client.storage.from(_experiencePhotoBucket).remove([path]);
+  }
+
+  @override
+  Future<HostExperience> submitForReview(HostExperienceDraft draft) async {
+    await _requireApprovedHost();
+    // Persist the latest edits first, then flip draft -> pending_review. The
+    // RPC never reaches 'published' (admin content:manage does that) and
+    // rejects an incomplete draft with an actionable message.
+    final saved = await saveDraft(draft);
+    await _client.rpc(
+      'host_submit_experience_for_review',
+      params: {'p_experience_id': saved.id},
+    );
+    final reviewed = await getExperience(saved.id);
+    return reviewed ?? saved;
   }
 
   @override

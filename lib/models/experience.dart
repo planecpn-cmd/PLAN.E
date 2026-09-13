@@ -69,7 +69,10 @@ class Experience {
   final String slug;
   final String? summary;
   final String? description;
-  final String coverImageUrl;
+  // Nullable since 20260909140000: an experience is created as a draft with no
+  // cover, and its owning host can read that row. Render sites fall back to a
+  // placeholder.
+  final String? coverImageUrl;
   final List<String> gallery;
   final String? locationName;
   final String? meetingPoint;
@@ -104,7 +107,7 @@ class Experience {
     required this.slug,
     this.summary,
     this.description,
-    required this.coverImageUrl,
+    this.coverImageUrl,
     this.gallery = const [],
     this.locationName,
     this.meetingPoint,
@@ -141,7 +144,7 @@ class Experience {
       slug: json['slug'] as String,
       summary: json['summary'] as String?,
       description: json['description'] as String?,
-      coverImageUrl: json['cover_image_url'] as String,
+      coverImageUrl: json['cover_image_url'] as String?,
       gallery:
           (json['gallery'] as List<dynamic>?)
               ?.map((e) => e.toString())

@@ -1,0 +1,13 @@
+/node_modules
+/.next
+/.open-next
+/.wrangler
+/out
+/build
+# Next regenerates this on dev/build and couples it to .next/types — don't track.
+next-env.d.ts
+*.tsbuildinfo
+.env
+.env.local
+.env.*.local
+.DS_Store

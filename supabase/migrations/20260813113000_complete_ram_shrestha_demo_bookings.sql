@@ -9,6 +9,15 @@ declare
   v_host_id constant uuid := '25ffe805-82b2-4a43-9fc1-203b080e197b';
   v_traveler_id uuid;
 begin
+  -- Companion to 20260813111000. If the demo host was skipped there (its auth
+  -- user is absent on fresh local stacks / CI / hosted), the demo experiences
+  -- and departures this migration references do not exist either — skip.
+  -- (P0.1: unblocks `supabase db reset` from zero. See docs/PHASE_0_REPORT.md.)
+  if not exists (select 1 from public.profiles where id = v_host_id) then
+    raise notice 'Skipping demo booking seed: demo host % not present', v_host_id;
+    return;
+  end if;
+
   perform set_config(
     'request.jwt.claims',
     '{"role":"service_role"}',

@@ -8,6 +8,7 @@ import '../../../widgets/widgets.dart';
 import '../domain/host_mode_models.dart';
 import 'host_conversation_navigation.dart';
 import 'host_mode_providers.dart';
+import 'widgets/host_mode_scaffold.dart';
 
 class HostBookingDetailScreen extends ConsumerWidget {
   const HostBookingDetailScreen({super.key, required this.id});
@@ -180,7 +181,12 @@ class HostBookingDetailScreen extends ConsumerWidget {
                     Expanded(
                       child: AppButton.secondary(
                         label: 'Decline',
-                        onPressed: () => _decide(context, ref, item, false),
+                        // H0 stopgap: accept/decline is not wired to a backend
+                        // yet (see docs/H1_HOST_WRITE_PATH.md).
+                        onPressed: () => showUnavailableNotice(
+                          context,
+                          'Accepting and declining booking requests',
+                        ),
                         isFullWidth: true,
                       ),
                     ),
@@ -188,7 +194,10 @@ class HostBookingDetailScreen extends ConsumerWidget {
                     Expanded(
                       child: AppButton(
                         label: 'Accept request',
-                        onPressed: () => _decide(context, ref, item, true),
+                        onPressed: () => showUnavailableNotice(
+                          context,
+                          'Accepting and declining booking requests',
+                        ),
                         isFullWidth: true,
                       ),
                     ),
@@ -218,72 +227,6 @@ class HostBookingDetailScreen extends ConsumerWidget {
     HostBookingStatus.declined => 'Declined',
   };
 
-  Future<void> _decide(
-    BuildContext context,
-    WidgetRef ref,
-    HostBookingRequest item,
-    bool accept,
-  ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('${accept ? 'Accept' : 'Decline'} request?'),
-        content: Text(
-          accept
-              ? 'This will confirm the booking request.'
-              : 'This will decline the booking request.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(accept ? 'Accept' : 'Decline'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-    await ref
-        .read(hostModeRepositoryProvider)
-        .updateBookingStatus(
-          item.id,
-          accept ? HostBookingStatus.confirmed : HostBookingStatus.declined,
-        );
-    ref.invalidate(hostBookingProvider(item.id));
-    ref.invalidate(hostBookingsProvider);
-    ref.invalidate(hostDashboardProvider);
-    if (!context.mounted) return;
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        icon: Icon(
-          accept ? Icons.check_circle_outline : Icons.cancel_outlined,
-          color: accept ? AppColors.success : AppColors.gold,
-          size: 42,
-        ),
-        title: Text(accept ? 'Booking confirmed' : 'Request declined'),
-        content: Text(
-          '${item.travelerName} was updated in temporary frontend state. This change resets when the app restarts.',
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Done'),
-          ),
-        ],
-      ),
-    );
-    if (context.mounted) {
-      context.go(
-        accept
-            ? '/host/bookings?status=confirmed'
-            : '/host/bookings?status=cancelled',
-      );
-    }
-  }
 }
 
 class _Detail extends StatelessWidget {
