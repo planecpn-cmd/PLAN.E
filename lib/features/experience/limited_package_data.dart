@@ -109,7 +109,7 @@ class LimitedPackageData {
       category = category?.nameEn ?? 'Package',
       region = region?.nameEn,
       photos = {
-        experience.coverImageUrl,
+        experience.coverImageUrl ?? '',
         ...experience.gallery,
       }.where((url) => url.isNotEmpty).toList(growable: false),
       durationHours = experience.durationHours,

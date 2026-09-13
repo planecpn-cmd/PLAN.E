@@ -42,10 +42,14 @@ const DOCS = [
 const VERSION = '1.0';
 const LOCALE = 'en';
 
-// A leftover template slot: '[' + uppercase letter + anything-but-']'. Matches
-// [EFFECTIVE DATE], [X], [PAYOUT TIMING - CONFIRM: e.g. ...]. Does NOT match the
-// '[ ]' / '[x]' markdown checkboxes used in the emergency + risk-ack docs.
-export const UNRESOLVED = /\[[A-Z][^\]\n]*\]/;
+// A leftover template slot: '[' + uppercase letter + anything up to the next
+// ']', newlines included - a hard-wrapped markdown paragraph can put a line
+// break anywhere inside a placeholder (see 06-payment-policy.md's PAYOUT
+// TIMING slot). Non-greedy so it still stops at the first ']', not the last
+// one in the file. Matches [EFFECTIVE DATE], [X], [PAYOUT TIMING - CONFIRM:
+// e.g. ...] even when wrapped. Does NOT match the '[ ]' / '[x]' markdown
+// checkboxes used in the emergency + risk-ack docs (neither starts [A-Z]).
+export const UNRESOLVED = /\[[A-Z][\s\S]*?\]/;
 
 function loadPlaceholders() {
   const raw = JSON.parse(readFileSync(join(legalDir, 'placeholders.json'), 'utf8'));
@@ -57,10 +61,27 @@ function loadPlaceholders() {
   return map;
 }
 
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// A placeholder key as written in placeholders.json is always single-line,
+// but the same slot in the markdown source can be hard-wrapped across a line
+// break wherever the author wrapped the paragraph. Collapse every run of
+// whitespace in the key into \s+ so the match tolerates that - and any other
+// whitespace difference (double space, tab) - without caring where exactly
+// the source wrapped it.
+function bracketPattern(key) {
+  return escapeRegExp(`[${key}]`).replace(/\s+/g, '\\s+');
+}
+
 export function applyPlaceholders(text, map) {
   let out = text;
   for (const [k, v] of Object.entries(map)) {
-    out = out.split(`[${k}]`).join(v);
+    // Replacer is a function, not the string `v` directly: String.replace
+    // treats a string replacement's own '$'-sequences specially, which would
+    // corrupt a value that happens to contain one.
+    out = out.replace(new RegExp(bracketPattern(k), 'g'), () => v);
   }
   return out;
 }
