@@ -1,0 +1,9 @@
+# Flutter/Dart test config.
+#
+# `known-broken-layout` marks tests that fail today for reasons unrelated to the
+# admin-panel build (see docs/TODO.md). CI runs `flutter test
+# --exclude-tags known-broken-layout` as the gate and runs the tagged tests
+# separately as a non-blocking warning so the failure stays visible.
+tags:
+  known-broken-layout:
+    skip: false

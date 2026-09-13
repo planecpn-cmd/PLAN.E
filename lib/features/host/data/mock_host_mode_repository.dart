@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../domain/host_mode_models.dart';
 import '../../../core/chat_ordering.dart';
 import 'host_mode_repository.dart';
@@ -428,6 +430,29 @@ class MockHostModeRepository implements HostModeRepository {
       .where((c) => c.experienceId == experienceId && c.isGroup)
       .firstOrNull;
 
+  final Map<String, Uint8List> _photoStore = {};
+  int _photoSeq = 0;
+
+  @override
+  Future<String> uploadExperiencePhoto({
+    required Uint8List bytes,
+    required String fileName,
+    required String experienceKey,
+  }) async {
+    final path = 'mock-host/$experienceKey/${_photoSeq++}-$fileName';
+    _photoStore[path] = bytes;
+    return path;
+  }
+
+  @override
+  Future<String> experiencePhotoSignedUrl(String path) async =>
+      'https://mock.local/$path';
+
+  @override
+  Future<void> deleteExperiencePhoto(String path) async {
+    _photoStore.remove(path);
+  }
+
   @override
   Future<HostExperience> saveDraft(HostExperienceDraft draft) async =>
       _upsertDraft(draft, HostExperienceStatus.draft);
@@ -458,6 +483,9 @@ class MockHostModeRepository implements HostModeRepository {
       priceNpr: draft.priceNpr ?? 0,
       status: status,
       summary: draft.description.trim(),
+      gallery: draft.photoAssets
+          .where((p) => !p.startsWith('assets/'))
+          .toList(),
     );
     final index = _experiences.indexWhere((e) => e.id == id);
     if (index < 0) {

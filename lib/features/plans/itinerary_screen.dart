@@ -106,10 +106,10 @@ class ItineraryScreen extends ConsumerWidget {
                               child: SizedBox(
                                 height: 160,
                                 width: double.infinity,
-                                child: exp.coverImageUrl.isNotEmpty
+                                child: (exp.coverImageUrl ?? '').isNotEmpty
                                     ? CachedNetworkImage(
                                         imageUrl: resizedImageUrl(
-                                          exp.coverImageUrl,
+                                          exp.coverImageUrl!,
                                           width: 800,
                                         ),
                                         cacheManager:
