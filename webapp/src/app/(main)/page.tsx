@@ -42,6 +42,17 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      {isSectionEnabled("brand_proposition") && (
+        <section className="mx-auto max-w-3xl px-4 py-14 text-center lg:px-6 lg:py-20">
+          <p className="font-[family-name:var(--font-display)] text-2xl font-bold leading-tight text-[var(--color-ink)] lg:text-3xl">
+            Nepal isn&apos;t one kind of experience.
+          </p>
+          <p className="mt-2 font-[family-name:var(--font-display)] text-2xl font-bold leading-tight text-[var(--color-forest)] lg:text-3xl">
+            Neither are you.
+          </p>
+        </section>
+      )}
     </div>
   );
 }
