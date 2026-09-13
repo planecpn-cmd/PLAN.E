@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "plan-e-admin",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-09-05",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": false,
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "routes": [{ "pattern": "admin.planenepal.com", "custom_domain": true }],
+  "vars": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://dtebgbrqynxahuzmbtbc.supabase.co"
+  }
+  // Secrets (set with `wrangler secret put`, never committed):
+  //   NEXT_PUBLIC_SUPABASE_ANON_KEY   -- publishable anon key
+  //   SUPABASE_SERVICE_ROLE_KEY       -- referenced ONLY by src/lib/service-role.ts
+}

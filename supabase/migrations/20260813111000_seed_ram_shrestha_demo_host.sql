@@ -12,8 +12,13 @@ declare
   v_category_id uuid;
   v_region_id uuid;
 begin
+  -- This demo user only exists in the original developer's local Auth. On a
+  -- fresh local stack, in CI, or on any other environment the row is absent —
+  -- skip the entire demo seed rather than aborting the migration chain.
+  -- (P0.1: unblocks `supabase db reset` from zero. See docs/PHASE_0_REPORT.md.)
   if not exists (select 1 from public.profiles where id = v_host_id) then
-    raise exception 'Demo host profile % does not exist', v_host_id;
+    raise notice 'Skipping demo host seed: profile % not present in this environment', v_host_id;
+    return;
   end if;
 
   -- The existing privilege-escalation guards recognize only service-role
