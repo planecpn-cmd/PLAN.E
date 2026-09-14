@@ -1,0 +1,52 @@
+-- =============================================================================
+-- P0-CRIT recategorisation (AUDIT.md §2, BLOCKED.md B8). AWAITING DECISION.
+--
+-- Every statement is commented out, so this migration is a no-op until the
+-- owner picks categories. To apply a decision, uncomment the chosen lines
+-- in a PR. CODEOWNERS requires owner review on this path.
+--
+-- Idempotent: each update sets category_id to a value resolved by slug and
+-- skips rows already there (is distinct from). Re-running changes nothing.
+--
+-- ROLLBACK (per line applied): set the listing back to its original category.
+--   update public.experiences set category_id = (select id from public.categories where slug = '<original>')
+--     where slug = '<listing>';
+--   original categories (2026-09-10):
+--     everest-heli-tour               -> wellness
+--     bhotekoshi-whitewater-rafting   -> camping
+--     pokhara-paragliding             -> hiking
+--     phulchowki-mountain-biking      -> hiking
+--     kakani-trout-strawberry         -> homestay
+--     bhaktapur-pottery-workshop      -> culture
+--
+-- Rafting, paragliding and biking have no fitting existing category. Adding
+-- one is a schema/taxonomy change and needs its own migration (rule 6), plus
+-- a Flutter mirror in lib/models/experience_family.dart.
+-- =============================================================================
+
+-- everest-heli-tour: wellness -> day-trip (alt: guided-tour)
+-- update public.experiences set category_id = c.id
+--   from public.categories c
+--   where c.slug = 'day-trip' and experiences.slug = 'everest-heli-tour'
+--     and experiences.category_id is distinct from c.id;
+
+-- kakani-trout-strawberry: homestay -> food-experience (alt: farm-experience)
+-- update public.experiences set category_id = c.id
+--   from public.categories c
+--   where c.slug = 'food-experience' and experiences.slug = 'kakani-trout-strawberry'
+--     and experiences.category_id is distinct from c.id;
+
+-- pokhara-paragliding: hiking -> day-trip (alt: new air-sports category)
+-- update public.experiences set category_id = c.id
+--   from public.categories c
+--   where c.slug = 'day-trip' and experiences.slug = 'pokhara-paragliding'
+--     and experiences.category_id is distinct from c.id;
+
+-- bhaktapur-pottery-workshop (weak): culture -> craft-workshop
+-- update public.experiences set category_id = c.id
+--   from public.categories c
+--   where c.slug = 'craft-workshop' and experiences.slug = 'bhaktapur-pottery-workshop'
+--     and experiences.category_id is distinct from c.id;
+
+-- bhotekoshi-whitewater-rafting: camping -> ?  (decide: keep / group-activity / new category)
+-- phulchowki-mountain-biking:    hiking  -> ?  (decide: keep / new cycling category)

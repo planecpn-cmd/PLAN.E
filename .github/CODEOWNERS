@@ -1,0 +1,9 @@
+# Owner review required (enable "Require review from Code Owners" on main).
+/supabase/migrations/    @planecpn-cmd
+/supabase/functions/     @planecpn-cmd
+
+# Pipeline controls: who can open a human gate, change a gate, or change CI.
+/agent/graph-state.json  @planecpn-cmd
+/webapp/gates/           @planecpn-cmd
+/supabase/tests/         @planecpn-cmd
+/.github/                @planecpn-cmd
