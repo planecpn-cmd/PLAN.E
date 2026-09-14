@@ -173,6 +173,33 @@ a new environment that already has real hosts — verify via `supabase
 migration list --linked` that it already shows a `Remote` timestamp before
 ever considering a re-apply.
 
+**The `create-booking-intent` past-departure guard is currently unreachable
+on hosted, by design of the data B6 just produced.** The guard
+(`departure.start_date < todayNepal` → 400 "already passed") only runs for a
+departure that first passes an earlier `.eq("status", "open")` lookup filter
+— a `closed` departure never reaches the date check at all, it 400s earlier
+with "Departure date not found or invalid" instead. B6 closed every
+departure that was both open and past-dated (that's its entire job), so as
+of this deploy there are zero rows left that satisfy the guard's own
+precondition — confirmed via `select status, count(*) ... group by status`:
+92 `closed`, 2 `open` (both future-dated). A live curl against any real
+departure right now either hits a future-open row (200, doesn't touch the
+guard) or a closed row (400, wrong branch). Neither exercises the fix.
+
+The fix itself is confirmed deployed — `supabase functions download
+create-booking-intent` and diffed against `main`'s committed source: the
+guard's logic matches exactly (formatting differs; Deno's eszip
+re-serializes on download, nothing structural changed). The safety net is
+`supabase/tests/edge_booking_past_departure.test.mjs`, which has passed
+every local run this session, including a genuine clean-volume
+reproduction. **What would actually re-test it live**, if anyone needs
+proof beyond that later: the exact pattern that test already uses —
+create one throwaway auth user, insert one throwaway `open` departure with
+a past `start_date` on a real published experience, call the function,
+assert 400 + "already passed", then delete both in a `finally` block. That
+mutates production even though it's self-cleaning, so it needs an explicit
+decision to run, not a default step in this runbook.
+
 **If it fails partway:** `supabase db push` applies migrations one at a
 time and stops at the first failure; migrations already applied before
 the failure stay applied (this is normal Postgres transaction behavior
