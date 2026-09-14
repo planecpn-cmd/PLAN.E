@@ -2,13 +2,14 @@
 -- every later change goes through the service-role backend under staff:manage.
 --
 -- ┌─────────────────────────────────────────────────────────────────────────┐
--- │  GATE 2 PLACEHOLDER — v_emails is intentionally EMPTY.                   │
--- │  Fill it with the FOUNDER email addresses exactly as they appear in     │
--- │  auth.users, then this migration grants each of them profiles.role =    │
--- │  'admin' + a staff_members row with all eight scopes.                   │
+-- │  GATE 2 — v_emails set 2026-09-14 to the one confirmed founder email.    │
+-- │  Grants each address profiles.role = 'admin' + a staff_members row       │
+-- │  with all eight scopes, as it appears in auth.users.                     │
 -- │  An empty list is a clean no-op (the FOREACH body never runs).          │
 -- │  An email with no matching auth.users row is skipped with a NOTICE,     │
--- │  never an error.                                                        │
+-- │  never an error -- so this migration alone can't tell you whether the   │
+-- │  address actually exists in auth.users. Confirm that separately before  │
+-- │  relying on this as the only way in.                                    │
 -- │                                                                         │
 -- │  FOUNDERS ONLY. profiles.role = 'admin' is a founder privilege (it      │
 -- │  gates config_audit_log / admin_audit_log reads and the                 │
@@ -20,8 +21,7 @@
 do $$
 declare
   v_emails text[] := array[
-    -- 'founder-one@example.com',
-    -- 'founder-two@example.com'
+    'raunakshah1244@gmail.com'
   ]::text[];
   v_all_scopes constant text[] := array[
     'hosts:review', 'hosts:decide',
