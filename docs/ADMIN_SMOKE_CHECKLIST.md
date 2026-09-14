@@ -42,6 +42,19 @@ npm install
 npm run dev                        # http://localhost:3000
 ```
 
+**Before signing in, confirm which backend you're actually pointed at** —
+click "Continue with Google" and read the `redirect_uri` param in the
+resulting Google URL (browser address bar or the network tab), then stop;
+don't complete the sign-in. It should match whatever stack you meant to
+test: `127.0.0.1:54341` for local, or the hosted project
+(`dtebgbrqynxahuzmbtbc.supabase.co`) for a deployed instance. This is not
+optional pedantry — a real production deploy once had a client bundle
+silently wired to `127.0.0.1:54341` (a dead address in production) while
+`/login` rendered a completely normal-looking form. The rendered page
+proves nothing about which backend it's actually talking to; the OAuth
+redirect does, without ever entering credentials. Same check, whichever
+environment you're running this checklist against.
+
 Sign in at `http://localhost:3000/login` with `admin@planetest.local` /
 `smoke-test-password-1`. You should land on `/` with a sidebar showing all
 six links (Host applications, Experiences, Bookings, Payments, Users, Config
