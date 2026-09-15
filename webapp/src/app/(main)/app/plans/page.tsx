@@ -71,7 +71,7 @@ function PlansContent() {
   }, [user, authLoading, tab]);
 
   function setTab(next: Tab) {
-    router.push(`/plans?tab=${next}`);
+    router.push(`/app/plans?tab=${next}`);
   }
 
   if (authLoading) return null;

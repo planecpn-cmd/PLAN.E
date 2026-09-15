@@ -9,11 +9,11 @@ import { Icon } from "@/components/ui/Icon";
 import { Button } from "@/components/ui/Button";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Home", icon: "home" as const },
+  { href: "/app/home", label: "Home", icon: "home" as const },
   { href: "/explore", label: "Explore", icon: "compass" as const },
-  { href: "/plans", label: "Plans", icon: "calendar" as const },
-  { href: "/saved", label: "Saved", icon: "bookmark" as const },
-  { href: "/profile", label: "Profile", icon: "user" as const },
+  { href: "/app/plans", label: "Plans", icon: "calendar" as const },
+  { href: "/app/saved", label: "Saved", icon: "bookmark" as const },
+  { href: "/app/profile", label: "Profile", icon: "user" as const },
 ];
 
 // Marketing nav (homepage only - N2 Foundation). Everywhere else keeps the
@@ -89,7 +89,7 @@ export function TopNav() {
   return (
     <header className="sticky top-0 z-40 hidden border-b border-[var(--color-border-subtle)] bg-[var(--color-ivory)]/95 backdrop-blur lg:block">
       <div className="mx-auto flex max-w-[1280px] items-center gap-8 px-6 py-2.5">
-        <Link href="/" aria-label="PLAN E home">
+        <Link href="/app/home" aria-label="PLAN E home">
           <Logo />
           <p className="mt-0.5 flex items-center gap-1 text-xs font-medium text-[var(--color-ink)]/60">
             <Icon name="mapPin" size={11} />

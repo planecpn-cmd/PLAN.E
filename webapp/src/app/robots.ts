@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/auth/", "/booking/", "/plans", "/saved", "/profile"],
+        disallow: ["/auth/", "/app/"],
       },
     ],
     sitemap: "https://planenepal.com/sitemap.xml",

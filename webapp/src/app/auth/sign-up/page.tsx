@@ -45,14 +45,14 @@ export default function SignUpPage() {
     if (!data.session) {
       router.push(`/auth/otp-verify?email=${encodeURIComponent(email)}`);
     } else {
-      router.push("/");
+      router.push("/app/home");
     }
   }
 
   async function withGoogle() {
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/` },
+      options: { redirectTo: `${window.location.origin}/app/home` },
     });
   }
 

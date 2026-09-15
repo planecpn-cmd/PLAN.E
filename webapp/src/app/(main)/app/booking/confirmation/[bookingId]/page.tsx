@@ -82,14 +82,14 @@ export default async function ConfirmationPage({
 
       {isConfirmed && (
         <div className="mt-6 space-y-3">
-          <Link href="/plans">
+          <Link href="/app/plans">
             <Button variant="primary" fullWidth>
               VIEW MY PLANS
             </Button>
           </Link>
         </div>
       )}
-      <Link href="/" className="mt-3 block">
+      <Link href="/app/home" className="mt-3 block">
         <Button variant="secondary" fullWidth>
           BACK TO HOME
         </Button>

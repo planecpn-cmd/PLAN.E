@@ -19,13 +19,13 @@ type Profile = {
 };
 
 const SETTINGS: { label: string; href: string; icon: IconName }[] = [
-  { label: "My Plans", href: "/plans", icon: "calendar" },
-  { label: "My Reviews", href: "/profile/my-reviews", icon: "star" },
-  { label: "Payment Methods", href: "/profile/payment-methods", icon: "bookmark" },
-  { label: "Notifications", href: "/profile/notifications", icon: "bell" },
-  { label: "Language & Region", href: "/profile/language", icon: "compass" },
-  { label: "Help & Support", href: "/profile/help", icon: "user" },
-  { label: "Settings", href: "/profile/settings", icon: "menu" },
+  { label: "My Plans", href: "/app/plans", icon: "calendar" },
+  { label: "My Reviews", href: "/app/profile/my-reviews", icon: "star" },
+  { label: "Payment Methods", href: "/app/profile/payment-methods", icon: "bookmark" },
+  { label: "Notifications", href: "/app/profile/notifications", icon: "bell" },
+  { label: "Language & Region", href: "/app/profile/language", icon: "compass" },
+  { label: "Help & Support", href: "/app/profile/help", icon: "user" },
+  { label: "Settings", href: "/app/profile/settings", icon: "menu" },
 ];
 
 export default function ProfilePage() {
@@ -95,7 +95,7 @@ export default function ProfilePage() {
                 {profile.location}
               </p>
             )}
-            <Link href="/profile/edit" className="mt-3">
+            <Link href="/app/profile/edit" className="mt-3">
               <Button variant="secondary" className="!py-2 !px-5 !text-xs">
                 EDIT PROFILE
               </Button>
@@ -105,11 +105,11 @@ export default function ProfilePage() {
           <OrnamentDivider className="my-6" />
 
           <div className="grid grid-cols-3 divide-x divide-[var(--color-border-subtle)] rounded-[var(--radius-md)] border border-[var(--color-border)] py-4 text-center">
-            <Link href="/plans?tab=past" className="px-2">
+            <Link href="/app/plans?tab=past" className="px-2">
               <p className="text-xl font-bold text-[var(--color-forest)]">{historyCount}</p>
               <p className="text-xs text-[var(--color-ink)]/60">History</p>
             </Link>
-            <Link href="/saved" className="px-2">
+            <Link href="/app/saved" className="px-2">
               <p className="text-xl font-bold text-[var(--color-forest)]">{savedCount}</p>
               <p className="text-xs text-[var(--color-ink)]/60">Saved</p>
             </Link>
