@@ -37,7 +37,7 @@ function OtpVerifyForm() {
       setError(error.message);
       return;
     }
-    router.push(isRecovery ? "/auth/set-new-password" : "/");
+    router.push(isRecovery ? "/auth/set-new-password" : "/app/home");
   }
 
   async function resend() {

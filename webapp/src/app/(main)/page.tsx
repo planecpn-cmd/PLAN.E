@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { getHomepageData, isSectionEnabled } from "@/lib/data/homepage";
 import { SearchBar } from "@/components/SearchBar";
 import { SectionHeader } from "@/components/ui/SectionHeader";
@@ -8,11 +9,44 @@ import { Button } from "@/components/ui/Button";
 
 export const revalidate = 300;
 
+const TITLE = "PLAN E — Discover experiences across Nepal";
+const DESCRIPTION = "Book treks, homestays, and cultural experiences across Nepal.";
+
+export const metadata: Metadata = {
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "/",
+    type: "website",
+    images: [{ url: "/brand/home-hero.webp" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+    images: ["/brand/home-hero.webp"],
+  },
+};
+
+// No aggregateRating - same reasoning as experience/[slug]'s JSON-LD
+// (AUDIT.md (b)): rating_count is not backed by anon-readable review rows.
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "PLAN E",
+  url: "https://planenepal.com",
+  description: DESCRIPTION,
+};
+
 export default async function HomePage() {
   const { families } = await getHomepageData();
 
   return (
     <div>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       {isSectionEnabled("hero") && (
         <section className="relative h-[300px] overflow-hidden lg:h-[340px]">
           <Image

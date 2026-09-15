@@ -52,7 +52,7 @@ export default function WelcomePage() {
                 Continue with Email
               </Button>
             </Link>
-            <Link href="/" className="block text-center">
+            <Link href="/app/home" className="block text-center">
               <Button variant="text" fullWidth>
                 Continue as Guest
               </Button>

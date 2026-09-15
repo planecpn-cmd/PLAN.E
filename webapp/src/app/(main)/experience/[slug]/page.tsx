@@ -235,7 +235,7 @@ export default async function ExperienceDetailPage({
               )}
 
               {nextDeparture ? (
-                <Link href={`/booking/${experience.slug}`} className="mt-4 block">
+                <Link href={`/app/booking/${experience.slug}`} className="mt-4 block">
                   <Button variant="primary" fullWidth>
                     JOIN NOW
                   </Button>
@@ -276,7 +276,7 @@ export default async function ExperienceDetailPage({
             <p className="text-xs text-[var(--color-ink)]/70">per person</p>
           </div>
           {nextDeparture ? (
-            <Link href={`/booking/${experience.slug}`}>
+            <Link href={`/app/booking/${experience.slug}`}>
               <Button variant="primary">JOIN NOW</Button>
             </Link>
           ) : (
