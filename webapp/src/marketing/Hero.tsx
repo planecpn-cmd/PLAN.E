@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { Compass } from "lucide-react";
 import { SearchBar } from "@/components/SearchBar";
 
@@ -7,24 +6,39 @@ import { SearchBar } from "@/components/SearchBar";
 // selector needed five different real place photos (Everest/Annapurna/
 // Mardi/Pokhara/Chitwan) with no verifiable provenance in this repo - not
 // ported. This uses the same real, already-approved hero photo the rest of
-// the site uses (/brand/home-hero.webp), not a stock substitute.
+// the site uses (/brand/home-hero.{avif,webp}), not a stock substitute.
 //
 // Server component, CSS-only entrance (animate-m-rise in globals.css) - not
 // framer-motion. It was the single largest JS contributor to this page and
 // the animation is decorative, not functional; dropping it was the fix that
 // brought Lighthouse mobile performance from 83 to the required >=85 (P4).
+//
+// HERO-PERF: plain <picture>/<img>, not next/image. Lighthouse against the
+// deployed site traced 7.6s of an 8.4s LCP to this one request going through
+// /_next/image?url=... - OpenNext's Cloudflare image loader resizes/re-
+// encodes at request time in the Worker, which is slow and was adding a full
+// round trip for an image that's already pre-sized and pre-compressed
+// (1400x933, under 1920px wide). A plain <img> pointed at the static file is
+// served directly off Cloudflare's asset CDN (the wrangler.jsonc `assets`
+// binding) with zero Worker execution. next/image's `priority` prop also
+// wasn't reliably producing fetchpriority=high through that same custom
+// loader path; a plain <img fetchPriority="high"> sets the real attribute
+// directly, no dependency on the loader translating it.
 export function Hero() {
   return (
     <section className="relative flex min-h-[92vh] w-full items-center overflow-hidden bg-[var(--m-forest-dark)]">
       <div className="absolute inset-0 z-0">
-        <Image
-          src="/brand/home-hero.webp"
-          alt="Travellers hiking a mountain trail in Nepal"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover"
-        />
+        <picture>
+          <source srcSet="/brand/home-hero.avif" type="image/avif" />
+          <source srcSet="/brand/home-hero.webp" type="image/webp" />
+          <img
+            src="/brand/home-hero.webp"
+            alt="Travellers hiking a mountain trail in Nepal"
+            fetchPriority="high"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        </picture>
         <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-transparent" />
         <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-black/70 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[var(--m-forest-dark)] to-transparent" />
