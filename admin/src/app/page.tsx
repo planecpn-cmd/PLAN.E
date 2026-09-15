@@ -1,19 +1,19 @@
 import { requireAdmin } from "@/lib/session";
 import { AdminShell } from "@/components/AdminShell";
+import { DashboardClient } from "@/components/DashboardClient";
 
-// Empty dashboard. No charts, no counts, no analytics (plan §4). A non-staff
-// account never reaches this — requireAdmin() redirects it to /not-authorized.
+// N6 dashboard shell. Counters only -- no revenue split, no revenue chart
+// (REQUIREMENTS_DELTA C1/N6: blocked on the commission principal-vs-agent and
+// direction decisions, which flip which number is "Plan E revenue" by ~3x).
+// Gross booking value is the one money figure that's safe: same number
+// either way. Each counter group is its own scope-gated fetch (see
+// components/DashboardClient.tsx) so a single-scope moderator's browser never
+// even requests data outside their scopes, not just doesn't render it.
 export default async function DashboardPage() {
   const session = await requireAdmin();
   return (
     <AdminShell scopes={session.scopes} email={session.email}>
-      <h1 className="text-xl font-bold text-[var(--color-forest)]">Dashboard</h1>
-      <p className="mt-2 text-sm text-[var(--color-ink)]/70">
-        Signed in as staff. Use the nav — your scopes decide what is listed.
-      </p>
-      <p className="mt-6 text-xs text-[var(--color-ink)]/50">
-        Host review, bookings, payments and finance screens arrive in later phases.
-      </p>
+      <DashboardClient scopes={session.scopes} />
     </AdminShell>
   );
 }
