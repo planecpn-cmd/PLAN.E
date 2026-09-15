@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
+    "deploy": "node scripts/require-prod-env.mjs && opennextjs-cloudflare build && node scripts/check-deploy-bundle.mjs && opennextjs-cloudflare deploy"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.6",
