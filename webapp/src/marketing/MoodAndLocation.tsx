@@ -1,8 +1,5 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { Sparkles, Compass, Lightbulb, Users, Utensils, HeartHandshake } from "lucide-react";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -25,7 +22,8 @@ const MOODS = [
 // design). Locations bind to the real `regions` table with real
 // cover_image_url - the source's per-region experience counts ("24
 // Experiences", "38 Experiences") were fabricated with no backing query and
-// are not carried over.
+// are not carried over. Server component - hover states are plain CSS
+// (Lighthouse mobile performance budget, P4).
 export function MoodAndLocation({ regions }: { regions: RegionRow[] }) {
   return (
     <section className="marketing bg-[var(--m-canvas)] px-4 py-20 lg:px-6">
@@ -41,22 +39,21 @@ export function MoodAndLocation({ regions }: { regions: RegionRow[] }) {
           {MOODS.map((mood) => {
             const Icon = mood.icon;
             return (
-              <motion.div key={mood.title} whileHover={{ y: -6 }} whileTap={{ scale: 0.97 }}>
-                <Link
-                  href={`/search?family=${mood.family}`}
-                  className="group flex flex-col items-start gap-3 rounded-2xl border border-black/[0.06] bg-[var(--m-canvas-pure)] p-5 transition-shadow duration-300 hover:shadow-[var(--m-shadow-premium)]"
-                >
-                  <div className="rounded-2xl border border-black/[0.08] bg-[var(--m-sage-light)] p-3 text-[var(--m-forest)] transition-transform group-hover:-rotate-6 group-hover:scale-110">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-m-serif text-sm font-bold text-[var(--m-forest)]">{mood.title}</h3>
-                    <p className="mt-0.5 text-[11px] font-light leading-tight text-[var(--m-ink-muted)]">
-                      {mood.desc}
-                    </p>
-                  </div>
-                </Link>
-              </motion.div>
+              <Link
+                key={mood.title}
+                href={`/search?family=${mood.family}`}
+                className="group flex flex-col items-start gap-3 rounded-2xl border border-black/[0.06] bg-[var(--m-canvas-pure)] p-5 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[var(--m-shadow-premium)]"
+              >
+                <div className="rounded-2xl border border-black/[0.08] bg-[var(--m-sage-light)] p-3 text-[var(--m-forest)] transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-m-serif text-sm font-bold text-[var(--m-forest)]">{mood.title}</h3>
+                  <p className="mt-0.5 text-[11px] font-light leading-tight text-[var(--m-ink-muted)]">
+                    {mood.desc}
+                  </p>
+                </div>
+              </Link>
             );
           })}
         </div>
@@ -73,31 +70,30 @@ export function MoodAndLocation({ regions }: { regions: RegionRow[] }) {
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {regions.map((region) => (
-              <motion.div key={region.id} whileHover={{ y: -6 }}>
-                <Link
-                  href={`/search?region=${region.slug}`}
-                  className="group relative flex h-56 flex-col justify-end overflow-hidden rounded-[24px] bg-[var(--m-forest-dark)] shadow-[var(--m-shadow-premium-sm)] transition-shadow duration-300 hover:shadow-[var(--m-shadow-premium-lg)]"
-                >
-                  {region.cover_image_url ? (
-                    <Image
-                      src={region.cover_image_url}
-                      alt=""
-                      fill
-                      sizes="(max-width: 1024px) 50vw, 25vw"
-                      className="object-cover opacity-75 transition-all duration-700 group-hover:scale-110 group-hover:opacity-90"
-                    />
-                  ) : null}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-                  <div className="relative z-10 p-5">
-                    <div className="flex items-baseline gap-2">
-                      <h3 className="font-m-serif text-lg font-bold text-white drop-shadow group-hover:text-[var(--m-gold-light)]">
-                        {region.name_en}
-                      </h3>
-                      {region.name_ne && <span className="text-xs text-white/60">{region.name_ne}</span>}
-                    </div>
+              <Link
+                key={region.id}
+                href={`/search?region=${region.slug}`}
+                className="group relative flex h-56 flex-col justify-end overflow-hidden rounded-[24px] bg-[var(--m-forest-dark)] shadow-[var(--m-shadow-premium-sm)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[var(--m-shadow-premium-lg)]"
+              >
+                {region.cover_image_url ? (
+                  <Image
+                    src={region.cover_image_url}
+                    alt=""
+                    fill
+                    sizes="(max-width: 1024px) 50vw, 25vw"
+                    className="object-cover opacity-75 transition-all duration-700 group-hover:scale-110 group-hover:opacity-90"
+                  />
+                ) : null}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                <div className="relative z-10 p-5">
+                  <div className="flex items-baseline gap-2">
+                    <h3 className="font-m-serif text-lg font-bold text-white drop-shadow group-hover:text-[var(--m-gold-light)]">
+                      {region.name_en}
+                    </h3>
+                    {region.name_ne && <span className="text-xs text-white/60">{region.name_ne}</span>}
                   </div>
-                </Link>
-              </motion.div>
+                </div>
+              </Link>
             ))}
           </div>
         </div>

@@ -1,7 +1,4 @@
-"use client";
-
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { Compass } from "lucide-react";
 import { SearchBar } from "@/components/SearchBar";
 
@@ -11,6 +8,11 @@ import { SearchBar } from "@/components/SearchBar";
 // Mardi/Pokhara/Chitwan) with no verifiable provenance in this repo - not
 // ported. This uses the same real, already-approved hero photo the rest of
 // the site uses (/brand/home-hero.webp), not a stock substitute.
+//
+// Server component, CSS-only entrance (animate-m-rise in globals.css) - not
+// framer-motion. It was the single largest JS contributor to this page and
+// the animation is decorative, not functional; dropping it was the fix that
+// brought Lighthouse mobile performance from 83 to the required >=85 (P4).
 export function Hero() {
   return (
     <section className="relative flex min-h-[92vh] w-full items-center overflow-hidden bg-[var(--m-forest-dark)]">
@@ -30,54 +32,37 @@ export function Hero() {
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-16 pt-32 sm:px-6 lg:px-8">
         <div className="max-w-2xl space-y-6 text-left">
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur-md"
+          <div
+            className="animate-m-rise inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur-md [animation-delay:0.1s]"
           >
             <span className="h-2 w-2 rounded-full bg-[var(--m-gold)]" />
             <span>Plan Your Experiences · Nepal 🇳🇵</span>
-          </motion.div>
+          </div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.35 }}
-            className="font-m-display text-4xl font-bold leading-[1.08] tracking-tight text-white drop-shadow-2xl sm:text-5xl lg:text-6xl"
+          <h1
+            className="animate-m-rise font-m-display text-4xl font-bold leading-[1.08] tracking-tight text-white drop-shadow-2xl [animation-delay:0.2s] sm:text-5xl lg:text-6xl"
           >
             Find your kind of Nepal.
-          </motion.h1>
+          </h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-            className="max-w-lg text-base font-light leading-relaxed text-white/90 drop-shadow"
+          <p
+            className="animate-m-rise max-w-lg text-base font-light leading-relaxed text-white/90 drop-shadow [animation-delay:0.3s]"
           >
             Adventure, culture, people, wellness and experiences worth remembering - all across Nepal.
-          </motion.p>
+          </p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.62 }}
-            className="max-w-xl pt-1"
-          >
+          <div className="animate-m-rise max-w-xl pt-1 [animation-delay:0.4s]">
             <SearchBar />
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.72 }}
-            className="flex flex-wrap items-center gap-3 pt-1 text-xs font-sans text-white/70"
+          <div
+            className="animate-m-rise flex flex-wrap items-center gap-3 pt-1 text-xs font-sans text-white/70 [animation-delay:0.5s]"
           >
             <span className="flex items-center gap-1.5">
               <Compass className="h-3.5 w-3.5 text-[var(--m-gold)]" />
               <span>Book directly, pay with Khalti &amp; eSewa</span>
             </span>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>
