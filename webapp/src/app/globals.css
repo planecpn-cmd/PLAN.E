@@ -113,6 +113,82 @@ body {
   }
 }
 
+/* M-PORT: marketing homepage design tokens, scoped to .marketing so they
+   never leak into the rest of the app's Tailwind theme. Values match the
+   ported site's own tokens 1:1 where they already exist here (forest, sage,
+   gold, ink share hex values with --color-forest etc above) and extend with
+   the additional shades/fonts/shadows/motion the ported design needs. */
+.marketing {
+  --m-canvas: #fafaf8;
+  --m-canvas-pure: #ffffff;
+  --m-canvas-subtle: #f4f5f2;
+  --m-canvas-muted: #eaece8;
+
+  --m-forest: #18372d;
+  --m-forest-light: #254e41;
+  --m-forest-dark: #0e231c;
+  --m-forest-deep: #01251c;
+
+  --m-gold: #8f5e1b;
+  --m-gold-warm: #b57c2b;
+  --m-gold-champagne: #c5a059;
+  --m-gold-light: #d4a359;
+  --m-gold-glow: rgba(143, 94, 27, 0.25);
+
+  --m-sage: #e7ece7;
+  --m-sage-light: #f1f4f1;
+  --m-sage-border: #d5ddd6;
+  --m-sage-text: #4c6057;
+
+  --m-ink: #172420;
+  --m-ink-light: #374742;
+  --m-ink-muted: #62736e;
+  --m-ink-faint: #8d9e98;
+
+  --m-shadow-premium-sm: 0 2px 8px -2px rgba(24, 55, 45, 0.06), 0 1px 4px -1px rgba(0, 0, 0, 0.04);
+  --m-shadow-premium: 0 12px 32px -4px rgba(24, 55, 45, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+  --m-shadow-premium-lg: 0 24px 48px -8px rgba(24, 55, 45, 0.12), 0 8px 24px -4px rgba(0, 0, 0, 0.04);
+  --m-shadow-gold-glow: 0 0 25px rgba(181, 124, 43, 0.25);
+
+  font-family: var(--font-m-sans), system-ui, sans-serif;
+}
+
+.marketing .font-m-display {
+  font-family: var(--font-m-display), sans-serif;
+}
+.marketing .font-m-serif {
+  font-family: var(--font-m-serif), Georgia, serif;
+}
+
+@keyframes m-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes m-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes m-pulse-glow {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.05); }
+}
+@keyframes m-radar-ping {
+  0% { transform: scale(0.8); opacity: 0.9; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+.marketing .animate-m-shimmer { animation: m-shimmer 4s ease-in-out infinite; }
+.marketing .animate-m-float { animation: m-float 5s ease-in-out infinite; }
+.marketing .animate-m-pulse-glow { animation: m-pulse-glow 3s ease-in-out infinite; }
+.marketing .animate-m-radar-ping { animation: m-radar-ping 2.2s cubic-bezier(0, 0, 0.2, 1) infinite; }
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* OrnamentDivider: gold hairline with a centered rotated-square accent. */
 .ornament-divider {
   display: flex;
